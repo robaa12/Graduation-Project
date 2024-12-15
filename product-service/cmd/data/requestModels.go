@@ -24,12 +24,18 @@ type ProductResponse struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
+type ProductDetailsResponse struct {
+	ID          uint          `json:"id"`
+	StoreID     uint          `json:"store_id"`
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	SKUs        []SKUResponse `json:"skus"`
+}
 
 type SKUResponse struct {
-	ProductID uint              `json:"product_id"`
-	Price     float64           `json:"price"`
-	Stock     int               `json:"stock"`
-	Variants  []VariantResponse `json:"variants"`
+	Price    float64           `json:"price"`
+	Stock    int               `json:"stock"`
+	Variants []VariantResponse `json:"variants"`
 }
 
 type VariantResponse struct {
