@@ -213,3 +213,96 @@ func (app *Config) GetStoreProducts(w http.ResponseWriter, r *http.Request) {
 	// Return store's Products
 	app.writeJSON(w, 200, productsResponse)
 }
+
+// GetProduct Returns a product details from the databse
+func (app *Config) GetProductDetails(w http.ResponseWriter, r *http.Request) {
+
+	strID := chi.URLParam(r, "id")
+
+	if strID == "" {
+		app.errorJSON(w, errors.New("Product Id Not Found "))
+		return
+	}
+	// Convert the product ID to an unsigned integer
+	productId, err := strconv.ParseUint(strID, 10, 0)
+	if err != nil {
+		app.errorJSON(w, errors.New("product ID must be a number"))
+		return
+	}
+	var product data.Product
+
+	result := app.db.Where("id=?", productId).Find(&product)
+	if result.Error != nil {
+		app.errorJSON(w, result.Error)
+		return
+	}
+
+	productResponse := data.ProductDetailsResponse{ID: product.ID, Name: product.Name, StoreID: product.StoreID, Description: product.Description}
+
+	var skus []data.SKU
+	result = app.db.Where("product_id = ?", productId).Find(&skus)
+	if result.Error != nil {
+
+		app.errorJSON(w, result.Error)
+		return
+	}
+	// Iterate through each SKU to build its response structure
+	for _, sku := range skus {
+		// create SKU Response That Use
+		var skuResponse data.SKUResponse
+		skuResponse.Price = sku.Price
+		skuResponse.Stock = sku.Stock
+
+		// Retrieve SKU variants associated with the current SKU
+		var sku_Varients []data.SKUVariant
+		result = app.db.Where("sku_id = ?", sku.ID).Find(&sku_Varients)
+		if result.Error != nil {
+			app.errorJSON(w, result.Error)
+			return
+		}
+		// Iterate through each SKU variant to fetch variant details
+		for _, sku_varient := range sku_Varients {
+			var varient data.Variant
+			result = app.db.Where("id = ?", sku_varient.VariantID).Find(&varient)
+
+			if result.Error != nil {
+				app.errorJSON(w, result.Error)
+				return
+			}
+			skuResponse.Variants = append(skuResponse.Variants, data.VariantResponse{Name: varient.Name, Value: sku_varient.Value})
+
+		}
+		productResponse.SKUs = append(productResponse.SKUs, skuResponse)
+	}
+
+	app.writeJSON(w, 200, productResponse)
+}
+func (app *Config) UpdateSKU(w http.ResponseWriter, r *http.Request) {
+	strID := chi.URLParam(r, "id")
+	if strID == "" {
+		app.errorJSON(w, errors.New("SKU_ID Not Found."))
+		return
+	}
+
+	// Convert the product ID to an unsigned integer
+	sku_id, err := strconv.ParseUint(strID, 10, 0)
+	if err != nil {
+		app.errorJSON(w, errors.New("SKU ID must be a number"))
+		return
+	}
+	var skuRequest data.SKURequest
+	err = app.readJSON(w, r, &skuRequest)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	result := app.db.Where("id= ?", sku_id).Updates(&data.SKU{Stock: skuRequest.Stock, Price: skuRequest.Price})
+	if result.Error != nil {
+		app.errorJSON(w, result.Error)
+		return
+	}
+
+	app.writeJSON(w, 200, "SKU updated successfully.")
+
+}
