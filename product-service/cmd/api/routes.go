@@ -22,5 +22,10 @@ func (app *Config) routes() http.Handler {
 
 	mux.Use(middleware.Heartbeat("/ping"))
 	mux.Post("/products", app.NewProduct)
+	mux.Get("/products/{id}", app.GetProduct)
+	mux.Put("/products/{id}", app.UpdateProduct)
+	mux.Delete("/products/{id}", app.DeleteProduct)
+	mux.Get("/stores/{store_id}/products", app.GetStoreProducts)
+
 	return mux
 }

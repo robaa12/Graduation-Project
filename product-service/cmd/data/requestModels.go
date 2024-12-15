@@ -17,3 +17,22 @@ type VariantRequest struct {
 	Name  string `json:"name" binding:"required"`
 	Value string `json:"value" binding:"required"`
 }
+
+type ProductResponse struct {
+	ID          uint   `json:"id"`
+	StoreID     uint   `json:"store_id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+type SKUResponse struct {
+	ProductID uint              `json:"product_id"`
+	Price     float64           `json:"price"`
+	Stock     int               `json:"stock"`
+	Variants  []VariantResponse `json:"variants"`
+}
+
+type VariantResponse struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}

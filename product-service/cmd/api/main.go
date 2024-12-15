@@ -44,6 +44,10 @@ func main() {
 		db:     db,
 		models: data.New(db),
 	}
+	err = db.AutoMigrate(&data.Product{}, &data.SKU{}, &data.Variant{}, &data.SKUVariant{}, data.Category{})
+	if err != nil {
+		log.Fatal("failed to run migration", err)
+	}
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%s", WebPort),

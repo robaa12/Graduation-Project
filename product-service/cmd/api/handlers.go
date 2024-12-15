@@ -1,13 +1,17 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"net/http"
+	"strconv"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/robaa12/product-service/cmd/data"
 	"gorm.io/gorm"
 )
 
+// NewProduct creates a new product , skus and variants in the database
 func (app *Config) NewProduct(w http.ResponseWriter, r *http.Request) {
 	// Read the JSON request
 	var productRequest data.ProductRequest
@@ -32,7 +36,7 @@ func (app *Config) NewProduct(w http.ResponseWriter, r *http.Request) {
 		for _, skuRequest := range productRequest.SKUs {
 			// Create a new SKU
 			var sku data.SKU
-			sku.CreateSKU(skuRequest)
+			sku.CreateSKU(skuRequest, product.ID)
 
 			// Add the SKU to the database
 			if err := tx.Create(&sku).Error; err != nil {
@@ -52,7 +56,7 @@ func (app *Config) NewProduct(w http.ResponseWriter, r *http.Request) {
 				}
 
 				// Create a new SKU Variant
-				var skuVariant data.SkuVariant
+				var skuVariant data.SKUVariant
 				skuVariant.CreateSkuVariant(sku.ID, variant.ID, variantRequest.Value)
 
 				// Add the SKU Variant to the database
@@ -70,4 +74,142 @@ func (app *Config) NewProduct(w http.ResponseWriter, r *http.Request) {
 	}
 	// Return the product
 	app.writeJSON(w, 201, productRequest)
+}
+
+// GetProduct returns a product from the database
+func (app *Config) GetProduct(w http.ResponseWriter, r *http.Request) {
+	var product data.Product
+
+	// Get the product ID from the URL
+	id := chi.URLParam(r, "id")
+
+	// Get the product from the database
+	err := product.GetProduct(id)
+
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+	productResponse := data.ProductResponse{
+		ID:          product.ID,
+		StoreID:     product.StoreID,
+		Name:        product.Name,
+		Description: product.Description,
+	}
+	// Return the product
+	app.writeJSON(w, 200, productResponse)
+}
+
+// UpdateProduct updates a product in the database
+func (app *Config) UpdateProduct(w http.ResponseWriter, r *http.Request) {
+	// Read the JSON request
+	var product data.ProductResponse
+	err := app.readJSON(w, r, &product)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+	// Get the product ID from the URL
+	strID := chi.URLParam(r, "id")
+	if strID == "" {
+		app.errorJSON(w, errors.New("product ID is required "))
+		return
+	}
+	// Convert the product ID to an unsigned integer
+	id, err := strconv.ParseUint(strID, 10, 0)
+	if err != nil {
+		app.errorJSON(w, errors.New("product ID must be a number"))
+		return
+	}
+	// Update the product in the database
+	err = app.db.Model(&data.Product{}).Where("id = ?", id).Updates(&product).Error
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+	product.ID = uint(id)
+	// Return the Updated product
+	app.writeJSON(w, 200, product)
+}
+
+// DeleteProduct deletes a product from the database
+func (app *Config) DeleteProduct(w http.ResponseWriter, r *http.Request) {
+	// Get the product ID from the URL
+	strID := chi.URLParam(r, "id")
+	if strID == "" {
+		app.errorJSON(w, errors.New("product ID is required"))
+		return
+	}
+
+	id, err := strconv.ParseUint(strID, 10, 0)
+	if err != nil {
+		app.errorJSON(w, errors.New("product ID must be a number"))
+		return
+	}
+	tx := app.db.Begin()
+	if tx.Error != nil {
+		app.errorJSON(w, errors.New("Couldn't start Transaction"))
+		return
+	}
+	err = tx.Where("sku_id IN (?)", tx.Model(&data.SKU{}).Where("product_id = ?", id).Select("id")).Delete(&data.SKUVariant{}).Error
+	if err != nil {
+		tx.Rollback()
+		app.errorJSON(w, err)
+		return
+	}
+
+	err = tx.Where("product_id = ?", id).Delete(&data.SKU{}).Error
+	if err != nil {
+		tx.Rollback()
+		log.Println(err)
+		app.errorJSON(w, err)
+		return
+	}
+	// Delete the product from the database
+	err = tx.Where("id = ?", id).Delete(&data.Product{}).Error
+	if err != nil {
+		tx.Rollback()
+		app.errorJSON(w, errors.New("Couldn't delete Product"))
+		return
+	}
+	err = tx.Commit().Error
+	if err != nil {
+		app.errorJSON(w, errors.New("Couldn't commit Transaction"))
+		return
+	}
+	// Return the product
+	app.writeJSON(w, 200, "Product and SKUs deleted successfully")
+}
+
+// GetStoreProducts returns all products of a store
+func (app *Config) GetStoreProducts(w http.ResponseWriter, r *http.Request) {
+	// Fetch Store ID Param From URL
+	store_id := chi.URLParam(r, "store_id")
+	if store_id == "" {
+		app.errorJSON(w, errors.New("store_id Not Found"), 400)
+		return
+	}
+	// create slice of Products
+	var products []data.Product
+
+	// Find All Products With Store ID
+	result := app.db.Where("store_id = ?", store_id).Find(&products)
+
+	// Create Slice of ProductResponse
+	var productsResponse []data.ProductResponse
+	for _, product := range products {
+		productsResponse = append(productsResponse, data.ProductResponse{
+			ID:          product.ID,
+			StoreID:     product.StoreID,
+			Name:        product.Name,
+			Description: product.Description,
+		})
+	}
+
+	if result.Error != nil {
+		app.errorJSON(w, result.Error)
+		return
+	}
+	// Return store's Products
+	app.writeJSON(w, 200, productsResponse)
 }
