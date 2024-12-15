@@ -213,3 +213,58 @@ func (app *Config) GetStoreProducts(w http.ResponseWriter, r *http.Request) {
 	// Return store's Products
 	app.writeJSON(w, 200, productsResponse)
 }
+
+// GetProduct Returns a product details from the databse
+func (app *Config) GetProductDetails(w http.ResponseWriter, r *http.Request) {
+
+	productId := chi.URLParam(r, "id")
+
+	if productId == "" {
+		app.errorJSON(w, errors.New("Product Id Not Found "))
+		return
+	}
+	var product data.Product
+
+	result := app.db.Where("id=?", productId).Find(&product)
+	if result.Error != nil {
+		app.errorJSON(w, result.Error)
+		return
+	}
+
+	productResponse := data.ProductRequest{Name: product.Name, StoreID: product.StoreID, Description: product.Description}
+
+	var skus []data.SKU
+	result = app.db.Where("ProductID=", productId).Find(&skus)
+	if result.Error != nil {
+		app.errorJSON(w, result.Error)
+		return
+	}
+	// Iterate through each SKU to build its response structure
+	for _, sku := range skus {
+		// create SKU Response That Use
+		var skuResponse data.SKURequest
+
+		// Retrieve SKU variants associated with the current SKU
+		var sku_Varients []data.SKUVariant
+		result = app.db.Where("sku_id=", sku.ID).Find(&sku_Varients)
+		if result.Error != nil {
+			app.errorJSON(w, result.Error)
+			return
+		}
+		// Iterate through each SKU variant to fetch variant details
+		for _, sku_varient := range sku_Varients {
+			var varient data.Variant
+			result = app.db.Where("id = ", sku_varient.VariantID).Find(&varient)
+
+			if result.Error != nil {
+				app.errorJSON(w, result.Error)
+				return
+			}
+			skuResponse.Variants = append(skuResponse.Variants, data.VariantRequest{Name: varient.Name, Value: sku_varient.Value})
+
+		}
+		productResponse.SKUs = append(productResponse.SKUs, skuResponse)
+	}
+
+	app.writeJSON(w, 200, productResponse)
+}

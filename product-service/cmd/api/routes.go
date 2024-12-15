@@ -26,6 +26,7 @@ func (app *Config) routes() http.Handler {
 	mux.Put("/products/{id}", app.UpdateProduct)
 	mux.Delete("/products/{id}", app.DeleteProduct)
 	mux.Get("/stores/{store_id}/products", app.GetStoreProducts)
+	mux.Get("products/{id}/details", app.GetProductDetails)
 
 	return mux
 }
