@@ -95,3 +95,7 @@ func (p *Product) GetProduct(id string) error {
 func (p *Product) UpdateProduct(id string) error {
 	return db.Save(p).Error
 }
+
+func (s *SKU) GetSKU(id string) error {
+	return db.First(s, id).Error
+}

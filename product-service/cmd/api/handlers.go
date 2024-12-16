@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/robaa12/product-service/cmd/data"
 	"gorm.io/gorm"
 )
@@ -81,10 +80,14 @@ func (app *Config) GetProduct(w http.ResponseWriter, r *http.Request) {
 	var product data.Product
 
 	// Get the product ID from the URL
-	id := chi.URLParam(r, "id")
+	id, err := app.getID(r, "id")
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
 
 	// Get the product from the database
-	err := product.GetProduct(id)
+	err = product.GetProduct(strconv.Itoa(int(id)))
 
 	if err != nil {
 		app.errorJSON(w, err)
@@ -110,15 +113,9 @@ func (app *Config) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Get the product ID from the URL
-	strID := chi.URLParam(r, "id")
-	if strID == "" {
-		app.errorJSON(w, errors.New("product ID is required "))
-		return
-	}
-	// Convert the product ID to an unsigned integer
-	id, err := strconv.ParseUint(strID, 10, 0)
+	id, err := app.getID(r, "id")
 	if err != nil {
-		app.errorJSON(w, errors.New("product ID must be a number"))
+		app.errorJSON(w, err)
 		return
 	}
 	// Update the product in the database
@@ -127,7 +124,7 @@ func (app *Config) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 		app.errorJSON(w, err)
 		return
 	}
-	product.ID = uint(id)
+	product.ID = id
 	// Return the Updated product
 	app.writeJSON(w, 200, product)
 }
@@ -135,17 +132,12 @@ func (app *Config) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 // DeleteProduct deletes a product from the database
 func (app *Config) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	// Get the product ID from the URL
-	strID := chi.URLParam(r, "id")
-	if strID == "" {
-		app.errorJSON(w, errors.New("product ID is required"))
+	id, err := app.getID(r, "id")
+	if err != nil {
+		app.errorJSON(w, err)
 		return
 	}
 
-	id, err := strconv.ParseUint(strID, 10, 0)
-	if err != nil {
-		app.errorJSON(w, errors.New("product ID must be a number"))
-		return
-	}
 	tx := app.db.Begin()
 	if tx.Error != nil {
 		app.errorJSON(w, errors.New("Couldn't start Transaction"))
@@ -184,16 +176,24 @@ func (app *Config) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 // GetStoreProducts returns all products of a store
 func (app *Config) GetStoreProducts(w http.ResponseWriter, r *http.Request) {
 	// Fetch Store ID Param From URL
-	store_id := chi.URLParam(r, "store_id")
-	if store_id == "" {
-		app.errorJSON(w, errors.New("store_id Not Found"), 400)
+	storeID, err := app.getID(r, "store_id")
+	if err != nil {
+		app.errorJSON(w, err, 400)
 		return
 	}
 	// create slice of Products
 	var products []data.Product
 
 	// Find All Products With Store ID
-	result := app.db.Where("store_id = ?", store_id).Find(&products)
+	result := app.db.Where("store_id = ?", storeID).Find(&products)
+	if result.RowsAffected == 0 {
+		app.errorJSON(w, errors.New("Products Not Found"), 404)
+		return
+	}
+	if result.Error != nil {
+		app.errorJSON(w, result.Error)
+		return
+	}
 
 	// Create Slice of ProductResponse
 	var productsResponse []data.ProductResponse
@@ -214,21 +214,15 @@ func (app *Config) GetStoreProducts(w http.ResponseWriter, r *http.Request) {
 	app.writeJSON(w, 200, productsResponse)
 }
 
-// GetProduct Returns a product details from the databse
+// GetProductDetails returns a product details from the database
 func (app *Config) GetProductDetails(w http.ResponseWriter, r *http.Request) {
-
-	strID := chi.URLParam(r, "id")
-
-	if strID == "" {
-		app.errorJSON(w, errors.New("Product Id Not Found "))
-		return
-	}
-	// Convert the product ID to an unsigned integer
-	productId, err := strconv.ParseUint(strID, 10, 0)
+	// Get the product ID from the URL
+	productId, err := app.getID(r, "id")
 	if err != nil {
-		app.errorJSON(w, errors.New("product ID must be a number"))
+		app.errorJSON(w, err)
 		return
 	}
+
 	var product data.Product
 
 	result := app.db.Where("id=?", productId).Find(&product)
@@ -236,13 +230,20 @@ func (app *Config) GetProductDetails(w http.ResponseWriter, r *http.Request) {
 		app.errorJSON(w, result.Error)
 		return
 	}
+	if result.RowsAffected == 0 {
+		app.errorJSON(w, errors.New("Product Not Found"), 404)
+		return
+	}
 
 	productResponse := data.ProductDetailsResponse{ID: product.ID, Name: product.Name, StoreID: product.StoreID, Description: product.Description}
 
 	var skus []data.SKU
 	result = app.db.Where("product_id = ?", productId).Find(&skus)
+	if result.RowsAffected == 0 {
+		app.errorJSON(w, errors.New("SKUs Not Found"), 404)
+		return
+	}
 	if result.Error != nil {
-
 		app.errorJSON(w, result.Error)
 		return
 	}
@@ -256,6 +257,10 @@ func (app *Config) GetProductDetails(w http.ResponseWriter, r *http.Request) {
 		// Retrieve SKU variants associated with the current SKU
 		var sku_Varients []data.SKUVariant
 		result = app.db.Where("sku_id = ?", sku.ID).Find(&sku_Varients)
+		if result.RowsAffected == 0 {
+			app.errorJSON(w, errors.New("SKU Variants Not Found"), 404)
+			return
+		}
 		if result.Error != nil {
 			app.errorJSON(w, result.Error)
 			return
@@ -270,26 +275,21 @@ func (app *Config) GetProductDetails(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			skuResponse.Variants = append(skuResponse.Variants, data.VariantResponse{Name: varient.Name, Value: sku_varient.Value})
-
 		}
 		productResponse.SKUs = append(productResponse.SKUs, skuResponse)
 	}
 
 	app.writeJSON(w, 200, productResponse)
 }
+
 func (app *Config) UpdateSKU(w http.ResponseWriter, r *http.Request) {
-	strID := chi.URLParam(r, "id")
-	if strID == "" {
-		app.errorJSON(w, errors.New("SKU_ID Not Found."))
+	// Get the SKU ID from the URL
+	skuID, err := app.getID(r, "id")
+	if err != nil {
+		app.errorJSON(w, err)
 		return
 	}
 
-	// Convert the product ID to an unsigned integer
-	sku_id, err := strconv.ParseUint(strID, 10, 0)
-	if err != nil {
-		app.errorJSON(w, errors.New("SKU ID must be a number"))
-		return
-	}
 	var skuRequest data.SKURequest
 	err = app.readJSON(w, r, &skuRequest)
 	if err != nil {
@@ -297,12 +297,148 @@ func (app *Config) UpdateSKU(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := app.db.Where("id= ?", sku_id).Updates(&data.SKU{Stock: skuRequest.Stock, Price: skuRequest.Price})
+	result := app.db.Where("id= ?", skuID).Updates(&data.SKU{Stock: skuRequest.Stock, Price: skuRequest.Price})
 	if result.Error != nil {
 		app.errorJSON(w, result.Error)
 		return
 	}
 
 	app.writeJSON(w, 200, "SKU updated successfully.")
+}
 
+func (app *Config) GetSKU(w http.ResponseWriter, r *http.Request) {
+	// Get the SKU ID from the URL
+	skuID, err := app.getID(r, "id")
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	// Find SKU by ID
+	var sku data.SKU
+	result := app.db.Model(&data.SKU{}).Where("id = ?", skuID).Find(&sku)
+	if result.RowsAffected == 0 {
+		app.errorJSON(w, errors.New("SKU Not Found"), 404)
+		return
+	}
+	// Find SKU Variants
+	var SKUVariants []data.SKUVariant
+	result = app.db.Where("sku_id = ?", skuID).Find(&SKUVariants)
+	if result.Error != nil {
+		app.errorJSON(w, result.Error)
+		return
+	}
+	var Variants []data.VariantResponse
+	for _, skuVariant := range SKUVariants {
+		var variant data.Variant
+		result = app.db.Where("id = ?", skuVariant.VariantID).Find(&variant)
+		if result.Error != nil {
+			app.errorJSON(w, result.Error)
+			return
+		}
+		Variants = append(Variants, data.VariantResponse{Name: variant.Name, Value: skuVariant.Value})
+	}
+	skuResponse := data.SKUResponse{Stock: sku.Stock, Price: sku.Price, Variants: Variants}
+	app.writeJSON(w, 200, skuResponse)
+}
+
+func (app *Config) DeleteSKU(w http.ResponseWriter, r *http.Request) {
+	// Get the SKU ID from the URL
+	skuID, err := app.getID(r, "id")
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	// Find SKU by ID
+	var sku data.SKU
+	result := app.db.Where("id = ?", skuID).Find(&sku)
+	if result.RowsAffected == 0 {
+		app.errorJSON(w, errors.New("Sku is not found."), 404)
+		return
+	}
+	if result.Error != nil {
+		app.errorJSON(w, result.Error)
+		return
+	}
+	// begin transaction
+	tx := app.db.Begin()
+	if tx.Error != nil {
+		app.errorJSON(w, errors.New("Couldn't start Transaction"))
+		return
+	}
+	// Delete SKU Variants
+	result = tx.Where("sku_id = ?", skuID).Delete(&data.SKUVariant{})
+	if result.Error != nil {
+		tx.Rollback()
+		app.errorJSON(w, result.Error)
+		return
+	}
+	// Delete SKU
+	result = tx.Where("id = ?", skuID).Delete(&data.SKU{})
+	if result.Error != nil {
+		tx.Rollback()
+		app.errorJSON(w, result.Error)
+		return
+	}
+	// commmit Transaction
+	result = tx.Commit()
+	if result.Error != nil {
+		app.errorJSON(w, result.Error)
+		return
+	}
+	app.writeJSON(w, 200, "SKU deleted successfully.")
+}
+
+func (app *Config) NewSKU(w http.ResponseWriter, r *http.Request) {
+	// Read the JSON request
+	var skuRequest data.SKURequest
+	err := app.readJSON(w, r, &skuRequest)
+	if err != nil {
+		app.errorJSON(w, errors.New("Enter valid SKU data"))
+		return
+	}
+	// Get the Product ID from the URL
+	productID, err := app.getID(r, "id")
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	// Start Database Transaction
+	// Create a new SKU
+	var sku data.SKU
+	sku.CreateSKU(skuRequest, productID)
+
+	// make transaction
+	tx := app.db.Begin()
+	// Add the SKU to the database
+	if err := tx.Create(&sku).Error; err != nil {
+		log.Println("Error creating sku in database")
+		return
+	}
+	// Create SKU Variant
+	for _, variant := range skuRequest.Variants {
+		var variantData data.Variant
+		variantData.CreateVariant(variant)
+		if err := tx.FirstOrCreate(&variantData, data.Variant{Name: variant.Name}).Error; err != nil {
+			log.Println("Error creating variant in database")
+			return
+		}
+		// Create a new SKU Variant
+		var skuVariant data.SKUVariant
+		skuVariant.CreateSkuVariant(sku.ID, variantData.ID, variant.Value)
+		if err = tx.Create(&skuVariant).Error; err != nil {
+			log.Println("Error creating sku variant in database")
+			return
+		}
+	}
+	// commit transaction
+	err = tx.Commit().Error
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+	// Return the SKU
+	app.writeJSON(w, 201, "SKU created successfully.")
 }
