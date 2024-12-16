@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/robaa12/product-service/cmd/data"
 	"gorm.io/gorm"
 )
@@ -81,10 +80,14 @@ func (app *Config) GetProduct(w http.ResponseWriter, r *http.Request) {
 	var product data.Product
 
 	// Get the product ID from the URL
-	id := chi.URLParam(r, "id")
+	id, err := app.getID(r, "id")
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
 
 	// Get the product from the database
-	err := product.GetProduct(id)
+	err = product.GetProduct(strconv.Itoa(int(id)))
 
 	if err != nil {
 		app.errorJSON(w, err)
@@ -110,15 +113,9 @@ func (app *Config) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Get the product ID from the URL
-	strID := chi.URLParam(r, "id")
-	if strID == "" {
-		app.errorJSON(w, errors.New("product ID is required "))
-		return
-	}
-	// Convert the product ID to an unsigned integer
-	id, err := strconv.ParseUint(strID, 10, 0)
+	id, err := app.getID(r, "id")
 	if err != nil {
-		app.errorJSON(w, errors.New("product ID must be a number"))
+		app.errorJSON(w, err)
 		return
 	}
 	// Update the product in the database
@@ -127,7 +124,7 @@ func (app *Config) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 		app.errorJSON(w, err)
 		return
 	}
-	product.ID = uint(id)
+	product.ID = id
 	// Return the Updated product
 	app.writeJSON(w, 200, product)
 }
@@ -135,17 +132,12 @@ func (app *Config) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 // DeleteProduct deletes a product from the database
 func (app *Config) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	// Get the product ID from the URL
-	strID := chi.URLParam(r, "id")
-	if strID == "" {
-		app.errorJSON(w, errors.New("product ID is required"))
+	id, err := app.getID(r, "id")
+	if err != nil {
+		app.errorJSON(w, err)
 		return
 	}
 
-	id, err := strconv.ParseUint(strID, 10, 0)
-	if err != nil {
-		app.errorJSON(w, errors.New("product ID must be a number"))
-		return
-	}
 	tx := app.db.Begin()
 	if tx.Error != nil {
 		app.errorJSON(w, errors.New("Couldn't start Transaction"))
@@ -184,26 +176,22 @@ func (app *Config) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 // GetStoreProducts returns all products of a store
 func (app *Config) GetStoreProducts(w http.ResponseWriter, r *http.Request) {
 	// Fetch Store ID Param From URL
-	store_id := chi.URLParam(r, "store_id")
-	if store_id == "" {
-		app.errorJSON(w, errors.New("store_id Not Found"), 400)
+	storeID, err := app.getID(r, "store_id")
+	if err != nil {
+		app.errorJSON(w, err, 400)
 		return
 	}
 	// create slice of Products
 	var products []data.Product
 
 	// Find All Products With Store ID
-	result := app.db.Where("store_id = ?", store_id).Find(&products)
+	result := app.db.Where("store_id = ?", storeID).Find(&products)
 	if result.RowsAffected == 0 {
 		app.errorJSON(w, errors.New("Products Not Found"), 404)
 		return
 	}
 	if result.Error != nil {
 		app.errorJSON(w, result.Error)
-		return
-	}
-	if result.RowsAffected == 0 {
-		app.errorJSON(w, errors.New("No Products Found"), 404)
 		return
 	}
 
@@ -226,21 +214,15 @@ func (app *Config) GetStoreProducts(w http.ResponseWriter, r *http.Request) {
 	app.writeJSON(w, 200, productsResponse)
 }
 
-// GetProduct Returns a product details from the databse
+// GetProductDetails returns a product details from the database
 func (app *Config) GetProductDetails(w http.ResponseWriter, r *http.Request) {
-
-	strID := chi.URLParam(r, "id")
-
-	if strID == "" {
-		app.errorJSON(w, errors.New("Product Id Not Found "))
-		return
-	}
-	// Convert the product ID to an unsigned integer
-	productId, err := strconv.ParseUint(strID, 10, 0)
+	// Get the product ID from the URL
+	productId, err := app.getID(r, "id")
 	if err != nil {
-		app.errorJSON(w, errors.New("product ID must be a number"))
+		app.errorJSON(w, err)
 		return
 	}
+
 	var product data.Product
 
 	result := app.db.Where("id=?", productId).Find(&product)
@@ -299,19 +281,15 @@ func (app *Config) GetProductDetails(w http.ResponseWriter, r *http.Request) {
 
 	app.writeJSON(w, 200, productResponse)
 }
+
 func (app *Config) UpdateSKU(w http.ResponseWriter, r *http.Request) {
-	strID := chi.URLParam(r, "id")
-	if strID == "" {
-		app.errorJSON(w, errors.New("SKU_ID Not Found."))
+	// Get the SKU ID from the URL
+	skuID, err := app.getID(r, "id")
+	if err != nil {
+		app.errorJSON(w, err)
 		return
 	}
 
-	// Convert the product ID to an unsigned integer
-	sku_id, err := strconv.ParseUint(strID, 10, 0)
-	if err != nil {
-		app.errorJSON(w, errors.New("SKU ID must be a number"))
-		return
-	}
 	var skuRequest data.SKURequest
 	err = app.readJSON(w, r, &skuRequest)
 	if err != nil {
@@ -319,29 +297,23 @@ func (app *Config) UpdateSKU(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := app.db.Where("id= ?", sku_id).Updates(&data.SKU{Stock: skuRequest.Stock, Price: skuRequest.Price})
+	result := app.db.Where("id= ?", skuID).Updates(&data.SKU{Stock: skuRequest.Stock, Price: skuRequest.Price})
 	if result.Error != nil {
 		app.errorJSON(w, result.Error)
 		return
 	}
 
 	app.writeJSON(w, 200, "SKU updated successfully.")
-
 }
 
 func (app *Config) GetSKU(w http.ResponseWriter, r *http.Request) {
-	// Fetch SKU ID Param From URL
-	strID := chi.URLParam(r, "id")
-	if strID == "" {
-		app.errorJSON(w, errors.New("SKU_ID Not Found."))
-		return
-	}
-	// Convert ID to uint
-	skuID, err := strconv.ParseUint(strID, 10, 0)
+	// Get the SKU ID from the URL
+	skuID, err := app.getID(r, "id")
 	if err != nil {
-		app.errorJSON(w, errors.New("SKU ID must be a number"))
+		app.errorJSON(w, err)
 		return
 	}
+
 	// Find SKU by ID
 	var sku data.SKU
 	result := app.db.Model(&data.SKU{}).Where("id = ?", skuID).Find(&sku)
@@ -371,18 +343,13 @@ func (app *Config) GetSKU(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Config) DeleteSKU(w http.ResponseWriter, r *http.Request) {
-	// Fetch SKU ID Param From URL
-	strID := chi.URLParam(r, "id")
-	if strID == "" {
-		app.errorJSON(w, errors.New("SKU_ID Not Found."))
-		return
-	}
-	// Convert ID to uint
-	skuID, err := strconv.ParseUint(strID, 10, 0)
+	// Get the SKU ID from the URL
+	skuID, err := app.getID(r, "id")
 	if err != nil {
-		app.errorJSON(w, errors.New("SKU ID must be a number"))
+		app.errorJSON(w, err)
 		return
 	}
+
 	// Find SKU by ID
 	var sku data.SKU
 	result := app.db.Where("id = ?", skuID).Find(&sku)
@@ -431,22 +398,17 @@ func (app *Config) NewSKU(w http.ResponseWriter, r *http.Request) {
 		app.errorJSON(w, errors.New("Enter valid SKU data"))
 		return
 	}
-	// Fetch Product ID Param From URL
-	strID := chi.URLParam(r, "id")
-	if strID == "" {
-		app.errorJSON(w, errors.New("Product ID Not Found."))
-		return
-	}
-	// Convert ID to uint
-	ID, err := strconv.ParseUint(strID, 10, 0)
+	// Get the Product ID from the URL
+	productID, err := app.getID(r, "id")
 	if err != nil {
-		app.errorJSON(w, errors.New("Product ID must be a number"))
+		app.errorJSON(w, err)
 		return
 	}
+
 	// Start Database Transaction
 	// Create a new SKU
 	var sku data.SKU
-	sku.CreateSKU(skuRequest, uint(ID))
+	sku.CreateSKU(skuRequest, productID)
 
 	// make transaction
 	tx := app.db.Begin()
