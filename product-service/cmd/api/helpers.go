@@ -5,6 +5,9 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"strconv"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type jsonResponse struct {
@@ -62,4 +65,18 @@ func (app *Config) errorJSON(w http.ResponseWriter, err error, status ...int) er
 	payload.Message = err.Error()
 
 	return app.writeJSON(w, statusCode, payload)
+}
+
+func (app *Config) getID(r *http.Request, key string) (uint, error) {
+	id := chi.URLParam(r, key)
+	if id == "" {
+		return 0, errors.New("missing ID parameter")
+	}
+
+	idInt, err := strconv.ParseUint(id, 10, 0)
+	if err != nil {
+		return 0, errors.New("ID parameter must be a number")
+	}
+
+	return uint(idInt), nil
 }
