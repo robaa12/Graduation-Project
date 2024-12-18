@@ -44,7 +44,12 @@ func main() {
 		db:     db,
 		models: data.New(db),
 	}
-	err = db.AutoMigrate(&data.Product{}, &data.SKU{}, &data.Variant{}, &data.SKUVariant{}, data.Category{})
+	err = db.SetupJoinTable(&data.Sku{}, "Variants", &data.SKUVariant{})
+	if err != nil {
+		log.Panic("failed to setup join table", err)
+	}
+
+	err = db.AutoMigrate(&data.Product{}, &data.Sku{}, &data.Variant{}, &data.SKUVariant{})
 	if err != nil {
 		log.Fatal("failed to run migration", err)
 	}
