@@ -6,6 +6,7 @@ type ProductRequest struct {
 	Description string       `json:"description" binding:"required"`
 	Published   bool         `json:"published" binding:"required"`
 	StartPrice  float64      `json:"startprice" binding:"required"`
+	Slug        string       `json:"slug"`
 	Category    string       `json:"category" binding:"required"`
 	SKUs        []SKURequest `json:"skus" binding:"required"`
 }
@@ -30,6 +31,7 @@ type ProductResponse struct {
 	StoreID     uint    `json:"store_id"`
 	Name        string  `json:"name"`
 	Description string  `json:"description"`
+	Slug        string  `json:"slug"`
 	Published   bool    `json:"published"`
 	StartPrice  float64 `json:"start_price"`
 	Category    string  `json:"category"`
@@ -41,6 +43,7 @@ type ProductDetailsResponse struct {
 	Description string        `json:"description"`
 	Published   bool          `json:"published"`
 	Category    string        `json:"category"`
+	Slug        string        `json:"slug"`
 	StartPrice  float64       `json:"start_price"`
 	SKUs        []SKUResponse `json:"skus"`
 }

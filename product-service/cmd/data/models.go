@@ -35,6 +35,7 @@ type Product struct {
 	StartPrice  float64        `json:"startprice" gorm:"not null"`
 	Category    string         `json:"category" gorm:"size:255;not null"`
 	SKUs        []Sku          `json:"skus" gorm:"foreignKey:ProductID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // One-to-many relationship with SKU
+	Slug        string         `json:"slug" gorm:"size:255;not null"`
 	CreatedAt   time.Time      `json:"created_at"`
 	UpdatedAt   time.Time      `json:"updated_at"`
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
@@ -80,6 +81,7 @@ func (p *Product) CreateProduct(productR ProductRequest) {
 	p.Published = productR.Published
 	p.StartPrice = productR.StartPrice
 	p.Category = productR.Category
+	p.Slug = productR.Slug
 }
 
 func (s *Sku) CreateSKU(skuR SKURequest, productID uint) {
@@ -112,4 +114,12 @@ func (p *Product) UpdateProduct(id string) error {
 
 func (s *Sku) GetSKU(id string) error {
 	return db.First(s, id).Error
+}
+
+func (Product) TableName() string {
+	return "products"
+}
+
+func (p *Product) BeforeCreate(tx *gorm.DB) error {
+	return tx.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_products_store_id_slug ON products (store_id, slug)").Error
 }

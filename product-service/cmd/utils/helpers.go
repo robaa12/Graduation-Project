@@ -3,11 +3,15 @@ package utils
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/robaa12/product-service/cmd/data"
+	"gorm.io/gorm"
 )
 
 type jsonResponse struct {
@@ -79,4 +83,28 @@ func GetID(r *http.Request, key string) (uint, error) {
 	}
 
 	return uint(idInt), nil
+}
+
+// ValidateAndGenerateSlug checks if the slug is unique within the store and generates a new one if necessary.
+func ValidateAndGenerateSlug(db *gorm.DB, name string, storeID uint) (string, error) {
+	// Generate the base slug from the product name
+	baseSlug := strings.ToLower(strings.ReplaceAll(name, " ", "-"))
+	slug := baseSlug
+	var count int64
+
+	// Loop to find a unique slug
+	for i := 1; ; i++ {
+		// Check if a product with the same slug and store_id already exists
+		db.Model(&data.Product{}).
+			Where("slug = ? AND store_id = ?", slug, storeID).
+			Count(&count)
+
+		// If no duplicate is found, return the unique slug
+		if count == 0 {
+			return slug, nil
+		}
+
+		// If a duplicate exists, append a counter to the slug
+		slug = fmt.Sprintf("%s-%d", baseSlug, i)
+	}
 }

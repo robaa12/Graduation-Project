@@ -4,13 +4,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/robaa12/product-service/cmd/data"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"github.com/robaa12/product-service/cmd/db"
 )
 
 // WebPort Application Port
@@ -20,7 +17,7 @@ const WebPort = "8080"
 var counts int
 
 type Config struct {
-	db     *gorm.DB
+	db     *db.Database
 	models data.Models
 }
 
@@ -33,25 +30,14 @@ func main() {
 		log.Panic(err)
 	}
 
-	// Connect to Database
-	db := connectToDB()
-	if db == nil {
-		log.Panic("Can't connect to Postgres!")
-	}
+	// Setup Database (migrations, indexes)
+	database, err := db.New()
+	database.SetupDatabase()
 
 	// Set up config
 	app := Config{
-		db:     db,
-		models: data.New(db),
-	}
-	err = db.SetupJoinTable(&data.Sku{}, "Variants", &data.SKUVariant{})
-	if err != nil {
-		log.Panic("failed to setup join table", err)
-	}
-
-	err = db.AutoMigrate(&data.Product{}, &data.Sku{}, &data.Variant{}, &data.SKUVariant{})
-	if err != nil {
-		log.Fatal("failed to run migration", err)
+		db:     database,
+		models: data.New(database.DB),
 	}
 
 	srv := &http.Server{
@@ -61,36 +47,5 @@ func main() {
 	err = srv.ListenAndServe()
 	if err != nil {
 		log.Panic(err)
-	}
-}
-
-func openDB(dsn string) (*gorm.DB, error) {
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		return nil, err
-	}
-	return db, nil
-}
-
-func connectToDB() *gorm.DB {
-	dsn := os.Getenv("DSN")
-
-	for {
-		connection, err := openDB(dsn)
-		if err != nil {
-			log.Println("Postgres not yet ready...")
-			counts++
-		} else {
-			log.Println("Connected to Postgres!")
-			return connection
-		}
-
-		if counts > 10 {
-			log.Println(err)
-			return nil
-		}
-		log.Println("Backing off two seconds")
-		time.Sleep(2 * time.Second)
-		continue
 	}
 }

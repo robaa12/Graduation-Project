@@ -2,12 +2,16 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"strconv"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/robaa12/product-service/cmd/data"
 	"github.com/robaa12/product-service/cmd/utils"
+	"github.com/robaa12/product-service/cmd/validation"
 	"gorm.io/gorm"
 )
 
@@ -24,6 +28,22 @@ func (h *ProductHandler) NewProduct(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorJSON(w, err)
 		return
 	}
+
+	if err := validation.ValidateNewProduct(productRequest); err != nil {
+		utils.ErrorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+
+	if err := validation.ValidateBusinessRules(productRequest); err != nil {
+		utils.ErrorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+	slug, err := utils.ValidateAndGenerateSlug(h.DB, productRequest.Name, productRequest.StoreID)
+	if err != nil {
+		utils.ErrorJSON(w, err, http.StatusInternalServerError)
+		return
+	}
+	productRequest.Slug = slug
 
 	// Start Database Transaction
 	err = h.DB.Transaction(func(tx *gorm.DB) error {
@@ -114,12 +134,36 @@ func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorJSON(w, err)
 		return
 	}
+
 	// Get the product ID from the URL
 	id, err := utils.GetID(r, "id")
 	if err != nil {
 		utils.ErrorJSON(w, err)
 		return
 	}
+
+	// Check if the product exists
+	var dbProduct data.Product
+	err = h.DB.Where("id = ?", id).First(&dbProduct).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			utils.ErrorJSON(w, errors.New("product not found"), http.StatusNotFound)
+		} else {
+			utils.ErrorJSON(w, err, http.StatusInternalServerError)
+		}
+	}
+
+	// Compare product names
+	if dbProduct.Name != product.Name {
+		slug, err := utils.ValidateAndGenerateSlug(h.DB, product.Name, dbProduct.StoreID)
+		if err != nil {
+			utils.ErrorJSON(w, err, http.StatusInternalServerError)
+			return
+		}
+		fmt.Println("slug: ", slug)
+		product.Slug = slug
+	}
+
 	// Update the product in the database
 	err = h.DB.Model(&data.Product{}).Where("id = ?", id).Updates(&product).Error
 	if err != nil {
@@ -128,7 +172,7 @@ func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	}
 	product.ID = id
 	// Return the Updated product
-	utils.WriteJSON(w, 200, product)
+	utils.WriteJSON(w, http.StatusOK, product)
 }
 
 // DeleteProduct deletes a product from the database
@@ -166,17 +210,54 @@ func (h *ProductHandler) GetStoreProducts(w http.ResponseWriter, r *http.Request
 		utils.ErrorJSON(w, err, 400)
 		return
 	}
-	// create slice of Products
-	var products []data.Product
 
-	// Find All Products With Store ID
-	result := h.DB.Where("store_id = ?", storeID).Find(&products)
-	if result.RowsAffected == 0 {
-		utils.ErrorJSON(w, errors.New("Products Not Found"), 404)
+	// parse pagination parameters
+	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+	pageSize, _ := strconv.Atoi(r.URL.Query().Get("page_size"))
+	sort := r.URL.Query().Get("sort")
+	order := r.URL.Query().Get("order")
+
+	// Vaildate sorting field
+	validSortFields := map[string]bool{
+		"created_at": true,
+		"name":       true,
+		"price":      true,
+	}
+	if sort != "" && !validSortFields[sort] {
+		utils.ErrorJSON(w, errors.New("invalid sort field"), http.StatusBadRequest)
 		return
 	}
-	if result.Error != nil {
-		utils.ErrorJSON(w, result.Error)
+
+	// Create pagination query
+	pagination := utils.NewPaginationQuery(page, pageSize, sort, order)
+
+	// Get total count
+	var total int64
+	if err := h.DB.Model(&data.Product{}).Where("store_id = ?", storeID).Count(&total).Error; err != nil {
+		utils.ErrorJSON(w, err)
+	}
+
+	// Calculate offset
+	offset := (pagination.Page - 1) * pagination.PageSize
+
+	// Create base Query
+	query := h.DB.Model(&data.Product{}).Where("store_id", storeID)
+
+	// Add sorting
+	if pagination.Sort != "" {
+		query = query.Order(fmt.Sprintf("%s %s", pagination.Sort, pagination.Order))
+	}
+
+	// Execute paginated query
+	var products []data.Product
+	if err := query.Offset(offset).Limit(pagination.PageSize).Find(&products).Error; err != nil {
+		utils.ErrorJSON(w, err)
+		return
+	}
+
+	// If no products found
+	if len(products) == 0 {
+		utils.ErrorJSON(w, errors.New("no products found"), http.StatusNotFound)
 		return
 	}
 
@@ -186,8 +267,19 @@ func (h *ProductHandler) GetStoreProducts(w http.ResponseWriter, r *http.Request
 		productResponse := product.ToProductResponse()
 		productsResponse = append(productsResponse, productResponse)
 	}
+	// Calculate total pages
+	totalPages := int(math.Ceil(float64(total) / float64(pagination.PageSize)))
+
+	// Create paginated response
+	response := utils.PaginatedResponse{
+		Data:       productsResponse,
+		Total:      total,
+		Page:       pagination.Page,
+		PageSize:   pagination.PageSize,
+		TotalPages: totalPages,
+	}
 	// Return store's Products
-	utils.WriteJSON(w, 200, productsResponse)
+	utils.WriteJSON(w, 200, response)
 }
 
 // GetProductDetails returns a product details from the database
@@ -211,6 +303,28 @@ func (h *ProductHandler) GetProductDetails(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	productDetailsResponse := product.ToProductDetailsResponse()
+	utils.WriteJSON(w, 200, productDetailsResponse)
+}
+
+func (h *ProductHandler) GetProductBySlug(w http.ResponseWriter, r *http.Request) {
+	store_id := chi.URLParam(r, "store_id")
+	slug := chi.URLParam(r, "slug")
+
+	if slug == "" || store_id == "" {
+		utils.ErrorJSON(w, errors.New("both slug and store_id is required"), http.StatusBadRequest)
+		return
+	}
+	var product data.Product
+	result := h.DB.Where("slug = ? AND store_id = ?", slug, store_id).Preload("SKUs.SKUVariants").Preload("SKUs.Variants").First(&product)
+	if result.Error != nil {
+		utils.ErrorJSON(w, result.Error)
+		return
+	}
+	if result.RowsAffected == 0 {
+		utils.ErrorJSON(w, errors.New("Product Not Found"), 404)
+		return
+	}
 	productDetailsResponse := product.ToProductDetailsResponse()
 	utils.WriteJSON(w, 200, productDetailsResponse)
 }
