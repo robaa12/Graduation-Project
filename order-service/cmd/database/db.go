@@ -3,7 +3,7 @@ package database
 import (
 	"fmt"
 	"log"
-	"order-service/cmd/data"
+	"order-service/cmd/model"
 	"os"
 	"time"
 
@@ -25,15 +25,11 @@ func New() (*Database, error) {
 
 }
 func (db *Database) SetupDatabase() error {
-	err := db.DB.AutoMigrate(&data.Customer{}, &data.Order{}, &data.OrderItem{})
+	err := db.DB.AutoMigrate(&model.Order{}, &model.OrderItem{})
 	if err != nil {
 		return fmt.Errorf("failed to run migration: %w", err)
 	}
-	err = db.DB.Exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_customers_email 
-	ON customers (email)`).Error
-	if err != nil {
-		return fmt.Errorf("failed to create unique index %w", err)
-	}
+
 	return nil
 
 }

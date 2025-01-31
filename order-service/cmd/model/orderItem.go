@@ -1,4 +1,4 @@
-package data
+package model
 
 // OrderItemReqest with their Fuction which's mapping OrderItemRequest using orderId as arg Into OrderItemModel
 type OrderItemRequest struct {

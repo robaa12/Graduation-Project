@@ -4,15 +4,16 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"order-service/cmd/data"
+
 	"order-service/cmd/database"
+
+	"gorm.io/gorm"
 )
 
 const webPort = "8081"
 
 type Config struct {
-	db     *database.Database
-	models data.Models
+	db *gorm.DB
 }
 
 func main() {
@@ -24,8 +25,7 @@ func main() {
 	}
 	db.SetupDatabase()
 	app := Config{
-		db:     db,
-		models: data.New(),
+		db: db.DB,
 	}
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%s", webPort),
