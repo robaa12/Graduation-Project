@@ -32,7 +32,7 @@ func (d *Database) SetupDatabase() error {
 	}
 
 	// Run migrations
-	if err := d.DB.AutoMigrate(&data.Product{}, &data.Sku{}, &data.Variant{}, &data.SKUVariant{}); err != nil {
+	if err := d.DB.AutoMigrate(&data.Product{}, &data.Sku{}, &data.Variant{}, &data.SKUVariant{}, &data.Collection{}); err != nil {
 		return fmt.Errorf("failed to run migration: %w", err)
 	}
 
