@@ -6,6 +6,7 @@ type ProductRequest struct {
 	Description string       `json:"description" binding:"required"`
 	Published   bool         `json:"published" binding:"required"`
 	StartPrice  float64      `json:"startprice" binding:"required"`
+	Slug        string       `json:"slug"`
 	Category    string       `json:"category" binding:"required"`
 	SKUs        []SKURequest `json:"skus" binding:"required"`
 }
@@ -25,11 +26,17 @@ type VariantRequest struct {
 	Value string `json:"value" binding:"required"`
 }
 
+type CollectionRequest struct {
+	Name        string `json:"name" binding:"required"`
+	Description string `json:"description" binding:"required"`
+}
+
 type ProductResponse struct {
 	ID          uint    `json:"id"`
 	StoreID     uint    `json:"store_id"`
 	Name        string  `json:"name"`
 	Description string  `json:"description"`
+	Slug        string  `json:"slug"`
 	Published   bool    `json:"published"`
 	StartPrice  float64 `json:"start_price"`
 	Category    string  `json:"category"`
@@ -41,6 +48,7 @@ type ProductDetailsResponse struct {
 	Description string        `json:"description"`
 	Published   bool          `json:"published"`
 	Category    string        `json:"category"`
+	Slug        string        `json:"slug"`
 	StartPrice  float64       `json:"start_price"`
 	SKUs        []SKUResponse `json:"skus"`
 }
@@ -59,6 +67,20 @@ type SKUResponse struct {
 type VariantResponse struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
+}
+
+type CollectionResponse struct {
+	ID          uint   `json:"id"`
+	StoreID     uint   `json:"store_id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+type CollectionDetailsResponse struct {
+	ID          uint              `json:"id"`
+	StoreID     uint              `json:"store_id"`
+	Name        string            `json:"name"`
+	Description string            `json:"description"`
+	Products    []ProductResponse `json:"products"`
 }
 
 // map product object ro product response object
@@ -110,5 +132,28 @@ func (s *Sku) ToSKUResponse() SKUResponse {
 		Margin:         s.Margin,
 		CompareAtPrice: s.CompareAtPrice,
 		Variants:       variants,
+	}
+}
+
+func (c *Collection) ToCollectionResponse() CollectionResponse {
+	return CollectionResponse{
+		ID:          c.ID,
+		StoreID:     c.StoreID,
+		Name:        c.Name,
+		Description: c.Description,
+	}
+}
+
+func (c *Collection) ToCollectionDetailsResponse() CollectionDetailsResponse {
+	var products []ProductResponse
+	for _, product := range c.Products {
+		products = append(products, product.ToProductResponse())
+	}
+	return CollectionDetailsResponse{
+		ID:          c.ID,
+		StoreID:     c.StoreID,
+		Name:        c.Name,
+		Description: c.Description,
+		Products:    products,
 	}
 }

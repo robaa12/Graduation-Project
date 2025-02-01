@@ -35,6 +35,7 @@ type Product struct {
 	StartPrice  float64        `json:"startprice" gorm:"not null"`
 	Category    string         `json:"category" gorm:"size:255;not null"`
 	SKUs        []Sku          `json:"skus" gorm:"foreignKey:ProductID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // One-to-many relationship with SKU
+	Slug        string         `json:"slug" gorm:"size:255;not null"`
 	CreatedAt   time.Time      `json:"created_at"`
 	UpdatedAt   time.Time      `json:"updated_at"`
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
@@ -64,6 +65,17 @@ type Variant struct {
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
+type Collection struct {
+	ID          uint           `json:"id" gorm:"primaryKey"`
+	StoreID     uint           `json:"store_id" gorm:"not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // Foreign key for Store
+	Name        string         `json:"name" gorm:"size:255;not null"`
+	Description string         `json:"description" gorm:"type:text"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	DeletedAt   gorm.DeletedAt `gorm:"index"`
+	Products    []Product      `json:"products" gorm:"many2many:collection_products;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+}
+
 type SKUVariant struct {
 	SkuID     uint           `gorm:"primaryKey;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // Foreign key for Sku
 	VariantID uint           `gorm:"primaryKey;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // Foreign key for Variant
@@ -80,6 +92,7 @@ func (p *Product) CreateProduct(productR ProductRequest) {
 	p.Published = productR.Published
 	p.StartPrice = productR.StartPrice
 	p.Category = productR.Category
+	p.Slug = productR.Slug
 }
 
 func (s *Sku) CreateSKU(skuR SKURequest, productID uint) {
@@ -112,4 +125,30 @@ func (p *Product) UpdateProduct(id string) error {
 
 func (s *Sku) GetSKU(id string) error {
 	return db.First(s, id).Error
+}
+
+func (Product) TableName() string {
+	return "products"
+}
+
+func (p *Product) BeforeCreate(tx *gorm.DB) error {
+	return tx.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_products_store_id_slug ON products (store_id, slug)").Error
+}
+
+func GetCollectionByID(db *gorm.DB, storeID uint, collectionID uint) (Collection, error) {
+	var collection Collection
+	err := db.Where("store_id = ? AND id = ?", storeID, collectionID).First(&collection).Error
+	return collection, err
+}
+
+func GetAllCollections(db *gorm.DB) ([]Collection, error) {
+	var collections []Collection
+	err := db.Find(&collections).Error
+	return collections, err
+}
+
+func AddProductToCollection(db *gorm.DB) ([]Collection, error) {
+	var collections []Collection
+	err := db.Find(&collections).Error
+	return collections, err
 }
