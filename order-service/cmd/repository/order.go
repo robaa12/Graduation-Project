@@ -30,9 +30,29 @@ func (r *OrderRepository) GetAllOrder(id string) ([]model.Order, error) {
 	return orders, nil
 }
 
-func (r *OrderRepository) AddOrder(order *model.Order) error {
-	return r.db.Create(order).Error
+func (r *OrderRepository) AddOrder(orderRequest *model.OrderRequestDetails) (error, *model.Order) {
+	// Create order
+	order := orderRequest.CreateOrder()
+	// start transaction
+	tx := r.db.Begin()
+	if err := tx.Create(order).Error; err != nil {
+		tx.Rollback()
+		return err, nil
+	}
+	// Create order items
+	for _, item := range orderRequest.OrderItems {
+		orderItem := item.CreateOrderItem(order.ID)
+		if err := tx.Create(orderItem).Error; err != nil {
+			tx.Rollback()
+			return err, nil
+		}
+		order.OrderItems = append(order.OrderItems, *orderItem)
+	}
+	// Commit transaction
+	tx.Commit()
+	return nil, order
 }
+
 func (r *OrderRepository) UpdateOrder(orderRequest *model.OrderRequest, id uint) error {
 	return r.db.Model(&model.Order{}).Where("id = ?", id).Updates(orderRequest).Error
 }

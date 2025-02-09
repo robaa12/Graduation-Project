@@ -5,9 +5,10 @@ import (
 	"os"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware" // ✅ Corrected import for Chi middleware
 	"github.com/go-chi/cors"
 	"github.com/robaa12/product-service/cmd/api/handlers"
-	"github.com/robaa12/product-service/cmd/api/middleware"
+	customMiddleware "github.com/robaa12/product-service/cmd/api/middleware" // ✅ Alias for your custom middleware
 	"github.com/robaa12/product-service/cmd/utils"
 	"github.com/robaa12/product-service/cmd/validation"
 )
@@ -16,6 +17,11 @@ func (app *Config) routes() http.Handler {
 	mux := chi.NewRouter()
 
 	// Middleware
+	mux.Use(middleware.Logger)
+	mux.Use(middleware.Recoverer)
+	mux.Use(middleware.RequestID)
+	mux.Use(middleware.RealIP)
+
 	mux.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"https://*", "http://*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -38,8 +44,8 @@ func (app *Config) routes() http.Handler {
 			r.Get("/products/slug/{slug}", productHandler.GetProductBySlug)
 
 			r.Group(func(r chi.Router) {
-				r.Use(middleware.AuthenticateToken)
-				r.Use(middleware.VerifyStoreOwnership)
+				r.Use(customMiddleware.AuthenticateToken)
+				r.Use(customMiddleware.VerifyStoreOwnership)
 				r.Post("/products", productHandler.NewProduct)
 			})
 
@@ -51,8 +57,8 @@ func (app *Config) routes() http.Handler {
 
 				// Protected endpoints
 				r.Group(func(r chi.Router) {
-					r.Use(middleware.AuthenticateToken)
-					r.Use(middleware.VerifyStoreOwnership)
+					r.Use(customMiddleware.AuthenticateToken)
+					r.Use(customMiddleware.VerifyStoreOwnership)
 
 					r.Put("/", productHandler.UpdateProduct)
 					r.Delete("/", productHandler.DeleteProduct)
@@ -65,8 +71,8 @@ func (app *Config) routes() http.Handler {
 
 					// Protected endpoints
 					r.Group(func(r chi.Router) {
-						r.Use(middleware.AuthenticateToken)
-						r.Use(middleware.VerifyStoreOwnership)
+						r.Use(customMiddleware.AuthenticateToken)
+						r.Use(customMiddleware.VerifyStoreOwnership)
 
 						r.Post("/", skuHandler.NewSKU)
 						r.Put("/{sku_id}", skuHandler.UpdateSKU)
@@ -83,8 +89,8 @@ func (app *Config) routes() http.Handler {
 
 				// Protected endpoints
 				r.Group(func(r chi.Router) {
-					r.Use(middleware.AuthenticateToken)
-					r.Use(middleware.VerifyStoreOwnership)
+					r.Use(customMiddleware.AuthenticateToken)
+					r.Use(customMiddleware.VerifyStoreOwnership)
 
 					r.Post("/", collectionHandler.CreateCollection)
 					r.Post("/{collection_id}/products", collectionHandler.AddProductToCollection)

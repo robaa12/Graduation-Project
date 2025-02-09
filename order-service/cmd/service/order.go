@@ -15,8 +15,7 @@ func NewOrderService(r *repository.OrderRepository) *OrderService {
 	return &OrderService{OrderRepo: r}
 }
 func (s *OrderService) AddNewOrder(orderRequest *model.OrderRequestDetails) (*model.OrderResponse, error) {
-	order := orderRequest.CreateOrder()
-	err := s.OrderRepo.AddOrder(order)
+	err, order := s.OrderRepo.AddOrder(orderRequest)
 	if err != nil {
 		return nil, err
 	}
