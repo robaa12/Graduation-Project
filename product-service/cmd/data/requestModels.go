@@ -106,6 +106,7 @@ func (p *Product) ToProductResponse() ProductResponse {
 		ID:          p.ID,
 		StoreID:     p.StoreID,
 		Name:        p.Name,
+		Slug:        p.Slug,
 		Description: p.Description,
 		Published:   p.Published,
 		StartPrice:  p.StartPrice,

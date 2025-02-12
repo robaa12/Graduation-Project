@@ -40,7 +40,7 @@ func order(r chi.Router) {
 	r.Get("/", orderHandler.GetAllOrder)
 	r.Route("/{order_id}", func(r chi.Router) {
 		r.Get("/", orderHandler.GetOrder)
-		r.Get("/details/", orderHandler.GetOrderDetails)
+		r.Get("/details", orderHandler.GetOrderDetails)
 		r.Put("/", orderHandler.UpdateOrder)
 		r.Delete("/", orderHandler.DeleteOrder)
 	})

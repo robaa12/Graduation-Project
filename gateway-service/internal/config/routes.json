@@ -1,0 +1,99 @@
+[
+    {
+      "path": "/orders/{order_id}/items",
+      "methods": ["GET", "POST"],
+      "service": "order-service",
+      "middlewares": ["auth", "logging"]
+    },
+    {
+      "path": "/orders/{order_id}/items/{item_id}",
+      "methods": ["GET", "PUT", "DELETE"],
+      "service": "order-service",
+      "middlewares": ["auth", "logging"]
+    },
+    {
+      "path": "/stores/{store_id}/orders",
+      "methods": ["GET", "POST"],
+      "service": "order-service",
+      "middlewares": ["auth", "logging"]
+    },
+    {
+      "path": "/stores/{store_id}/orders/{order_id}",
+      "methods": ["GET", "PUT", "DELETE"],
+      "service": "order-service",
+      "middlewares": ["auth", "logging"]
+    },
+    {
+      "path": "/stores/{store_id}/orders/{order_id}/details",
+      "methods": ["GET"],
+      "service": "order-service",
+      "middlewares": ["auth", "logging"]
+    },
+    {
+      "path": "/stores/{store_id}/products",
+      "methods": ["GET"],
+      "service": "product-service",
+      "middlewares": []
+    },
+    {
+      "path": "/stores/{store_id}/products/slug/{slug}",
+      "methods": ["GET"],
+      "service": "product-service",
+      "middlewares": []
+    },
+    {
+      "path": "/stores/{store_id}/products",
+      "methods": ["POST"],
+      "service": "product-service",
+      "middlewares": ["auth", "store-ownership"]
+    },
+    {
+      "path": "/stores/{store_id}/products/{product_id}",
+      "methods": ["GET", "PUT", "DELETE"],
+      "service": "product-service",
+      "middlewares": ["auth", "store-ownership"]
+    },
+    {
+      "path": "/stores/{store_id}/products/{product_id}/details",
+      "methods": ["GET"],
+      "service": "product-service",
+      "middlewares": []
+    },
+    {
+      "path": "/stores/{store_id}/products/{product_id}/skus",
+      "methods": ["POST"],
+      "service": "product-service",
+      "middlewares": ["auth", "store-ownership"]
+    },
+    {
+      "path": "/stores/{store_id}/products/{product_id}/skus/{sku_id}",
+      "methods": ["GET", "PUT", "DELETE"],
+      "service": "product-service",
+      "middlewares": ["auth", "store-ownership"]
+    },
+    {
+      "path": "/stores/{store_id}/collections",
+      "methods": ["GET"],
+      "service": "product-service",
+      "middlewares": []
+    },
+    {
+      "path": "/stores/{store_id}/collections/{collection_id}",
+      "methods": ["GET"],
+      "service": "product-service",
+      "middlewares": []
+    },
+    {
+      "path": "/stores/{store_id}/collections",
+      "methods": ["POST"],
+      "service": "product-service",
+      "middlewares": ["auth", "store-ownership"]
+    },
+    {
+      "path": "/stores/{store_id}/collections/{collection_id}/products",
+      "methods": ["POST", "DELETE"],
+      "service": "product-service",
+      "middlewares": ["auth", "store-ownership"]
+    }
+  ]
+  

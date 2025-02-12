@@ -22,7 +22,7 @@ type Config struct {
 }
 
 func main() {
-	log.Println("Starting Product Service")
+	log.Printf("Starting Product Service On Port %s...\n", WebPort)
 
 	// load environment variables
 	err := godotenv.Load()
