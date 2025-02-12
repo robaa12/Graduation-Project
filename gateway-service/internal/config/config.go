@@ -72,7 +72,7 @@ func Load() (*Config, error) {
 	return &Config{
 		Server: ServerConfig{
 			Port: getEnv("SERVER_PORT", "8080"),
-			Host: getEnv("SERVER_HOST", "0.0.0.0"),
+			Host: getEnv("SERVER_HOST", "localhost"),
 		},
 		Services: map[string]ServiceConfig{ // Changed ServicesConfig to map
 			"user-service": {

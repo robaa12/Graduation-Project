@@ -68,25 +68,33 @@ func (rm *RouteManager) registerRoutes() {
 }
 
 func (rm *RouteManager) createRouteHandler(route config.RouteConfig) http.Handler {
-	service := rm.Cfg.Services[route.Service]
+	service, exists := rm.Cfg.Services[route.Service]
+	if !exists {
+		log.Printf("Warning: Service not found for route %s", route.Path)
+		return http.NotFoundHandler()
+	}
+
+	// Convert middlewares slice to map for O(1) lookup
+	middlewareMap := make(map[string]bool)
+	for _, m := range route.Middlewares {
+		middlewareMap[m] = true
+	}
+
+	// Create base handler
 	handler := proxy.NewProxyService(&service)
 
-	// Ensure middleware are provided
-	if len(route.Middlewares) == 0 {
-		log.Printf("Warning: No Middleware defined for route %s", route.Path)
+	// Apply middlewares in fixed order
+	if middlewareMap["auth"] {
+		handler = rm.Auth.AuthMiddleware(handler)
 	}
-	// add middleware to router
-	for _, middleware := range route.Middlewares {
-		switch middleware {
-		case "auth":
-			handler = rm.Auth.AuthMiddleware(handler)
-			// add more middleware if needed
-		}
+	if middlewareMap["store-ownership"] {
+		handler = rm.Auth.StoreOwnershipMiddleware(handler)
 	}
-	return handler
 
+	return handler
 }
+
 func (rm *RouteManager) coreRoutes() {
-	//rm.router.Post("/login", authService.Login)
-	//rm.router.Post("/user/register", proxyService.UserServiceProxy().ServeHTTP)
+	rm.Router.Post("/login", rm.Auth.Login)
+	rm.Router.Post("/register", rm.Auth.Register)
 }

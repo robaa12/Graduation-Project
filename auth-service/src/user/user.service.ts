@@ -1,5 +1,11 @@
 import { User } from './entities/user.entity';
-import { BadRequestException, Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { MoreThan, QueryFailedError, Repository } from 'typeorm';
@@ -12,12 +18,12 @@ import { DuplicatedValueException } from 'src/shared/exception-filters/duplicate
 @Injectable()
 export class UserService {
   constructor(
-    @InjectRepository(User)  private userRepository: Repository<User>,
-    private MailerService:EmailService,
-    private jwtService: JwtService
+    @InjectRepository(User) private userRepository: Repository<User>,
+    private MailerService: EmailService,
+    private jwtService: JwtService,
   ) {}
 
-  private castToUser(user: User):IUser {
+  private castToUser(user: User): IUser {
     return {
       id: user.id,
       firstName: user.firstName,
@@ -26,37 +32,52 @@ export class UserService {
       email: user.email,
       is_banned: user.is_banned,
       phoneNumber: user.phoneNumber,
-      stores_id: user.stores.map(store => store.id),
+      stores_id: user.stores.map((store) => store.id),
       address: user.address,
       createAt: user.createAt,
-      updateAt: user.updateAt
+      updateAt: user.updateAt,
+    };
+  }
+  async create(createUserDto: CreateUserDto): Promise<IUser> {
+    try {
+      // Hash the password
+      const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+
+      // Generate OTP
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+
+      // Create user with all data at once
+      let user = this.userRepository.create({
+        ...createUserDto,
+        password: hashedPassword,
+        otp: otp,
+        otpExpiry: otpExpiry,
+      });
+
+      // Save user
+      user = await this.userRepository.save(user);
+
+      // Send verification email asynchronously without waiting
+      this.MailerService.sendVerficationMail(otp, user.email).catch((error) => {
+        Logger.error('Failed to send verification email', error);
+      });
+
+      // Transform and return user immediately
+      return this.castToUser({ ...user, stores: [] });
+    } catch (e) {
+      if (e instanceof QueryFailedError) {
+        throw new DuplicatedValueException('Email is already registered');
+      }
+      throw e;
     }
   }
-  async create(createUserDto: CreateUserDto):Promise<IUser> {
-    try{
-      createUserDto.password = await bcrypt.hash(createUserDto.password , 10);
-      let user = this.userRepository.create(createUserDto);
-      user = await  this.userRepository.save(user);
-      if(user){
-        const otp = Math.floor(100000 + Math.random() * 900000);
-        user.otp = otp.toString();
-        user.otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
-        this.MailerService.sendVerficationMail(otp.toString() , user.email )
-      }
-      user = await  this.userRepository.save(user);
-      return this.castToUser(user);
-    }catch(e){
-      if(e instanceof QueryFailedError){
-        if (e instanceof QueryFailedError) {
-          throw new DuplicatedValueException('name is already exist');
-        }
-        throw e;
-    }
-  }}
 
-  async verifyEmail(email:string , otp:string):Promise<IUser>{
-    const user = await this.userRepository.findOne({where:{ email , otp , otpExpiry:MoreThan(new Date(Date.now())) } });    
-    if(!user){
+  async verifyEmail(email: string, otp: string): Promise<IUser> {
+    const user = await this.userRepository.findOne({
+      where: { email, otp, otpExpiry: MoreThan(new Date(Date.now())) },
+    });
+    if (!user) {
       throw new BadRequestException('Invalid OTP');
     }
     user.isActive = true;
@@ -64,13 +85,16 @@ export class UserService {
     user.otpExpiry = null;
     return this.castToUser(await this.userRepository.save(user));
   }
-  async login(data:any){
-    let user = await this.userRepository.findOne({where:{email:data.email} , relations:['stores']});
-    if(!user){
+  async login(data: any) {
+    let user = await this.userRepository.findOne({
+      where: { email: data.email },
+      relations: ['stores'],
+    });
+    if (!user) {
       throw new UnauthorizedException('User not found');
     }
-    let isPasswordMatch = await bcrypt.compare(data.password , user.password);
-    if(!isPasswordMatch){
+    let isPasswordMatch = await bcrypt.compare(data.password, user.password);
+    if (!isPasswordMatch) {
       throw new BadRequestException('Invalid Credentials');
     }
     return this.castToUser(user);
@@ -80,14 +104,17 @@ export class UserService {
   }
 
   async findOne(id: number) {
-    const user =await this.userRepository.findOne({where:{id} , relations:['stores']} );
+    const user = await this.userRepository.findOne({
+      where: { id },
+      relations: ['stores'],
+    });
     console.log(user);
     return this.castToUser(user);
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto):Promise<IUser> {
-    let user =  await this.userRepository.update(id,updateUserDto);
-    let updatedUser = await this.userRepository.findOneBy({id});
+  async update(id: number, updateUserDto: UpdateUserDto): Promise<IUser> {
+    let user = await this.userRepository.update(id, updateUserDto);
+    let updatedUser = await this.userRepository.findOneBy({ id });
     return this.castToUser(updatedUser);
   }
 

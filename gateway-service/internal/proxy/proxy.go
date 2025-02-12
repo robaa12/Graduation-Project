@@ -28,7 +28,6 @@ func (proxyService *ProxyService) ServeHTTP(w http.ResponseWriter, r *http.Reque
 func (p *ProxyService) createProxy() http.Handler {
 	target, err := url.Parse(p.serviceConfig.URL)
 	log.Println(p.serviceConfig.URL)
-	log.Println("Hello")
 	if err != nil {
 		panic(err)
 	}
