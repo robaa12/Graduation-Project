@@ -17,7 +17,6 @@ type OrderItemResponse struct {
 }
 
 func (orderItemRequest *OrderItemRequest) CreateOrderItem(orderID uint) *OrderItem {
-
 	return &OrderItem{
 		OrderID:  orderID,
 		SkuID:    orderItemRequest.SkuID,

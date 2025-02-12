@@ -10,14 +10,14 @@ import (
 	"gorm.io/gorm"
 )
 
-const webPort = "8081"
+const webPort = "8082"
 
 type Config struct {
 	db *gorm.DB
 }
 
 func main() {
-	log.Println("Starting Order Service...")
+	log.Printf("Starting Order Service On Port %s...\n", webPort)
 
 	db, err := database.New()
 	if err != nil {

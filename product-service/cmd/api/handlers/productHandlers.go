@@ -44,12 +44,12 @@ func (h *ProductHandler) NewProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	productRequest.Slug = slug
+	// Create a new Product
+	var product data.Product
+	product.CreateProduct(productRequest)
 
 	// Start Database Transaction
 	err = h.DB.Transaction(func(tx *gorm.DB) error {
-		// Create a new Product
-		var product data.Product
-		product.CreateProduct(productRequest)
 
 		// Add Product to the database
 		if err := tx.Create(&product).Error; err != nil {
@@ -96,8 +96,9 @@ func (h *ProductHandler) NewProduct(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorJSON(w, err)
 		return
 	}
+	productResponse := product.ToProductResponse()
 	// Return the product
-	utils.WriteJSON(w, 201, productRequest)
+	utils.WriteJSON(w, 201, productResponse)
 }
 
 // GetProduct returns a product from the database
@@ -105,7 +106,7 @@ func (h *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
 	var product data.Product
 
 	// Get the product ID from the URL
-	id, err := utils.GetID(r, "id")
+	id, err := utils.GetID(r, "product_id")
 	if err != nil {
 		utils.ErrorJSON(w, err)
 		return
@@ -136,7 +137,7 @@ func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the product ID from the URL
-	id, err := utils.GetID(r, "id")
+	id, err := utils.GetID(r, "product_id")
 	if err != nil {
 		utils.ErrorJSON(w, err)
 		return
@@ -178,7 +179,7 @@ func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 // DeleteProduct deletes a product from the database
 func (h *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	// Get the product ID from the URL
-	id, err := utils.GetID(r, "id")
+	id, err := utils.GetID(r, "product_id")
 	if err != nil {
 		utils.ErrorJSON(w, err)
 		return
@@ -285,7 +286,7 @@ func (h *ProductHandler) GetStoreProducts(w http.ResponseWriter, r *http.Request
 // GetProductDetails returns a product details from the database
 func (h *ProductHandler) GetProductDetails(w http.ResponseWriter, r *http.Request) {
 	// Get the product ID from the URL
-	productId, err := utils.GetID(r, "id")
+	productId, err := utils.GetID(r, "product_id")
 	if err != nil {
 		utils.ErrorJSON(w, err)
 		return

@@ -49,7 +49,7 @@ func (h *SKUHandler) UpdateSKU(w http.ResponseWriter, r *http.Request) {
 
 func (h *SKUHandler) GetSKU(w http.ResponseWriter, r *http.Request) {
 	// Get the SKU ID from the URL
-	skuID, err := utils.GetID(r, "id")
+	skuID, err := utils.GetID(r, "sku_id")
 	if err != nil {
 		utils.ErrorJSON(w, err)
 		return
@@ -72,7 +72,7 @@ func (h *SKUHandler) GetSKU(w http.ResponseWriter, r *http.Request) {
 
 func (h *SKUHandler) DeleteSKU(w http.ResponseWriter, r *http.Request) {
 	// Get the SKU ID from the URL
-	skuID, err := utils.GetID(r, "id")
+	skuID, err := utils.GetID(r, "sku_id")
 	if err != nil {
 		utils.ErrorJSON(w, err)
 		return
@@ -107,7 +107,7 @@ func (h *SKUHandler) NewSKU(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Get the Product ID from the URL
-	productID, err := utils.GetID(r, "id")
+	productID, err := utils.GetID(r, "product_id")
 	if err != nil {
 		utils.ErrorJSON(w, err)
 		return

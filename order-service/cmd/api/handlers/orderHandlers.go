@@ -96,7 +96,7 @@ func (orderHandler *OrderHandler) GetOrder(w http.ResponseWriter, r *http.Reques
 	// get Orderitem response from service layer
 	orderResponse, err := orderHandler.OrderService.GetOrder(utils.ItoS(order_id))
 	if err != nil {
-		utils.ErrorJSON(w, err)
+		utils.ErrorJSON(w, errors.New("Order not found"), 404)
 		return
 	}
 	// write json resonpse
@@ -130,7 +130,7 @@ func (orderHandler *OrderHandler) UpdateOrder(w http.ResponseWriter, r *http.Req
 	}
 
 	// write json response
-	err = utils.WriteJSON(w, 200, "Order updated successfully.")
+	err = utils.WriteJSON(w, 201, "Order updated successfully.")
 	if err != nil {
 		utils.ErrorJSON(w, err)
 		return
@@ -152,7 +152,7 @@ func (orderHandler *OrderHandler) DeleteOrder(w http.ResponseWriter, r *http.Req
 		return
 	}
 	// write json resonpse
-	err = utils.WriteJSON(w, 200, "Order deleted successfully.")
+	err = utils.WriteJSON(w, 204, "Order deleted successfully.")
 	if err != nil {
 		utils.ErrorJSON(w, err)
 		return
