@@ -2,6 +2,8 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { StoreService } from './store.service';
 import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
+import { CreateStoreThemeDto } from './dto/create-store-theme.dto';
+import { ApiOperation } from '@nestjs/swagger';
 
 @Controller('store')
 export class StoreController {
@@ -34,4 +36,43 @@ export class StoreController {
       }
     }
 
+    @Post('theme')
+    @ApiOperation({summary:'Create Store Theme'})
+    async createStoreTheme(@Body() CreateStoreThemeDto:CreateStoreThemeDto){ {
+        let storeTheme = await this.storeService.createStoreTheme(CreateStoreThemeDto);
+        return {
+          message: 'Store theme created successfully',
+          data : storeTheme
+        }
+    }
+  }
+
+  @Get('theme/:storeId')
+  @ApiOperation({summary:'Find Store Themes'})
+  async findStoreThemes(@Param('storeId') storeId:string){
+    let storeThemes = await this.storeService.findStoreThemes(+storeId);
+    return {
+      message: 'Store themes fetched successfully',
+      data : storeThemes
+    }
+  }
+
+  @Patch('theme/:id')
+  @ApiOperation({summary:'Update Store Theme'})
+  async update(@Param('id') id: string, @Body() CreateStoreThemeDto: CreateStoreThemeDto) {
+    const theme = await this.storeService.updateStoreTheme(id, CreateStoreThemeDto);
+    return {
+      message: 'Store theme updated successfully',
+      data : theme
+    }
+  }
+
+  @Delete('theme/:id')
+  @ApiOperation({summary:'Delete Store Theme'})
+  async remove(@Param('id') id: string) {
+    const theme = await this.storeService.removeStoreTheme(id);
+    return {
+      message: 'Store theme deleted successfully',
+    }
+  }
 }
