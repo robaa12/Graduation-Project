@@ -9,9 +9,11 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { EmailService } from './shared/services/email/email.service';
 import { StoreModule } from './store/store.module';
 import { CategoryModule } from './category/category.module';
-
+import { MongooseModule } from '@nestjs/mongoose';
+let mongoUrl = 'mongodb+srv://gamgom298:mApo4pebtVa2bll7@themes.jb2ij.mongodb.net/?retryWrites=true&w=majority&appName=themes';
 @Module({
-  imports: [ConfigModule.forRoot({ envFilePath: '.env',isGlobal:true}), DatabaseModule , UserModule ,
+  imports: [
+  ConfigModule.forRoot({ envFilePath: '.env',isGlobal:true}), DatabaseModule , UserModule ,
     JwtModule.register({
     global: true,
     secret: process.env.JWT_SECRET,
@@ -31,6 +33,7 @@ import { CategoryModule } from './category/category.module';
       },
     },
   }),
+  MongooseModule.forRoot(mongoUrl, { dbName: 'themes'} ),
   StoreModule,
   CategoryModule,
 ],
