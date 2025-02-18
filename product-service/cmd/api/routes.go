@@ -31,10 +31,12 @@ func (app *Config) routes() http.Handler {
 	}))
 
 	// Initialize handlers
+	OrderVerificationHandler := handlers.OrderVerificationHandler{DB: app.db.DB}
 	productHandler := handlers.ProductHandler{DB: app.db.DB}
 	skuHandler := handlers.SKUHandler{DB: app.db.DB}
 	collectionHandler := handlers.CollectionHandler{DB: app.db.DB, Validator: validation.NewCollectionValidator(app.db.DB)}
 
+	mux.Post("/verify-order", OrderVerificationHandler.VerifyOrderItems)
 	// Routes under /stores/{store_id}
 	mux.Route("/stores", func(r chi.Router) {
 		r.Route("/{store_id}", func(r chi.Router) {

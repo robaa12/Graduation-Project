@@ -59,7 +59,7 @@ func (h *ProductHandler) NewProduct(w http.ResponseWriter, r *http.Request) {
 		for _, skuRequest := range productRequest.SKUs {
 			// Create a new SKU
 			var sku data.Sku
-			sku.CreateSKU(skuRequest, product.ID)
+			sku.CreateSKU(skuRequest, product.ID, product.StoreID)
 
 			// Add the SKU to the database
 			if err := tx.Create(&sku).Error; err != nil {

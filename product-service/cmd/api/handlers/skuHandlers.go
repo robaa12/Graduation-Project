@@ -99,9 +99,15 @@ func (h *SKUHandler) DeleteSKU(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *SKUHandler) NewSKU(w http.ResponseWriter, r *http.Request) {
+	// Get store id from URI
+	storeID, err := utils.GetID(r, "store_id")
+	if err != nil {
+		utils.ErrorJSON(w, err)
+		return
+	}
 	// Read the JSON request
 	var skuRequest data.SKURequest
-	err := utils.ReadJSON(w, r, &skuRequest)
+	err = utils.ReadJSON(w, r, &skuRequest)
 	if err != nil {
 		utils.ErrorJSON(w, errors.New("Enter valid SKU data"))
 		return
@@ -116,7 +122,7 @@ func (h *SKUHandler) NewSKU(w http.ResponseWriter, r *http.Request) {
 	// Start Database Transaction
 	// Create a new SKU
 	var sku data.Sku
-	sku.CreateSKU(skuRequest, productID)
+	sku.CreateSKU(skuRequest, productID, storeID)
 
 	// make transaction
 	tx := h.DB.Begin()

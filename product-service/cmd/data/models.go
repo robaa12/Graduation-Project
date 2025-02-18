@@ -43,6 +43,7 @@ type Product struct {
 
 type Sku struct {
 	ID             uint           `json:"_" gorm:"primaryKey"`
+	StoreID        uint           `json:"store_id" gorm:"not null;index"`                                          // Add store_id
 	ProductID      uint           `json:"product_id" gorm:"not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // Foreign key for Product
 	Stock          int            `json:"stock" gorm:"not null"`
 	Price          float64        `json:"price" gorm:"not null"`
@@ -95,8 +96,9 @@ func (p *Product) CreateProduct(productR ProductRequest) {
 	p.Slug = productR.Slug
 }
 
-func (s *Sku) CreateSKU(skuR SKURequest, productID uint) {
+func (s *Sku) CreateSKU(skuR SKURequest, productID uint, storeID uint) {
 	s.ProductID = productID
+	s.StoreID = storeID
 	s.Stock = skuR.Stock
 	s.Price = skuR.Price
 	s.CompareAtPrice = skuR.CompareAtPrice
