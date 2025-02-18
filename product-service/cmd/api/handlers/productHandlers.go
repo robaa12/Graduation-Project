@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"math"
 	"net/http"
 	"strconv"
 
@@ -212,46 +211,11 @@ func (h *ProductHandler) GetStoreProducts(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// parse pagination parameters
-	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-	pageSize, _ := strconv.Atoi(r.URL.Query().Get("page_size"))
-	sort := r.URL.Query().Get("sort")
-	order := r.URL.Query().Get("order")
-
-	// Vaildate sorting field
-	validSortFields := map[string]bool{
-		"created_at": true,
-		"name":       true,
-		"price":      true,
-	}
-	if sort != "" && !validSortFields[sort] {
-		utils.ErrorJSON(w, errors.New("invalid sort field"), http.StatusBadRequest)
-		return
-	}
-
-	// Create pagination query
-	pagination := utils.NewPaginationQuery(page, pageSize, sort, order)
-
-	// Get total count
-	var total int64
-	if err := h.DB.Model(&data.Product{}).Where("store_id = ?", storeID).Count(&total).Error; err != nil {
-		utils.ErrorJSON(w, err)
-	}
-
-	// Calculate offset
-	offset := (pagination.Page - 1) * pagination.PageSize
-
 	// Create base Query
 	query := h.DB.Model(&data.Product{}).Where("store_id", storeID)
-
-	// Add sorting
-	if pagination.Sort != "" {
-		query = query.Order(fmt.Sprintf("%s %s", pagination.Sort, pagination.Order))
-	}
-
-	// Execute paginated query
+	// Execute Query
 	var products []data.Product
-	if err := query.Offset(offset).Limit(pagination.PageSize).Find(&products).Error; err != nil {
+	if err := query.Find(&products).Error; err != nil {
 		utils.ErrorJSON(w, err)
 		return
 	}
@@ -268,19 +232,9 @@ func (h *ProductHandler) GetStoreProducts(w http.ResponseWriter, r *http.Request
 		productResponse := product.ToProductResponse()
 		productsResponse = append(productsResponse, productResponse)
 	}
-	// Calculate total pages
-	totalPages := int(math.Ceil(float64(total) / float64(pagination.PageSize)))
 
-	// Create paginated response
-	response := utils.PaginatedResponse{
-		Data:       productsResponse,
-		Total:      total,
-		Page:       pagination.Page,
-		PageSize:   pagination.PageSize,
-		TotalPages: totalPages,
-	}
 	// Return store's Products
-	utils.WriteJSON(w, 200, response)
+	utils.WriteJSON(w, 200, productsResponse)
 }
 
 // GetProductDetails returns a product details from the database

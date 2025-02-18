@@ -15,13 +15,13 @@
     "path": "/stores/{store_id}/orders",
     "methods": ["GET", "POST"],
     "service": "order-service",
-    "middlewares": ["auth", "logging"]
+    "middlewares": ["logging"]
   },
   {
     "path": "/stores/{store_id}/orders/{order_id}",
     "methods": ["GET", "PUT", "DELETE"],
     "service": "order-service",
-    "middlewares": ["auth", "logging"]
+    "middlewares": ["logging"]
   },
   {
     "path": "/stores/{store_id}/orders/{order_id}/details",
@@ -33,7 +33,7 @@
     "path": "/stores/{store_id}/products",
     "methods": ["GET"],
     "service": "product-service",
-    "middlewares": []
+    "middlewares": ["logging"]
   },
   {
     "path": "/stores/{store_id}/products/slug/{slug}",
@@ -96,25 +96,25 @@
     "middlewares": ["auth", "store-ownership"]
   },
   {
-    "path": "/auth/verify-email",
+    "path": "/user/verify-email",
     "methods": ["POST"],
     "service": "user-service",
     "middlewares": []
   },
   {
-    "path": "/auth/users",
+    "path": "/user",
     "methods": ["GET"],
     "service": "user-service",
     "middlewares": ["auth"]
   },
   {
-    "path": "/auth/users/{id}",
+    "path": "/user/{id}",
     "methods": ["GET", "PATCH", "DELETE"],
     "service": "user-service",
     "middlewares": ["auth"]
   },
   {
-    "path": "/auth/stores",
+    "path": "/store",
     "methods": ["GET", "POST"],
     "service": "user-service",
     "middlewares": ["auth"]

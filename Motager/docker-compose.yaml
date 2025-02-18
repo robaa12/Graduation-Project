@@ -1,0 +1,166 @@
+networks:
+  internal-network:
+    driver: bridge
+    internal: true
+  gateway-network:
+    driver: bridge
+    internal: false
+  product-network:
+    driver: bridge
+    internal: true
+  order-network:
+    driver: bridge
+    internal: true
+  user-network:
+    driver: bridge
+    internal: true
+
+services:
+  # DataBase Services
+  product-db:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=products
+    volumes:
+      - product-db-data:/var/lib/postgresql/data
+    networks:
+      - product-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  order-db:
+    image: postgres:latest
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=orders
+    volumes:
+      - order-db-data:/var/lib/postgresql/data
+    networks:
+      - order-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  user-db:
+    image: postgres:latest
+    ports:
+      - "5434:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=users
+    volumes:
+      - user-db-data:/var/lib/postgresql/data
+    networks:
+      - user-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Application Services
+
+  gateway-service:
+    build:
+      context: ./../gateway-service
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8080:8080"
+    deploy:
+      replicas: 1
+      mode: replicated
+    environment:
+      - SERVER_PORT=8080
+      - SERVER_HOST=0.0.0.0
+      - USER_SERVICE_URL=http://user-service:3000
+      - PRODUCT_SERVICE_URL=http://product-service:8083
+      - ORDER_SERVICE_URL=http://order-service:8084
+      - JWT_SECRET=Messi-is-the-best-player
+      - JWT_EXPIRATION=3600
+      - RATE_LIMIT_MAX_REQUESTS=100
+      - RATE_LIMIT_DURATION=1m
+    networks:
+      - internal-network
+      - gateway-network
+
+  product-service:
+    build:
+      context: ./../product-service
+      dockerfile: Dockerfile
+    ports:
+      - "8083:8083"
+    restart: always
+    environment:
+      - DSN=host=product-db port=5432 user=postgres password=password dbname=products sslmode=disable timezone=UTC connect_timeout=5
+      - APP_ENV=production
+    deploy:
+      replicas: 1
+      mode: replicated
+    networks:
+      - internal-network
+      - product-network
+    depends_on:
+      product-db:
+        condition: service_healthy
+
+  order-service:
+    build:
+      context: ./../order-service
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8084:8084"
+    deploy:
+      replicas: 1
+      mode: replicated
+    environment:
+      - DSN=host=order-db port=5432 user=postgres password=password dbname=orders sslmode=disable timezone=UTC connect_timeout=5
+      - APP_ENV=production
+    networks:
+      - internal-network
+      - order-network
+    depends_on:
+      order-db:
+        condition: service_healthy
+
+  user-service:
+    build:
+      context: ./../user-service
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3000:3000"
+    deploy:
+      replicas: 1
+      mode: replicated
+    environment:
+      - DSN=postgresql://postgres:password@user-db:5432/users
+      - EMAIL_USERNAME=no-reply-elms450@zohomail.com
+      - EMAIL_PASSWORD=2WYiWsHWbGqS
+      - EMAIL_HOST=smtp.zoho.com
+      - EMAIL_PORT=465
+    networks:
+      - internal-network
+      - user-network
+    depends_on:
+      user-db:
+        condition: service_healthy
+
+volumes:
+  product-db-data:
+  order-db-data:
+  user-db-data:

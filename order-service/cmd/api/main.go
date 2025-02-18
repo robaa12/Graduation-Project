@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const webPort = "8082"
+const webPort = "8084"
 
 type Config struct {
 	db *gorm.DB

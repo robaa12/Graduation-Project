@@ -237,7 +237,7 @@ func (s *AuthService) StoreOwnershipMiddleware(next http.Handler) http.Handler {
 			}
 		}
 		// If store ID is not in user's stores
-		utils.ErrorJSON(w, errors.New("Unauthorized"), http.StatusUnauthorized)
+		utils.ErrorJSON(w, errors.New("Unauthorized Owner"), http.StatusUnauthorized)
 
 	})
 }

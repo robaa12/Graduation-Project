@@ -7,7 +7,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -43,10 +42,6 @@ func openDB(dsn string) (*gorm.DB, error) {
 }
 
 func connectToDb() *gorm.DB {
-	err := godotenv.Load()
-	if err != nil {
-		log.Panic(err)
-	}
 	dsn := os.Getenv("DSN")
 	var count int
 	for {

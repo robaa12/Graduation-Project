@@ -91,7 +91,7 @@ func Load() (*Config, error) {
 
 		Auth: AuthConfig{
 			JWTSecret: getEnv("JWT_SECRET", "Messi is better than Ronaldo"),
-			TokenExp:  getDurationEnv("TOKEN_EXP", 24*time.Hour),
+			TokenExp:  getDurationEnv("JWT_EXPIRATION", 24*time.Hour),
 		},
 		RateLimit: RateLimitConfig{
 			MaxRequests: getEnvInt("RATE_LIMIT_MAX_REQUESTS", 100),

@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -74,21 +75,26 @@ func (rm *RouteManager) createRouteHandler(route config.RouteConfig) http.Handle
 		return http.NotFoundHandler()
 	}
 
-	// Convert middlewares slice to map for O(1) lookup
-	middlewareMap := make(map[string]bool)
-	for _, m := range route.Middlewares {
-		middlewareMap[m] = true
-	}
-
 	// Create base handler
 	handler := proxy.NewProxyService(&service)
 
-	// Apply middlewares in fixed order
-	if middlewareMap["auth"] {
-		handler = rm.Auth.AuthMiddleware(handler)
+	middlewareMap := map[string]func(http.Handler) http.Handler{
+		"auth":            rm.Auth.AuthMiddleware,
+		"store-ownership": rm.Auth.StoreOwnershipMiddleware,
 	}
-	if middlewareMap["store-ownership"] {
-		handler = rm.Auth.StoreOwnershipMiddleware(handler)
+
+	middlewareOrder := []string{
+		"auth",
+		"store-ownership",
+	}
+
+	for i := len(middlewareOrder) - 1; i >= 0; i-- {
+		mwName := middlewareOrder[i]
+		if contains(route.Middlewares, mwName) {
+			if mw, exists := middlewareMap[mwName]; exists {
+				handler = mw(handler)
+			}
+		}
 	}
 
 	return handler
@@ -97,4 +103,21 @@ func (rm *RouteManager) createRouteHandler(route config.RouteConfig) http.Handle
 func (rm *RouteManager) coreRoutes() {
 	rm.Router.Post("/login", rm.Auth.Login)
 	rm.Router.Post("/register", rm.Auth.Register)
+	rm.Router.Get("/", rm.sayHello())
+}
+
+func (rm *RouteManager) sayHello() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "Hello, World!")
+
+	}
+}
+
+func contains(slice []string, str string) bool {
+	for _, v := range slice {
+		if v == str {
+			return true
+		}
+	}
+	return false
 }
