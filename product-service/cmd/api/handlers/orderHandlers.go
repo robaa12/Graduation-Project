@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/robaa12/product-service/cmd/data"
@@ -67,6 +68,7 @@ func (h *OrderVerificationHandler) VerifyOrderItems(w http.ResponseWriter, r *ht
 		if err := tx.Where("id IN ? AND store_id = ?", skuIDs, req.StoreID).Find(&skus).Error; err != nil {
 			return err
 		}
+		log.Println(skus)
 
 		// Create a map for quick SKU lookup
 		skuMap := make(map[uint]data.Sku)
@@ -82,7 +84,7 @@ func (h *OrderVerificationHandler) VerifyOrderItems(w http.ResponseWriter, r *ht
 				Valid:   true,
 				InStock: true,
 			}
-
+			log.Println(exists)
 			if !exists {
 				response.Valid = false
 				verifiedItem.Valid = false

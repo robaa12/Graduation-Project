@@ -5,16 +5,24 @@ import (
 	"order-service/cmd/model"
 	"order-service/cmd/repository"
 	"order-service/cmd/utils"
+	"os"
 )
 
 type OrderService struct {
-	OrderRepo *repository.OrderRepository
+	OrderRepo      *repository.OrderRepository
+	ProductService *ProductService
 }
 
 func NewOrderService(r *repository.OrderRepository) *OrderService {
-	return &OrderService{OrderRepo: r}
+	return &OrderService{OrderRepo: r,
+		ProductService: &ProductService{ProductServiceURL: os.Getenv("PRODUCT_SERVICE_URL")},
+	}
 }
 func (s *OrderService) AddNewOrder(orderRequest *model.OrderRequestDetails) (*model.OrderResponse, error) {
+	err := s.ProductService.VerifyOrderItems(orderRequest.StoreID, orderRequest.OrderItems)
+	if err != nil {
+		return nil, err
+	}
 	err, order := s.OrderRepo.AddOrder(orderRequest)
 	if err != nil {
 		return nil, err

@@ -10,7 +10,7 @@ import { EmailService } from './shared/services/email/email.service';
 import { StoreModule } from './store/store.module';
 import { CategoryModule } from './category/category.module';
 import { MongooseModule } from '@nestjs/mongoose';
-let mongoUrl = 'mongodb+srv://gamgom298:mApo4pebtVa2bll7@themes.jb2ij.mongodb.net/?retryWrites=true&w=majority&appName=themes';
+let mongoUrl = 'mongodb://admin:adminpassword@mongo-db:27017/users?authSource=admin';
 @Module({
   imports: [
   ConfigModule.forRoot({ envFilePath: '.env',isGlobal:true}), DatabaseModule , UserModule ,

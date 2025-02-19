@@ -65,8 +65,28 @@ services:
       - user-db-data:/var/lib/postgresql/data
     networks:
       - user-network
+      
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  mongo-db:
+    image: mongo:latest
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=adminpassword
+      - MONGO_INITDB_DATABASE=users
+    volumes:
+      - mongo-db-data:/data/db
+    networks:
+      - user-network
+
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.runCommand({ ping: 1 })"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -130,6 +150,7 @@ services:
     environment:
       - DSN=host=order-db port=5432 user=postgres password=password dbname=orders sslmode=disable timezone=UTC connect_timeout=5
       - APP_ENV=production
+      - PRODUCT_SERVICE_URL=http://product-service:8083
     networks:
       - internal-network
       - order-network
@@ -164,3 +185,5 @@ volumes:
   product-db-data:
   order-db-data:
   user-db-data:
+  mongo-db-data:
+

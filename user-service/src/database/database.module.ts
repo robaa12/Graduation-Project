@@ -19,7 +19,7 @@ import { ConfigService } from '@nestjs/config';
           : 'password',
         database: process.env.DSN
           ? new URL(process.env.DSN).pathname.replace('/', '')
-          : 'user_db',
+          : 'users',
         autoLoadEntities: true,
         synchronize: process.env.APP_ENV !== 'production',
       }),

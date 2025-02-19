@@ -45,9 +45,9 @@ func (s *ProductService) VerifyOrderItems(storeID uint, items []model.OrderItemR
 	return nil
 }
 
-func (s *ProductService) UpdateInventory(items []model.OrderItem) error {
+func (s *ProductService) UpdateInventory(items []model.OrderItemRequest) error {
 	updateRequest := struct {
-		Items []model.OrderItem `json:"items"`
+		Items []model.OrderItemRequest `json:"items"`
 	}{
 		Items: items,
 	}
