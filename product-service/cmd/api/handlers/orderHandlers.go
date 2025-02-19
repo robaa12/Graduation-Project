@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/robaa12/product-service/cmd/data"
@@ -26,17 +25,17 @@ type VerificationItem struct {
 }
 
 type VerificationResponse struct {
-	Valid    bool           `json:"valid"`
-	Messages []string       `json:"messages"`
-	Items    []VerifiedItem `json:"items"`
+	Valid   bool           `json:"valid"`
+	Message string         `json:"messages"`
+	Items   []VerifiedItem `json:"items"`
 }
 
 type VerifiedItem struct {
-	SkuID   uint    `json:"sku_id"`
-	Valid   bool    `json:"valid"`
-	InStock bool    `json:"in_stock"`
-	Price   float64 `json:"actual_price"`
-	Message string  `json:"message,omitempty"`
+	SkuID   uint     `json:"sku_id"`
+	Valid   bool     `json:"valid"`
+	InStock bool     `json:"in_stock"`
+	Price   float64  `json:"actual_price"`
+	Message []string `json:"message,omitempty"`
 }
 
 func (h *OrderVerificationHandler) VerifyOrderItems(w http.ResponseWriter, r *http.Request) {
@@ -68,7 +67,6 @@ func (h *OrderVerificationHandler) VerifyOrderItems(w http.ResponseWriter, r *ht
 		if err := tx.Where("id IN ? AND store_id = ?", skuIDs, req.StoreID).Find(&skus).Error; err != nil {
 			return err
 		}
-		log.Println(skus)
 
 		// Create a map for quick SKU lookup
 		skuMap := make(map[uint]data.Sku)
@@ -84,11 +82,11 @@ func (h *OrderVerificationHandler) VerifyOrderItems(w http.ResponseWriter, r *ht
 				Valid:   true,
 				InStock: true,
 			}
-			log.Println(exists)
+
 			if !exists {
 				response.Valid = false
 				verifiedItem.Valid = false
-				verifiedItem.Message = "SKU not found or does not belong to store"
+				verifiedItem.Message = append(verifiedItem.Message, "SKU not found or does not belong to store")
 			} else {
 				requestedQty := skuQuantityMap[requestedSkuID]
 				requestedPrice := skuPriceMap[requestedSkuID]
@@ -98,14 +96,14 @@ func (h *OrderVerificationHandler) VerifyOrderItems(w http.ResponseWriter, r *ht
 					response.Valid = false
 					verifiedItem.Valid = false
 					verifiedItem.InStock = false
-					verifiedItem.Message = fmt.Sprintf("Insufficient stock (available: %d)", sku.Stock)
+					verifiedItem.Message = append(verifiedItem.Message, fmt.Sprintf("Insufficient stock (available: %d)", sku.Stock))
 				}
 
 				// Verify price
 				if requestedPrice != sku.Price {
 					response.Valid = false
 					verifiedItem.Valid = false
-					verifiedItem.Message = fmt.Sprintf("Price mismatch (actual: %.2f)", sku.Price)
+					verifiedItem.Message = append(verifiedItem.Message, fmt.Sprintf("Price mismatch (actual: %.2f)", sku.Price))
 				}
 
 				verifiedItem.Price = sku.Price
@@ -120,6 +118,11 @@ func (h *OrderVerificationHandler) VerifyOrderItems(w http.ResponseWriter, r *ht
 	if err != nil {
 		utils.ErrorJSON(w, err)
 		return
+	}
+	if !response.Valid {
+		response.Message = "Unverified Order Items"
+	} else {
+		response.Message = "Verified Order Items"
 	}
 
 	utils.WriteJSON(w, http.StatusOK, response)

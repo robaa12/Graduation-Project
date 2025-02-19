@@ -18,6 +18,19 @@ func NewProductService(url string) *ProductService {
 	}
 }
 
+type VerificationResponse struct {
+	Valid   bool           `json:"valid"`
+	Message string         `json:"messages"`
+	Items   []VerifiedItem `json:"items"`
+}
+
+type VerifiedItem struct {
+	SkuID   uint    `json:"sku_id"`
+	Valid   bool    `json:"valid"`
+	InStock bool    `json:"in_stock"`
+	Price   float64 `json:"actual_price"`
+}
+
 func (s *ProductService) VerifyOrderItems(storeID uint, items []model.OrderItemRequest) error {
 	verificationRequest := struct {
 		StoreID uint                     `json:"store_id"`
@@ -40,6 +53,18 @@ func (s *ProductService) VerifyOrderItems(storeID uint, items []model.OrderItemR
 
 	if resp.StatusCode != http.StatusOK {
 		return errors.New("failed to verify order items")
+	}
+
+	var VerificationResponse VerificationResponse
+
+	dec := json.NewDecoder(resp.Body)
+	err = dec.Decode(&VerificationResponse)
+	if err != nil {
+		return err
+	}
+	if !VerificationResponse.Valid {
+		return errors.New(VerificationResponse.Message)
+
 	}
 
 	return nil
