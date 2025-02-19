@@ -71,13 +71,7 @@ func (s *ProductService) VerifyOrderItems(storeID uint, items []model.OrderItemR
 }
 
 func (s *ProductService) UpdateInventory(items []model.OrderItemRequest) error {
-	updateRequest := struct {
-		Items []model.OrderItemRequest `json:"items"`
-	}{
-		Items: items,
-	}
-
-	jsonData, err := json.Marshal(updateRequest)
+	jsonData, err := json.Marshal(items)
 	if err != nil {
 		return err
 	}

@@ -43,7 +43,7 @@ type Product struct {
 
 type Sku struct {
 	ID             uint           `json:"_" gorm:"primaryKey"`
-	StoreID        uint           `json:"store_id" gorm:"not null;index"`                                          // Add store_id
+	StoreID        uint           `json:"store_id" gorm:"not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`   // Add store_id
 	ProductID      uint           `json:"product_id" gorm:"not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // Foreign key for Product
 	Stock          int            `json:"stock" gorm:"not null"`
 	Price          float64        `json:"price" gorm:"not null"`
@@ -153,4 +153,29 @@ func AddProductToCollection(db *gorm.DB) ([]Collection, error) {
 	var collections []Collection
 	err := db.Find(&collections).Error
 	return collections, err
+}
+
+func UpdateInventory(db *gorm.DB, skus []Sku) error {
+	// Update inventory for each SKU
+	tx := db.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	defer func() {
+		if err := recover(); err != nil {
+			tx.Rollback()
+		}
+	}()
+	for _, sku := range skus {
+		err := tx.Model(&Sku{}).
+			Where("id = ?", sku.ID).
+			Update("stock", gorm.Expr("stock - ?", sku.Stock)).
+			Error
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+	return tx.Commit().Error
 }

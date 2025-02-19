@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/robaa12/product-service/cmd/data"
@@ -9,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type OrderVerificationHandler struct {
+type OrderHandler struct {
 	DB *gorm.DB
 }
 
@@ -38,7 +40,7 @@ type VerifiedItem struct {
 	Message []string `json:"message,omitempty"`
 }
 
-func (h *OrderVerificationHandler) VerifyOrderItems(w http.ResponseWriter, r *http.Request) {
+func (h *OrderHandler) VerifyOrderItems(w http.ResponseWriter, r *http.Request) {
 	var req VerificationRequest
 	if err := utils.ReadJSON(w, r, &req); err != nil {
 		utils.ErrorJSON(w, err)
@@ -117,6 +119,7 @@ func (h *OrderVerificationHandler) VerifyOrderItems(w http.ResponseWriter, r *ht
 
 	if err != nil {
 		utils.ErrorJSON(w, err)
+		log.Println(err)
 		return
 	}
 	if !response.Valid {
@@ -126,4 +129,30 @@ func (h *OrderVerificationHandler) VerifyOrderItems(w http.ResponseWriter, r *ht
 	}
 
 	utils.WriteJSON(w, http.StatusOK, response)
+}
+
+func (h *OrderHandler) UpdateInventory(w http.ResponseWriter, r *http.Request) {
+
+	var orderItems []VerificationItem
+
+	if err := utils.ReadJSON(w, r, &orderItems); err != nil {
+		log.Println(err)
+		utils.ErrorJSON(w, err, http.StatusBadRequest)
+	}
+
+	var skus []data.Sku
+	// Populate skus
+	for _, item := range orderItems {
+		sku := data.Sku{
+			ID:    item.SkuID,
+			Stock: int(item.Quantity),
+		}
+		skus = append(skus, sku)
+	}
+
+	if err := data.UpdateInventory(h.DB, skus); err != nil {
+		utils.ErrorJSON(w, errors.New("Error Updating Inventory"), http.StatusNotFound)
+	}
+
+	utils.WriteJSON(w, 200, "Inventory Updated Successfully.")
 }

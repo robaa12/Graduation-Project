@@ -23,6 +23,15 @@ func (s *OrderService) AddNewOrder(orderRequest *model.OrderRequestDetails) (*mo
 	if err != nil {
 		return nil, err
 	}
+
+	// Payment Logic using payment gateway (To Be Implemented)
+
+	// Manage inventory
+	err = s.ProductService.UpdateInventory(orderRequest.OrderItems)
+	if err != nil {
+		return nil, err
+	}
+
 	err, order := s.OrderRepo.AddOrder(orderRequest)
 	if err != nil {
 		return nil, err
