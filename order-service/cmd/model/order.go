@@ -6,26 +6,16 @@ import (
 
 // orderRequest and thier fuction which's mapping orderRequest to orderModel
 type OrderRequestDetails struct {
-	StoreID        uint               `json:"store_id" binding:"required"`
-	TotalPrice     float64            `json:"total_price" binding:"required"`
-	CustomerEmail  string             `json:"email" binding:"required"`
-	CustomerName   string             `json:"customer_name"  binding:"required"`
-	PhoneNumber    string             `json:"phone_number"  binding:"required"`
-	Address        string             `json:"address" binding:"required"`
-	PaymentMethod  string             `json:"payment_method" binding:"required"`
-	Note           string             `json:"note" binding:"required"`
-	City           string             `json:"city" binding:"required"`
-	Governorate    string             `json:"governorate" binding:"required"`
-	PostalCode     string             `json:"postal_code" binding:"required"`
-	ShippingMethod string             `json:"shipping_method" binding:"required"`
-	OrderItems     []OrderItemRequest `json:"order_items" binding:"required"`
+	StoreID uint `json:"store_id" binding:"required"`
+	OrderRequest
+	OrderItems []OrderItemRequest `json:"order_items" binding:"required"`
 }
 type OrderRequest struct {
-	TotalPrice     float64 `json:"total_price" binding:"required"`
-	CustomerEmail  string  `json:"email" binding:"required"`
+	CustomerRequest
 	CustomerName   string  `json:"customer_name"  binding:"required"`
 	PhoneNumber    string  `json:"phone_number"  binding:"required"`
 	Address        string  `json:"address" binding:"required"`
+	TotalPrice     float64 `json:"total_price" binding:"required"`
 	PaymentMethod  string  `json:"payment_method" binding:"required"`
 	Note           string  `json:"note" binding:"required"`
 	City           string  `json:"city" binding:"required"`
@@ -35,14 +25,14 @@ type OrderRequest struct {
 }
 
 // orderResponse with their fuction that mapping OrderModel into OrderResponse
-type OrderResponse struct {
+
+type OrderResponseInfo struct {
 	ID             uint      `json:"order_id"`
 	StoreID        uint      `json:"store_id"`
-	TotalPrice     float64   `json:"total_price"`
-	CustomerEmail  string    `json:"email" gorm:"size:255; not null"`
 	CustomerName   string    `json:"customer_name"`
 	PhoneNumber    string    `json:"phone_number" `
 	Address        string    `json:"address"`
+	TotalPrice     float64   `json:"total_price"`
 	PaymentMethod  string    `json:"payment_method"`
 	Note           string    `json:"note"`
 	City           string    `json:"city"`
@@ -52,18 +42,22 @@ type OrderResponse struct {
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
 }
+type OrderResponse struct {
+	CustomerResponse
+	OrderResponseInfo
+}
 
 // orderDetailsResponse with their fuction that mapping OrderModel using CustomerModel as arg into OrderDetailsResponse
 type OrderDetailsResponse struct {
-	OrderInfo  OrderResponse       `json:"order_info"`
+	OrderResponse
 	OrderItems []OrderItemResponse `json:"order_items"`
 }
 
-func (orderRequest *OrderRequestDetails) CreateOrder() *Order {
+func (orderRequest *OrderRequestDetails) CreateOrder(customerID uint) *Order {
 	return &Order{
 		StoreID:        orderRequest.StoreID,
 		TotalPrice:     orderRequest.TotalPrice,
-		CustomerEmail:  orderRequest.CustomerEmail,
+		CustomerID:     customerID,
 		CustomerName:   orderRequest.CustomerName,
 		PhoneNumber:    orderRequest.PhoneNumber,
 		Address:        orderRequest.Address,
@@ -76,12 +70,11 @@ func (orderRequest *OrderRequestDetails) CreateOrder() *Order {
 	}
 }
 
-func (order *Order) CreateOrderResponse() *OrderResponse {
-	return &OrderResponse{
+func (order *Order) CreateOrderResponseInfo() *OrderResponseInfo {
+	return &OrderResponseInfo{
 		ID:             order.ID,
 		StoreID:        order.StoreID,
 		TotalPrice:     order.TotalPrice,
-		CustomerEmail:  order.CustomerEmail,
 		CustomerName:   order.CustomerName,
 		PhoneNumber:    order.PhoneNumber,
 		Address:        order.Address,
@@ -95,6 +88,14 @@ func (order *Order) CreateOrderResponse() *OrderResponse {
 
 }
 
+func (order *Order) CreateOrderResponse() *OrderResponse {
+	return &OrderResponse{
+		CustomerResponse:  *order.Customer.CreateCustomerResponse(),
+		OrderResponseInfo: *order.CreateOrderResponseInfo(),
+	}
+
+}
+
 // NOTE MAKE SURE IF customerinto is important to be on OrderDetailsResponse ------->
 func (order *Order) CreateOrderDetailsResponse() *OrderDetailsResponse {
 
@@ -103,7 +104,7 @@ func (order *Order) CreateOrderDetailsResponse() *OrderDetailsResponse {
 		orderItems = append(orderItems, *orderItem.CreateOrderItemResponse())
 	}
 	return &OrderDetailsResponse{
-		OrderInfo:  *order.CreateOrderResponse(),
-		OrderItems: orderItems,
+		OrderResponse: *order.CreateOrderResponse(),
+		OrderItems:    orderItems,
 	}
 }

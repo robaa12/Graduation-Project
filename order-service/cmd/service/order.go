@@ -32,7 +32,7 @@ func (s *OrderService) AddNewOrder(orderRequest *model.OrderRequestDetails) (*mo
 		return nil, err
 	}
 
-	err, order := s.OrderRepo.AddOrder(orderRequest)
+	order, err := s.OrderRepo.AddOrder(orderRequest)
 	if err != nil {
 		return nil, err
 	}

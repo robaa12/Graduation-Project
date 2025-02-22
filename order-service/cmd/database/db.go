@@ -24,7 +24,12 @@ func New() (*Database, error) {
 
 }
 func (db *Database) SetupDatabase() error {
-	err := db.DB.AutoMigrate(&model.Order{}, &model.OrderItem{})
+	// Setup join table
+	if err := db.DB.SetupJoinTable(&model.Store{}, "Customers", &model.StoreCustomer{}); err != nil {
+		return fmt.Errorf("failed to setup join table: %w", err)
+	}
+
+	err := db.DB.AutoMigrate(&model.Order{}, &model.OrderItem{}, &model.Customer{}, &model.Store{}, &model.StoreCustomer{})
 	if err != nil {
 		return fmt.Errorf("failed to run migration: %w", err)
 	}

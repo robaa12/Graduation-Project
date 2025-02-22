@@ -32,6 +32,9 @@ func (r *OrderItemRepository) GetAllOrderItems(order_id string) ([]model.OrderIt
 }
 
 // Create funtions for each model
+func CreateOrderItem(orderItem *model.OrderItem, tx *gorm.DB) error {
+	return tx.Create(orderItem).Error
+}
 
 func (r *OrderItemRepository) AddOrderItem(orderItem *model.OrderItem) error {
 	return r.db.Create(orderItem).Error

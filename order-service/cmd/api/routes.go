@@ -28,6 +28,7 @@ func (app *Config) routes() http.Handler {
 	mux.Use(middleware.Heartbeat("/ping"))
 	mux.Route("/orders/{order_id}/items", orderItems)
 	mux.Route("/stores/{store_id}/orders", order)
+	mux.Route("/stores/{store_id}/customers", customer)
 
 	return mux
 }
@@ -59,6 +60,20 @@ func orderItems(r chi.Router) {
 		r.Put("/", orderItemsHandler.UpdateOrderItem)
 		r.Delete("/", orderItemsHandler.DeleteOrderItem)
 
+	})
+
+}
+func customer(r chi.Router) {
+	customerrRepo := repository.NewCustomerRepository(db)
+	customerService := service.NewCustomerService(customerrRepo)
+	customerHandler := handlers.NewCustomerHandler(customerService)
+
+	r.Post("/", customerHandler.CreateNewCustomer)
+	r.Get("/", customerHandler.GetAllCustomers)
+	r.Route("/{customer_id}", func(r chi.Router) {
+		r.Get("/", customerHandler.GetCustomer)
+		//	r.Put("/", customerHandler.UpdateCustomer)
+		r.Delete("/", customerHandler.DeleteCustomer)
 	})
 
 }

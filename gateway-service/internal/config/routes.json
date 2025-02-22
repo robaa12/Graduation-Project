@@ -124,5 +124,17 @@
     "methods": ["GET"],
     "service": "user-service",
     "middlewares": []
+  },
+  {
+    "path": "/stores/{store_id}/customers",
+    "methods": ["GET", "POST"],
+    "service": "order-service",
+    "middlewares": ["auth", "store-ownership", "logging"]
+  },
+  {
+    "path": "/stores/{store_id}/customers/{customer_id}",
+    "methods": ["GET", "DELETE"],
+    "service": "order-service",
+    "middlewares": ["auth", "store-ownership", "logging"]
   }
 ]
