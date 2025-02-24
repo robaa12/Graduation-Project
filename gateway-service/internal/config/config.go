@@ -66,7 +66,7 @@ func LoadRoutesConfig() ([]RouteConfig, error) {
 func Load() (*Config, error) {
 	routes, err := LoadRoutesConfig()
 	if err != nil {
-		log.Println("Faild Loading Config")
+		log.Println("Failed Loading Config")
 		return nil, err
 	}
 	return &Config{

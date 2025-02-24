@@ -29,13 +29,16 @@ type LoginResponse struct {
 	Token    string `json:"token"`
 	UserID   int    `json:"user_id"`
 	StoresID []int  `json:"stores_id"`
+	Email 	string `json:"email"`
+	Image 	string `json:"image"`
+	Name 	string `json:"name"`
 }
 
 type UserResponse struct {
 	ID        int    `json:"id"`
 	Email     string `json:"email"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
 	StoresID  []int  `json:"stores_id,omitempty"`
 }
 
@@ -101,7 +104,7 @@ func (s *AuthService) Register(w http.ResponseWriter, r *http.Request) {
 	// Generate JWT Token
 	token, err := s.jwtService.GenerateToken(user.ID, user.StoresID)
 	if err != nil {
-		utils.ErrorJSON(w, errors.New("Error Genrating JWT Token"), http.StatusInternalServerError)
+		utils.ErrorJSON(w, errors.New("Error Generating JWT Token"), http.StatusInternalServerError)
 		return
 	}
 
@@ -142,6 +145,9 @@ func (s *AuthService) Login(w http.ResponseWriter, r *http.Request) {
 		Token:    token,
 		UserID:   user.ID,
 		StoresID: user.StoresID,
+		Email: user.Email,
+		Image : "",
+		Name : user.FirstName + " " + user.LastName,
 	})
 }
 
@@ -182,6 +188,7 @@ func (s *AuthService) validateCredentials(login LoginRequest) (*UserResponse, er
 	}
 
 	user := apiResponse.Data
+	fmt.Println(user)
 	return &user, nil
 }
 
