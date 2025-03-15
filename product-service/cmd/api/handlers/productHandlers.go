@@ -3,20 +3,20 @@ package handlers
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
 
 	"github.com/robaa12/product-service/cmd/model"
+	"github.com/robaa12/product-service/cmd/service"
 	"github.com/robaa12/product-service/cmd/utils"
-	"github.com/robaa12/product-service/cmd/validation"
 	"gorm.io/gorm"
 )
 
 type ProductHandler struct {
-	DB *gorm.DB
+	ProductService service.ProductService
+	DB             *gorm.DB
 }
 
 // NewProduct creates a new product , skus and variants in the database
@@ -28,71 +28,12 @@ func (h *ProductHandler) NewProduct(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorJSON(w, err)
 		return
 	}
+	productResponse, err := h.ProductService.NewProduct(productRequest)
 
-	if err := validation.ValidateNewProduct(productRequest); err != nil {
-		utils.ErrorJSON(w, err, http.StatusBadRequest)
-		return
-	}
-
-	if err := validation.ValidateBusinessRules(productRequest); err != nil {
-		utils.ErrorJSON(w, err, http.StatusBadRequest)
-		return
-	}
-	slug, err := utils.ValidateAndGenerateSlug(h.DB, productRequest.Name, productRequest.StoreID)
-	if err != nil {
-		utils.ErrorJSON(w, err, http.StatusInternalServerError)
-		return
-	}
-	productRequest.Slug = slug
-	// Create a new Product
-	product := productRequest.CreateProduct()
-
-	// Start Database Transaction
-	err = h.DB.Transaction(func(tx *gorm.DB) error {
-
-		// Add Product to the database
-		if err := tx.Create(&product).Error; err != nil {
-			log.Println("Error creating product in database")
-			return err
-		}
-
-		for _, skuRequest := range productRequest.SKUs {
-			// Create a new SKU
-			sku := skuRequest.CreateSKU(product.ID, product.StoreID)
-
-			// Add the SKU to the database
-			if err := tx.Create(&sku).Error; err != nil {
-				log.Println("Error creating sku in database")
-				return err
-			}
-
-			for _, variantRequest := range skuRequest.Variants {
-				// Create a new variant
-				variant := variantRequest.CreateVariant()
-
-				// Check if the variant already exists in the database or not and create it if it doesn't
-				if err := tx.FirstOrCreate(&variant, model.Variant{Name: variantRequest.Name}).Error; err != nil {
-					log.Println("Error creating variant in database")
-					return err
-				}
-
-				// Create a new SKU Variant
-				skuVariant := model.CreateSkuVariant(sku.ID, variant.ID, variantRequest.Value)
-
-				// Add the SKU Variant to the database
-				if err := tx.Create(&skuVariant).Error; err != nil {
-					log.Println("Error creating sku variant in database")
-					return err
-				}
-			}
-		}
-		return nil
-	})
 	if err != nil {
 		utils.ErrorJSON(w, err)
 		return
 	}
-	productResponse := product.ToProductResponse()
 	// Return the product
 	utils.WriteJSON(w, 201, productResponse)
 }

@@ -109,3 +109,27 @@ func ValidateAndGenerateSlug(db *gorm.DB, name string, storeID uint) (string, er
 		slug = fmt.Sprintf("%s-%d", baseSlug, i)
 	}
 }
+
+// ValidateAndGenerateCollectionSlug checks if the slug is unique within the store and generates a new one if necessary.
+func ValidateAndGenerateCollectionSlug(db *gorm.DB, name string, storeID uint) (string, error) {
+	// Generate the base slug from the collection name
+	baseSlug := strings.ToLower(strings.ReplaceAll(name, " ", "-"))
+	slug := baseSlug
+	var count int64
+
+	// Loop to find a unique slug
+	for i := 1; ; i++ {
+		// Check if a collection with the same slug and store_id already exists
+		db.Model(&model.Collection{}).
+			Where("slug = ? AND store_id = ?", slug, storeID).
+			Count(&count)
+
+		// If no duplicate is found, return the unique slug
+		if count == 0 {
+			return slug, nil
+		}
+
+		// If a duplicate exists, append a counter to the slug
+		slug = fmt.Sprintf("%s-%d", baseSlug, i)
+	}
+}

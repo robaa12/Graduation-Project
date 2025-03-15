@@ -14,7 +14,6 @@ func (v *VariantRequest) CreateVariant() *Variant {
 	return &Variant{
 		Name: v.Name,
 	}
-
 }
 
 func CreateSkuVariant(skuID uint, variantID uint, value string) *SKUVariant {

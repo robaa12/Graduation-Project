@@ -70,6 +70,8 @@ type Collection struct {
 	ID          uint           `json:"id" gorm:"primaryKey"`
 	StoreID     uint           `json:"store_id" gorm:"not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // Foreign key for Store
 	Name        string         `json:"name" gorm:"size:255;not null"`
+	Slug        string         `json:"slug" gorm:"size:255;not null"`
+	ImageURL    string         `json:"image_url" gorm:"size:255"`
 	Description string         `json:"description" gorm:"type:text"`
 	CreatedAt   time.Time      `json:"created_at"`
 	UpdatedAt   time.Time      `json:"updated_at"`
