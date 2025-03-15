@@ -10,7 +10,8 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/robaa12/product-service/cmd/data"
+	"github.com/robaa12/product-service/cmd/model"
+
 	"gorm.io/gorm"
 )
 
@@ -95,7 +96,7 @@ func ValidateAndGenerateSlug(db *gorm.DB, name string, storeID uint) (string, er
 	// Loop to find a unique slug
 	for i := 1; ; i++ {
 		// Check if a product with the same slug and store_id already exists
-		db.Model(&data.Product{}).
+		db.Model(&model.Product{}).
 			Where("slug = ? AND store_id = ?", slug, storeID).
 			Count(&count)
 

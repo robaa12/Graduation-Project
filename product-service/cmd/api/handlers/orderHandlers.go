@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/robaa12/product-service/cmd/data"
+	"github.com/robaa12/product-service/cmd/model"
 	"github.com/robaa12/product-service/cmd/utils"
 	"gorm.io/gorm"
 )
@@ -64,14 +64,14 @@ func (h *OrderHandler) VerifyOrderItems(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Fetch all SKUs in a single query
-	var skus []data.Sku
+	var skus []model.Sku
 	err := h.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where("id IN ? AND store_id = ?", skuIDs, req.StoreID).Find(&skus).Error; err != nil {
 			return err
 		}
 
 		// Create a map for quick SKU lookup
-		skuMap := make(map[uint]data.Sku)
+		skuMap := make(map[uint]model.Sku)
 		for _, sku := range skus {
 			skuMap[sku.ID] = sku
 		}
@@ -140,17 +140,17 @@ func (h *OrderHandler) UpdateInventory(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorJSON(w, err, http.StatusBadRequest)
 	}
 
-	var skus []data.Sku
+	var skus []model.Sku
 	// Populate skus
 	for _, item := range orderItems {
-		sku := data.Sku{
+		sku := model.Sku{
 			ID:    item.SkuID,
 			Stock: int(item.Quantity),
 		}
 		skus = append(skus, sku)
 	}
 
-	if err := data.UpdateInventory(h.DB, skus); err != nil {
+	if err := model.UpdateInventory(h.DB, skus); err != nil {
 		utils.ErrorJSON(w, errors.New("Error Updating Inventory"), http.StatusNotFound)
 	}
 

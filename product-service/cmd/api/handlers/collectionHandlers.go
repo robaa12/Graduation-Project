@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/robaa12/product-service/cmd/data"
+	"github.com/robaa12/product-service/cmd/model"
 	"github.com/robaa12/product-service/cmd/utils"
 	"github.com/robaa12/product-service/cmd/validation"
 	"gorm.io/gorm"
@@ -22,7 +22,7 @@ func (h *CollectionHandler) CreateCollection(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	var collectionRequest data.CollectionRequest
+	var collectionRequest model.CollectionRequest
 	if err := utils.ReadJSON(w, r, &collectionRequest); err != nil {
 		utils.ErrorJSON(w, err, http.StatusBadRequest)
 		return
@@ -34,7 +34,7 @@ func (h *CollectionHandler) CreateCollection(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	collection := data.Collection{
+	collection := model.Collection{
 		StoreID:     storeID,
 		Name:        collectionRequest.Name,
 		Description: collectionRequest.Description,
@@ -56,16 +56,16 @@ func (h *CollectionHandler) GetCollections(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	var collections []data.Collection
+	var collections []model.Collection
 	// Get collections from the database by store ID
 	if err := h.DB.Where("store_id = ?", StoreID).Find(&collections).Error; err != nil {
 		utils.ErrorJSON(w, err)
 		return
 	}
 	// Convert to response
-	var output []data.CollectionResponse
+	var output []model.CollectionResponse
 	for _, collection := range collections {
-		output = append(output, collection.ToCollectionResponse())
+		output = append(output, *collection.ToCollectionResponse())
 	}
 	utils.WriteJSON(w, 200, output)
 }

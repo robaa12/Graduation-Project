@@ -3,10 +3,10 @@ package validation
 import (
 	"errors"
 
-	"github.com/robaa12/product-service/cmd/data"
+	"github.com/robaa12/product-service/cmd/model"
 )
 
-func ValidateNewProduct(product data.ProductRequest) error {
+func ValidateNewProduct(product model.ProductRequest) error {
 	if product.Name == "" {
 		return errors.New("product name is required ++ ")
 	}
@@ -30,7 +30,7 @@ func ValidateNewProduct(product data.ProductRequest) error {
 	return nil
 }
 
-func ValidateSKU(sku data.SKURequest) error {
+func ValidateSKU(sku model.SKURequest) error {
 	if sku.Price < 0 {
 		return errors.New("price cannot be negative")
 	}
@@ -51,7 +51,7 @@ func ValidateSKU(sku data.SKURequest) error {
 	return nil
 }
 
-func ValidateVariant(variant data.VariantRequest) error {
+func ValidateVariant(variant model.VariantRequest) error {
 	if variant.Name == "" {
 		return errors.New("vairant name is required")
 	}

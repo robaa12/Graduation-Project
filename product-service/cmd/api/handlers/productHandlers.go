@@ -8,7 +8,8 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/robaa12/product-service/cmd/data"
+
+	"github.com/robaa12/product-service/cmd/model"
 	"github.com/robaa12/product-service/cmd/utils"
 	"github.com/robaa12/product-service/cmd/validation"
 	"gorm.io/gorm"
@@ -21,7 +22,7 @@ type ProductHandler struct {
 // NewProduct creates a new product , skus and variants in the database
 func (h *ProductHandler) NewProduct(w http.ResponseWriter, r *http.Request) {
 	// Read the JSON request
-	var productRequest data.ProductRequest
+	var productRequest model.ProductRequest
 	err := utils.ReadJSON(w, r, &productRequest)
 	if err != nil {
 		utils.ErrorJSON(w, err)
@@ -44,8 +45,7 @@ func (h *ProductHandler) NewProduct(w http.ResponseWriter, r *http.Request) {
 	}
 	productRequest.Slug = slug
 	// Create a new Product
-	var product data.Product
-	product.CreateProduct(productRequest)
+	product := productRequest.CreateProduct()
 
 	// Start Database Transaction
 	err = h.DB.Transaction(func(tx *gorm.DB) error {
@@ -58,8 +58,7 @@ func (h *ProductHandler) NewProduct(w http.ResponseWriter, r *http.Request) {
 
 		for _, skuRequest := range productRequest.SKUs {
 			// Create a new SKU
-			var sku data.Sku
-			sku.CreateSKU(skuRequest, product.ID, product.StoreID)
+			sku := skuRequest.CreateSKU(product.ID, product.StoreID)
 
 			// Add the SKU to the database
 			if err := tx.Create(&sku).Error; err != nil {
@@ -69,18 +68,16 @@ func (h *ProductHandler) NewProduct(w http.ResponseWriter, r *http.Request) {
 
 			for _, variantRequest := range skuRequest.Variants {
 				// Create a new variant
-				var variant data.Variant
-				variant.CreateVariant(variantRequest)
+				variant := variantRequest.CreateVariant()
 
 				// Check if the variant already exists in the database or not and create it if it doesn't
-				if err := tx.FirstOrCreate(&variant, data.Variant{Name: variantRequest.Name}).Error; err != nil {
+				if err := tx.FirstOrCreate(&variant, model.Variant{Name: variantRequest.Name}).Error; err != nil {
 					log.Println("Error creating variant in database")
 					return err
 				}
 
 				// Create a new SKU Variant
-				var skuVariant data.SKUVariant
-				skuVariant.CreateSkuVariant(sku.ID, variant.ID, variantRequest.Value)
+				skuVariant := model.CreateSkuVariant(sku.ID, variant.ID, variantRequest.Value)
 
 				// Add the SKU Variant to the database
 				if err := tx.Create(&skuVariant).Error; err != nil {
@@ -102,7 +99,7 @@ func (h *ProductHandler) NewProduct(w http.ResponseWriter, r *http.Request) {
 
 // GetProduct returns a product from the database
 func (h *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
-	var product data.Product
+	var product model.Product
 
 	// Get the product ID from the URL
 	id, err := utils.GetID(r, "product_id")
@@ -128,7 +125,7 @@ func (h *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
 // UpdateProduct updates a product in the database
 func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	// Read the JSON request
-	var product data.ProductResponse
+	var product model.ProductResponse
 	err := utils.ReadJSON(w, r, &product)
 	if err != nil {
 		utils.ErrorJSON(w, err)
@@ -143,7 +140,7 @@ func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the product exists
-	var dbProduct data.Product
+	var dbProduct model.Product
 	err = h.DB.Where("id = ?", id).First(&dbProduct).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -165,7 +162,7 @@ func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update the product in the database
-	err = h.DB.Model(&data.Product{}).Where("id = ?", id).Updates(&product).Error
+	err = h.DB.Model(&model.Product{}).Where("id = ?", id).Updates(&product).Error
 	if err != nil {
 		utils.ErrorJSON(w, err)
 		return
@@ -183,7 +180,7 @@ func (h *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorJSON(w, err)
 		return
 	}
-	var product data.Product
+	var product model.Product
 	result := h.DB.Where("id=?", id).Preload("SKUs.SKUVariants").Preload("SKUs.Variants").Find(&product)
 	if result.Error != nil {
 		utils.ErrorJSON(w, result.Error)
@@ -212,9 +209,9 @@ func (h *ProductHandler) GetStoreProducts(w http.ResponseWriter, r *http.Request
 	}
 
 	// Create base Query
-	query := h.DB.Model(&data.Product{}).Where("store_id", storeID)
+	query := h.DB.Model(&model.Product{}).Where("store_id", storeID)
 	// Execute Query
-	var products []data.Product
+	var products []model.Product
 	if err := query.Find(&products).Error; err != nil {
 		utils.ErrorJSON(w, err)
 		return
@@ -227,10 +224,10 @@ func (h *ProductHandler) GetStoreProducts(w http.ResponseWriter, r *http.Request
 	}
 
 	// Create Slice of ProductResponse
-	var productsResponse []data.ProductResponse
+	var productsResponse []model.ProductResponse
 	for _, product := range products {
 		productResponse := product.ToProductResponse()
-		productsResponse = append(productsResponse, productResponse)
+		productsResponse = append(productsResponse, *productResponse)
 	}
 
 	// Return store's Products
@@ -246,7 +243,7 @@ func (h *ProductHandler) GetProductDetails(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	var product data.Product
+	var product model.Product
 
 	result := h.DB.Where("id=?", productId).Preload("SKUs.SKUVariants").Preload("SKUs.Variants").Find(&product)
 	if result.Error != nil {
@@ -270,7 +267,7 @@ func (h *ProductHandler) GetProductBySlug(w http.ResponseWriter, r *http.Request
 		utils.ErrorJSON(w, errors.New("both slug and store_id is required"), http.StatusBadRequest)
 		return
 	}
-	var product data.Product
+	var product model.Product
 	result := h.DB.Where("slug = ? AND store_id = ?", slug, store_id).Preload("SKUs.SKUVariants").Preload("SKUs.Variants").First(&product)
 	if result.Error != nil {
 		utils.ErrorJSON(w, result.Error)

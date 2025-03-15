@@ -1,4 +1,4 @@
-package db
+package database
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/robaa12/product-service/cmd/data"
+	"github.com/robaa12/product-service/cmd/model"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -27,12 +27,12 @@ func New() (*Database, error) {
 
 func (d *Database) SetupDatabase() error {
 	// Setup join table
-	if err := d.DB.SetupJoinTable(&data.Sku{}, "Variants", &data.SKUVariant{}); err != nil {
+	if err := d.DB.SetupJoinTable(&model.Sku{}, "Variants", &model.SKUVariant{}); err != nil {
 		return fmt.Errorf("failed to setup join table: %w", err)
 	}
 
 	// Run migrations
-	if err := d.DB.AutoMigrate(&data.Product{}, &data.Sku{}, &data.Variant{}, &data.SKUVariant{}, &data.Collection{}); err != nil {
+	if err := d.DB.AutoMigrate(&model.Product{}, &model.Sku{}, &model.Variant{}, &model.SKUVariant{}, &model.Collection{}); err != nil {
 		return fmt.Errorf("failed to run migration: %w", err)
 	}
 

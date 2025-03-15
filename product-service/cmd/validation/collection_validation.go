@@ -3,7 +3,7 @@ package validation
 import (
 	"errors"
 
-	"github.com/robaa12/product-service/cmd/data"
+	"github.com/robaa12/product-service/cmd/model"
 	"gorm.io/gorm"
 )
 
@@ -15,8 +15,8 @@ func NewCollectionValidator(db *gorm.DB) *CollectionValidator {
 	return &CollectionValidator{DB: db}
 }
 
-func (v *CollectionValidator) CollectionExists(storeID, collectionID uint) (*data.Collection, error) {
-	var collection data.Collection
+func (v *CollectionValidator) CollectionExists(storeID, collectionID uint) (*model.Collection, error) {
+	var collection model.Collection
 	if err := v.DB.Where("store_id = ? AND id = ?", storeID, collectionID).First(&collection).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, err
@@ -26,8 +26,8 @@ func (v *CollectionValidator) CollectionExists(storeID, collectionID uint) (*dat
 	return &collection, nil
 }
 
-func (v *CollectionValidator) ValidateProductsExist(storeID uint, productIDs []uint) ([]data.Product, error) {
-	var products []data.Product
+func (v *CollectionValidator) ValidateProductsExist(storeID uint, productIDs []uint) ([]model.Product, error) {
+	var products []model.Product
 	if err := v.DB.Where("store_id = ? AND id IN (?)", storeID, productIDs).Find(&products).Error; err != nil {
 		return nil, err
 	}
@@ -37,8 +37,8 @@ func (v *CollectionValidator) ValidateProductsExist(storeID uint, productIDs []u
 	return products, nil
 }
 
-func (v *CollectionValidator) ValidateProductExists(storeID, productID uint) (*data.Product, error) {
-	var product data.Product
+func (v *CollectionValidator) ValidateProductExists(storeID, productID uint) (*model.Product, error) {
+	var product model.Product
 	if err := v.DB.Where("store_id = ? AND id = ?", storeID, productID).First(&product).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("product not found")
@@ -48,7 +48,7 @@ func (v *CollectionValidator) ValidateProductExists(storeID, productID uint) (*d
 	return &product, nil
 }
 
-func (v *CollectionValidator) ValidateCollectionRequest(req *data.CollectionRequest) error {
+func (v *CollectionValidator) ValidateCollectionRequest(req *model.CollectionRequest) error {
 	if req.Name == "" {
 		return errors.New("collection name is required")
 	}
@@ -58,8 +58,8 @@ func (v *CollectionValidator) ValidateCollectionRequest(req *data.CollectionRequ
 	return nil
 }
 
-func (v *CollectionValidator) GetCollectionWithProducts(collectionID, storeID uint) (*data.Collection, error) {
-	var collection data.Collection
+func (v *CollectionValidator) GetCollectionWithProducts(collectionID, storeID uint) (*model.Collection, error) {
+	var collection model.Collection
 	if err := v.DB.Preload("Products").Where("store_id = ? AND id = ?", storeID, collectionID).First(&collection).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("collection not found")

@@ -1,4 +1,4 @@
-package data
+package model
 
 import (
 	"time"
@@ -84,37 +84,6 @@ type SKUVariant struct {
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index"`
-}
-
-func (p *Product) CreateProduct(productR ProductRequest) {
-	p.Name = productR.Name
-	p.Description = productR.Description
-	p.StoreID = productR.StoreID
-	p.Published = productR.Published
-	p.StartPrice = productR.StartPrice
-	p.Category = productR.Category
-	p.Slug = productR.Slug
-}
-
-func (s *Sku) CreateSKU(skuR SKURequest, productID uint, storeID uint) {
-	s.ProductID = productID
-	s.StoreID = storeID
-	s.Stock = skuR.Stock
-	s.Price = skuR.Price
-	s.CompareAtPrice = skuR.CompareAtPrice
-	s.CostPerItem = skuR.CostPerItem
-	s.Profit = skuR.Profit
-	s.Margin = skuR.Margin
-}
-
-func (v *Variant) CreateVariant(variantR VariantRequest) {
-	v.Name = variantR.Name
-}
-
-func (sv *SKUVariant) CreateSkuVariant(skuID uint, variantID uint, value string) {
-	sv.SkuID = skuID
-	sv.VariantID = variantID
-	sv.Value = value
 }
 
 func (p *Product) GetProduct(id string) error {

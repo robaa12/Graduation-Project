@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/robaa12/product-service/cmd/data"
-	"github.com/robaa12/product-service/cmd/db"
+	"github.com/robaa12/product-service/cmd/database"
+	"github.com/robaa12/product-service/cmd/model"
 )
 
 // WebPort Application Port
@@ -16,21 +16,21 @@ const WebPort = "8083"
 var counts int
 
 type Config struct {
-	db     *db.Database
-	models data.Models
+	db     *database.Database
+	models model.Models
 }
 
 func main() {
 	log.Printf("Starting Product Service On Port %s...\n", WebPort)
 
 	// Setup Database (migrations, indexes)
-	database, err := db.New()
+	database, err := database.New()
 	database.SetupDatabase()
 
 	// Set up config
 	app := Config{
 		db:     database,
-		models: data.New(database.DB),
+		models: model.New(database.DB),
 	}
 
 	srv := &http.Server{

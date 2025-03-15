@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/robaa12/product-service/cmd/data"
+	"github.com/robaa12/product-service/cmd/model"
 	"github.com/robaa12/product-service/cmd/utils"
 	"gorm.io/gorm"
 )
@@ -24,14 +24,14 @@ func (h *SKUHandler) UpdateSKU(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var skuRequest data.SKURequest
+	var skuRequest model.SKURequest
 	err = utils.ReadJSON(w, r, &skuRequest)
 	if err != nil {
 		utils.ErrorJSON(w, err)
 		return
 	}
 
-	result := h.DB.Where("id= ?", skuID).Updates(&data.Sku{
+	result := h.DB.Where("id= ?", skuID).Updates(&model.Sku{
 		Stock:          skuRequest.Stock,
 		Price:          skuRequest.Price,
 		CompareAtPrice: skuRequest.CompareAtPrice,
@@ -56,8 +56,8 @@ func (h *SKUHandler) GetSKU(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Find SKU by ID
-	var sku data.Sku
-	result := h.DB.Model(&data.Sku{}).Where("id = ?", skuID).Preload("Variants").Preload("SKUVariants").Find(&sku)
+	var sku model.Sku
+	result := h.DB.Model(&model.Sku{}).Where("id = ?", skuID).Preload("Variants").Preload("SKUVariants").Find(&sku)
 	if result.RowsAffected == 0 {
 		utils.ErrorJSON(w, errors.New("SKU Not Found"), 404)
 		return
@@ -79,7 +79,7 @@ func (h *SKUHandler) DeleteSKU(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Find SKU by ID
-	var sku data.Sku
+	var sku model.Sku
 	result := h.DB.Where("id = ?", skuID).Find(&sku)
 	if result.RowsAffected == 0 {
 		utils.ErrorJSON(w, errors.New("Sku is not found."), 404)
@@ -106,7 +106,7 @@ func (h *SKUHandler) NewSKU(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Read the JSON request
-	var skuRequest data.SKURequest
+	var skuRequest model.SKURequest
 	err = utils.ReadJSON(w, r, &skuRequest)
 	if err != nil {
 		utils.ErrorJSON(w, errors.New("Enter valid SKU data"))
@@ -121,8 +121,8 @@ func (h *SKUHandler) NewSKU(w http.ResponseWriter, r *http.Request) {
 
 	// Start Database Transaction
 	// Create a new SKU
-	var sku data.Sku
-	sku.CreateSKU(skuRequest, productID, storeID)
+
+	sku := skuRequest.CreateSKU(productID, storeID)
 
 	// make transaction
 	tx := h.DB.Begin()
@@ -133,15 +133,14 @@ func (h *SKUHandler) NewSKU(w http.ResponseWriter, r *http.Request) {
 	}
 	// Create SKU Variant
 	for _, variant := range skuRequest.Variants {
-		var variantData data.Variant
-		variantData.CreateVariant(variant)
-		if err := tx.FirstOrCreate(&variantData, data.Variant{Name: variant.Name}).Error; err != nil {
+
+		variantData := variant.CreateVariant()
+		if err := tx.FirstOrCreate(&variantData, model.Variant{Name: variant.Name}).Error; err != nil {
 			log.Println("Error creating variant in database")
 			return
 		}
 		// Create a new SKU Variant
-		var skuVariant data.SKUVariant
-		skuVariant.CreateSkuVariant(sku.ID, variantData.ID, variant.Value)
+		skuVariant := model.CreateSkuVariant(sku.ID, variantData.ID, variant.Value)
 		if err = tx.Create(&skuVariant).Error; err != nil {
 			log.Println("Error creating sku variant in database")
 			return
@@ -158,7 +157,7 @@ func (h *SKUHandler) NewSKU(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *SKUHandler) GetAllProducts(w http.ResponseWriter, r *http.Request) {
-	var products []data.Product
+	var products []model.Product
 	err := h.DB.Preload("SKUs.Variants").Preload("SKUs.SKUVariants").Find(&products).Error
 	if err != nil {
 		utils.ErrorJSON(w, err)
