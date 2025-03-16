@@ -21,10 +21,8 @@ type SKUResponse struct {
 	Variants       []VariantResponse `json:"variants"`
 }
 
-func (s *SKURequest) CreateSKU(productID uint, storeID uint) *Sku {
+func (s *SKURequest) ToSKU() *Sku {
 	return &Sku{
-		ProductID:      productID,
-		StoreID:        storeID,
 		Stock:          s.Stock,
 		Price:          s.Price,
 		CompareAtPrice: s.CompareAtPrice,
@@ -32,6 +30,12 @@ func (s *SKURequest) CreateSKU(productID uint, storeID uint) *Sku {
 		Profit:         s.Profit,
 		Margin:         s.Margin,
 	}
+}
+func (s *SKURequest) CreateSKU(productID uint, storeID uint) *Sku {
+	sku := s.ToSKU()
+	sku.ProductID = productID
+	sku.StoreID = storeID
+	return sku
 }
 
 // map sku object to sku response object

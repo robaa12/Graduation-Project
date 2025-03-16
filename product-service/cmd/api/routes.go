@@ -8,6 +8,9 @@ import (
 	"github.com/go-chi/chi/v5/middleware" // ✅ Corrected import for Chi middleware
 	"github.com/go-chi/cors"
 	"github.com/robaa12/product-service/cmd/api/handlers" // ✅ Alias for your custom middleware
+	"github.com/robaa12/product-service/cmd/database"
+	"github.com/robaa12/product-service/cmd/repository"
+	"github.com/robaa12/product-service/cmd/service"
 	"github.com/robaa12/product-service/cmd/utils"
 	"github.com/robaa12/product-service/cmd/validation"
 )
@@ -33,7 +36,7 @@ func (app *Config) routes() http.Handler {
 	// Initialize handlers
 	OrderHandler := handlers.OrderHandler{DB: app.db.DB}
 	productHandler := handlers.ProductHandler{DB: app.db.DB}
-	skuHandler := handlers.SKUHandler{DB: app.db.DB}
+
 	collectionHandler := handlers.CollectionHandler{DB: app.db.DB, Validator: validation.NewCollectionValidator(app.db.DB)}
 
 	mux.Post("/verify-order", OrderHandler.VerifyOrderItems)
@@ -67,20 +70,7 @@ func (app *Config) routes() http.Handler {
 				})
 
 				// SKU Routes
-				r.Route("/skus", func(r chi.Router) {
-					// Public endpoints
-					r.Get("/{sku_id}", skuHandler.GetSKU)
-
-					// Protected endpoints
-					r.Group(func(r chi.Router) {
-						//	r.Use(customMiddleware.AuthenticateToken)
-						//	r.Use(customMiddleware.VerifyStoreOwnership)
-
-						r.Post("/", skuHandler.NewSKU)
-						r.Put("/{sku_id}", skuHandler.UpdateSKU)
-						r.Delete("/{sku_id}", skuHandler.DeleteSKU)
-					})
-				})
+				r.Route("/skus", app.sku)
 			})
 
 			// Collection Routes /stores/{store_id}/collections
@@ -129,4 +119,26 @@ func (app *Config) routes() http.Handler {
 	}
 
 	return mux
+}
+func setupSKUHandler(db *database.Database) *handlers.SKUHandler {
+	skuRepo := repository.NewSkuRepository(db)
+	skuService := service.NewSKUService(skuRepo)
+	skuHandler := handlers.NewSKUHandler(skuService)
+
+	return skuHandler
+}
+func (app *Config) sku(r chi.Router) {
+	skuHandler := setupSKUHandler(app.db)
+	// Public endpoints
+	r.Get("/{sku_id}", skuHandler.GetSKU)
+
+	// Protected endpoints
+	r.Group(func(r chi.Router) {
+		//	r.Use(customMiddleware.AuthenticateToken)
+		//	r.Use(customMiddleware.VerifyStoreOwnership)
+
+		r.Post("/", skuHandler.NewSKU)
+		r.Put("/{sku_id}", skuHandler.UpdateSKU)
+		r.Delete("/{sku_id}", skuHandler.DeleteSKU)
+	})
 }
