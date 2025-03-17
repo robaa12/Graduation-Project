@@ -12,7 +12,6 @@ import (
 	"github.com/robaa12/product-service/cmd/repository"
 	"github.com/robaa12/product-service/cmd/service"
 	"github.com/robaa12/product-service/cmd/utils"
-	"github.com/robaa12/product-service/cmd/validation"
 )
 
 func (app *Config) routes() http.Handler {
@@ -42,9 +41,6 @@ func (app *Config) routes() http.Handler {
 	productHandler := handlers.ProductHandler{
 		ProductService: *productService,
 	}
-
-	// Collection Handler
-	collectionHandler := handlers.CollectionHandler{DB: app.db.DB, Validator: validation.NewCollectionValidator(app.db.DB)}
 
 	mux.Post("/verify-order", OrderHandler.VerifyOrderItems)
 	mux.Post("/update-inventory", OrderHandler.UpdateInventory)
@@ -81,21 +77,7 @@ func (app *Config) routes() http.Handler {
 			})
 
 			// Collection Routes /stores/{store_id}/collections
-			r.Route("/collections", func(r chi.Router) {
-				// Public endpoints
-				r.Get("/", collectionHandler.GetCollections)
-				r.Get("/{collection_id}", collectionHandler.GetCollection)
-
-				// Protected endpoints
-				r.Group(func(r chi.Router) {
-					//r.Use(customMiddleware.AuthenticateToken)
-					//r.Use(customMiddleware.VerifyStoreOwnership)
-
-					r.Post("/", collectionHandler.CreateCollection)
-					r.Post("/{collection_id}/products", collectionHandler.AddProductToCollection)
-					r.Delete("/{collection_id}/products/{product_id}", collectionHandler.RemoveProductFromCollection)
-				})
-			})
+			r.Route("/collections", app.collection)
 		})
 	})
 
@@ -148,4 +130,28 @@ func (app *Config) sku(r chi.Router) {
 		r.Put("/{sku_id}", skuHandler.UpdateSKU)
 		r.Delete("/{sku_id}", skuHandler.DeleteSKU)
 	})
+}
+func setupCollectionHandler(db *database.Database) *handlers.CollectionHandler {
+	collectionRepo := repository.NewCollectionRepository(db)
+	collectionService := service.NewCollectionService(collectionRepo)
+	collectionHandler := handlers.NewCollectionHandler(collectionService)
+
+	return collectionHandler
+}
+func (app *Config) collection(r chi.Router) {
+	collectionHandler := setupCollectionHandler(app.db)
+	// Public endpoints
+	r.Get("/", collectionHandler.GetCollections)
+	r.Get("/{collection_id}", collectionHandler.GetCollection)
+
+	// Protected endpoints
+	r.Group(func(r chi.Router) {
+		//r.Use(customMiddleware.AuthenticateToken)
+		//r.Use(customMiddleware.VerifyStoreOwnership)
+
+		r.Post("/", collectionHandler.CreateCollection)
+		r.Post("/{collection_id}/products", collectionHandler.AddProductToCollection)
+		r.Delete("/{collection_id}/products/{product_id}", collectionHandler.RemoveProductFromCollection)
+	})
+
 }

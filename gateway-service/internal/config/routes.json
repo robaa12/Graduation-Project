@@ -91,7 +91,12 @@
   },
   {
     "path": "/stores/{store_id}/collections/{collection_id}/products",
-    "methods": ["POST", "DELETE"],
+    "methods": ["POST"],
+    "service": "product-service",
+    "middlewares": ["auth", "store-ownership"]
+  },{
+    "path": "/stores/{store_id}/collections/{collection_id}/products/{product_id}",
+    "methods": [ "DELETE"],
     "service": "product-service",
     "middlewares": ["auth", "store-ownership"]
   },

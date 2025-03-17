@@ -1,11 +1,15 @@
 package model
 
 type CollectionRequest struct {
-	StoreID     uint   `json:"store_id" binding:"required"`
 	Name        string `json:"name" binding:"required"`
 	Description string `json:"description" binding:"required"`
 	ImageURL    string `json:"image_url"`
 }
+
+type CollectionProductsRequest struct {
+	ProductIDs []uint `json:"product_ids"`
+}
+
 type CollectionResponse struct {
 	ID          uint   `json:"id"`
 	StoreID     uint   `json:"store_id"`
@@ -17,6 +21,15 @@ type CollectionResponse struct {
 type CollectionDetailsResponse struct {
 	CollectionResponse
 	Products []ProductResponse `json:"products"`
+}
+
+func (c *CollectionRequest) ToCollection(storeID uint) *Collection {
+	return &Collection{
+		StoreID:     storeID,
+		Name:        c.Name,
+		Description: c.Description,
+		ImageURL:    c.ImageURL,
+	}
 }
 
 func (c *Collection) ToCollectionResponse() *CollectionResponse {
