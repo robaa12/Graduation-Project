@@ -8,6 +8,8 @@ import (
 	"github.com/go-chi/chi/v5/middleware" // ✅ Corrected import for Chi middleware
 	"github.com/go-chi/cors"
 	"github.com/robaa12/product-service/cmd/api/handlers" // ✅ Alias for your custom middleware
+	"github.com/robaa12/product-service/cmd/repository"
+	"github.com/robaa12/product-service/cmd/service"
 	"github.com/robaa12/product-service/cmd/utils"
 	"github.com/robaa12/product-service/cmd/validation"
 )
@@ -32,7 +34,12 @@ func (app *Config) routes() http.Handler {
 
 	// Initialize handlers
 	OrderHandler := handlers.OrderHandler{DB: app.db.DB}
-	productHandler := handlers.ProductHandler{DB: app.db.DB}
+	productRepository := repository.NewProductRepository(*app.db)
+	productService := service.NewProductService(productRepository)
+	productHandler := handlers.ProductHandler{
+		ProductService: *productService,
+		DB:             app.db.DB,
+	}
 	skuHandler := handlers.SKUHandler{DB: app.db.DB}
 	collectionHandler := handlers.CollectionHandler{DB: app.db.DB, Validator: validation.NewCollectionValidator(app.db.DB)}
 

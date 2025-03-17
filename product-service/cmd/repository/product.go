@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -18,16 +19,17 @@ func NewProductRepository(db database.Database) *ProductRepository {
 	return &ProductRepository{db: db}
 }
 
-func (pr *ProductRepository) GetProduct(p model.Product, id int) error {
-	return pr.db.DB.First(p, id).Error
+func (pr *ProductRepository) GetProduct(id uint) (*model.Product, error) {
+	var product model.Product
+	err := pr.db.DB.First(&product, id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &product, nil
 }
 
-func (pr *ProductRepository) GetStoreProducts(p *[]model.Product) error {
-	return pr.db.DB.Find(p).Error
-}
-
-func (pr *ProductRepository) UpdateProduct(p model.Product) error {
-	return pr.db.DB.Save(p).Error
+func (pr *ProductRepository) UpdateProduct(p model.ProductResponse, id uint) error {
+	return pr.db.DB.Model(&model.Product{}).Where("id = ?", id).Updates(p).Error
 }
 
 func (pr *ProductRepository) CreateProduct(productRequest model.ProductRequest) (*model.Product, error) {
@@ -102,4 +104,71 @@ func (pr *ProductRepository) GenerateProductSlug(name string, storeID uint) (str
 		// If a duplicate exists, append a counter to the slug
 		slug = fmt.Sprintf("%s-%d", baseSlug, i)
 	}
+}
+
+func (pr *ProductRepository) DeleteProduct(productID uint, storeID uint) error {
+	var product model.Product
+
+	result := pr.db.DB.Where("id = ? AND store_id = ?", productID, storeID).Delete(&product).Preload("SKUs.SKUVariants").
+		Preload("SKUs.Variants").
+		Find(&product)
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return errors.New("product not found or doesn't belong to the store")
+	}
+
+	return pr.db.DB.Unscoped().Delete(&product).Error
+}
+
+func (pr *ProductRepository) GetStoreProducts(storeID uint) ([]model.Product, error) {
+	var products []model.Product
+
+	result := pr.db.DB.Model(&model.Product{}).Where("store_id = ?", storeID).Find(&products)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	if len(products) == 0 {
+		return nil, errors.New("no products found")
+	}
+
+	return products, nil
+}
+
+func (pr *ProductRepository) GetProductDetails(productID uint) (*model.Product, error) {
+	var product model.Product
+
+	result := pr.db.DB.Where("id=?", productID).Preload("SKUs.SKUVariants").Preload("SKUs.Variants").Find(&product)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	if result.RowsAffected == 0 {
+		return nil, errors.New("product not found")
+	}
+
+	return &product, nil
+}
+
+func (pr *ProductRepository) GetProductBySlug(slug string, storeID uint) (*model.Product, error) {
+	var product model.Product
+
+	result := pr.db.DB.Where("slug = ? AND store_id = ?", slug, storeID).
+		Preload("SKUs.SKUVariants").
+		Preload("SKUs.Variants").
+		First(&product)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return nil, errors.New("product not found")
+	}
+
+	return &product, nil
 }
