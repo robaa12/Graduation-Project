@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 
+	apperrors "github.com/robaa12/product-service/cmd/errors"
 	"github.com/robaa12/product-service/cmd/model"
 	"github.com/robaa12/product-service/cmd/repository"
 )
@@ -18,7 +19,7 @@ func NewProductService(repo *repository.ProductRepository) *ProductService {
 
 // NewProduct creates a new product , skus and variants in the database
 func (ps *ProductService) NewProduct(productRequest model.ProductRequest) (*model.ProductResponse, error) {
-	// Prouct Request Validation
+	// Product Request Validation
 	if len(productRequest.Name) > 255 {
 		return nil, errors.New("product name cannot exceed 255 characters")
 	}
@@ -40,7 +41,7 @@ func (ps *ProductService) NewProduct(productRequest model.ProductRequest) (*mode
 	// TO DO : VALIDATION
 	slug, err := ps.repository.GenerateProductSlug(productRequest.Name, productRequest.StoreID)
 	if err != nil {
-		log.Println("Error Genrating Product's Slug")
+		log.Println("Error Generating Product's Slug")
 		return nil, err
 	}
 	productRequest.Slug = slug
@@ -52,8 +53,9 @@ func (ps *ProductService) NewProduct(productRequest model.ProductRequest) (*mode
 	return productResponse, nil
 }
 
-func (ps *ProductService) GetProduct(id uint) (*model.ProductResponse, error) {
-	product, err := ps.repository.GetProduct(id)
+func (ps *ProductService) GetProduct(id uint, storeID uint) (*model.ProductResponse, error) {
+	product, err := ps.repository.GetProduct(id, storeID)
+	err = apperrors.ErrCheck(err)
 	if err != nil {
 		return nil, err
 	}
@@ -61,9 +63,9 @@ func (ps *ProductService) GetProduct(id uint) (*model.ProductResponse, error) {
 	return productResponse, nil
 }
 
-func (ps *ProductService) UpdateProduct(id uint, productResponse model.ProductResponse) error {
+func (ps *ProductService) UpdateProduct(id, storeID uint, productResponse model.ProductResponse) error {
 	// Check if the product exists
-	product, err := ps.repository.GetProduct(id)
+	product, err := ps.repository.GetProduct(id, storeID)
 	if err != nil {
 		return err
 	}
@@ -71,12 +73,12 @@ func (ps *ProductService) UpdateProduct(id uint, productResponse model.ProductRe
 	if product.Name != productResponse.Name {
 		slug, err := ps.repository.GenerateProductSlug(productResponse.Name, product.StoreID)
 		if err != nil {
-			log.Println("Error Genrating Product's Slug")
+			log.Println("Error Generating Product's Slug")
 			return err
 		}
 		productResponse.Slug = slug
 	}
-	err = ps.repository.UpdateProduct(productResponse, id)
+	err = ps.repository.UpdateProduct(productResponse, id, storeID)
 	if err != nil {
 		return err
 	}
@@ -85,12 +87,14 @@ func (ps *ProductService) UpdateProduct(id uint, productResponse model.ProductRe
 
 func (ps *ProductService) DeleteProduct(productID uint, storeID uint) error {
 	// Call the repository to delete the product
-	return ps.repository.DeleteProduct(productID, storeID)
+	err := ps.repository.DeleteProduct(productID, storeID)
+	return apperrors.ErrCheck(err)
 }
 
 func (ps *ProductService) GetStoreProducts(storeID uint) ([]model.ProductResponse, error) {
 	// Call the repository to get the products
 	products, err := ps.repository.GetStoreProducts(storeID)
+	err = apperrors.ErrCheck(err)
 	if err != nil {
 		return nil, err
 	}
@@ -105,9 +109,10 @@ func (ps *ProductService) GetStoreProducts(storeID uint) ([]model.ProductRespons
 	return productsResponse, nil
 }
 
-func (ps *ProductService) GetProductDetails(productID uint) (*model.ProductDetailsResponse, error) {
+func (ps *ProductService) GetProductDetails(productID, storeID uint) (*model.ProductDetailsResponse, error) {
 	// Call the repository to get the product with details
-	product, err := ps.repository.GetProductDetails(productID)
+	product, err := ps.repository.GetProductDetails(productID, storeID)
+	err = apperrors.ErrCheck(err)
 	if err != nil {
 		return nil, err
 	}
@@ -124,6 +129,7 @@ func (ps *ProductService) GetProductBySlug(slug string, storeID uint) (*model.Pr
 
 	// Call repository to get the product
 	product, err := ps.repository.GetProductBySlug(slug, storeID)
+	err = apperrors.ErrCheck(err)
 	if err != nil {
 		return nil, err
 	}

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
+	apperrors "github.com/robaa12/product-service/cmd/errors"
 	"github.com/robaa12/product-service/cmd/model"
 
 	"gorm.io/gorm"
@@ -62,9 +63,13 @@ func WriteJSON(w http.ResponseWriter, status int, data any, headers ...http.Head
 
 func ErrorJSON(w http.ResponseWriter, err error, status ...int) error {
 	statusCode := http.StatusBadRequest
-	if len(status) > 0 {
+
+	if appErr, ok := err.(apperrors.AppError); ok {
+		statusCode = appErr.StatusCode
+	} else if len(status) > 0 {
 		statusCode = status[0]
 	}
+
 	var payload jsonResponse
 	payload.Error = true
 	payload.Message = err.Error()
@@ -84,30 +89,6 @@ func GetID(r *http.Request, key string) (uint, error) {
 	}
 
 	return uint(idInt), nil
-}
-
-// ValidateAndGenerateSlug checks if the slug is unique within the store and generates a new one if necessary.
-func ValidateAndGenerateSlug(db *gorm.DB, name string, storeID uint) (string, error) {
-	// Generate the base slug from the product name
-	baseSlug := strings.ToLower(strings.ReplaceAll(name, " ", "-"))
-	slug := baseSlug
-	var count int64
-
-	// Loop to find a unique slug
-	for i := 1; ; i++ {
-		// Check if a product with the same slug and store_id already exists
-		db.Model(&model.Product{}).
-			Where("slug = ? AND store_id = ?", slug, storeID).
-			Count(&count)
-
-		// If no duplicate is found, return the unique slug
-		if count == 0 {
-			return slug, nil
-		}
-
-		// If a duplicate exists, append a counter to the slug
-		slug = fmt.Sprintf("%s-%d", baseSlug, i)
-	}
 }
 
 // ValidateAndGenerateCollectionSlug checks if the slug is unique within the store and generates a new one if necessary.

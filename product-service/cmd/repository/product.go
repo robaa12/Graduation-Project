@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -19,17 +18,18 @@ func NewProductRepository(db database.Database) *ProductRepository {
 	return &ProductRepository{db: db}
 }
 
-func (pr *ProductRepository) GetProduct(id uint) (*model.Product, error) {
+func (pr *ProductRepository) GetProduct(productId uint, storeId uint) (*model.Product, error) {
 	var product model.Product
-	err := pr.db.DB.First(&product, id).Error
+	// Find the product with the given id and store_id
+	err := pr.db.DB.Where("id = ? AND store_id = ?", productId, storeId).First(&product).Error
 	if err != nil {
-		return nil, err
+		return nil, gorm.ErrRecordNotFound
 	}
 	return &product, nil
 }
 
-func (pr *ProductRepository) UpdateProduct(p model.ProductResponse, id uint) error {
-	return pr.db.DB.Model(&model.Product{}).Where("id = ?", id).Updates(p).Error
+func (pr *ProductRepository) UpdateProduct(p model.ProductResponse, id uint, storeId uint) error {
+	return pr.db.DB.Model(&model.Product{}).Where("id = ? AND store_id = ?", id, storeId).Updates(p).Error
 }
 
 func (pr *ProductRepository) CreateProduct(productRequest model.ProductRequest) (*model.Product, error) {
@@ -46,7 +46,7 @@ func (pr *ProductRepository) CreateProduct(productRequest model.ProductRequest) 
 		}
 		for _, skuRequest := range productRequest.SKUs {
 			// Create a new SKU
-			sku := skuRequest.CreateSKU(product.ID, product.StoreID)
+			sku := skuRequest.CreateSKU(product.ID)
 
 			// Add the SKU to the database
 			if err := tx.Create(&sku).Error; err != nil {
@@ -82,7 +82,6 @@ func (pr *ProductRepository) CreateProduct(productRequest model.ProductRequest) 
 	return product, nil
 }
 
-// Generate product slug
 func (pr *ProductRepository) GenerateProductSlug(name string, storeID uint) (string, error) {
 	// Generate the base slug from the product name
 	baseSlug := strings.ToLower(strings.ReplaceAll(name, " ", "-"))
@@ -118,7 +117,7 @@ func (pr *ProductRepository) DeleteProduct(productID uint, storeID uint) error {
 	}
 
 	if result.RowsAffected == 0 {
-		return errors.New("product not found or doesn't belong to the store")
+		return gorm.ErrRecordNotFound
 	}
 
 	return pr.db.DB.Unscoped().Delete(&product).Error
@@ -134,21 +133,21 @@ func (pr *ProductRepository) GetStoreProducts(storeID uint) ([]model.Product, er
 	}
 
 	if len(products) == 0 {
-		return nil, errors.New("no products found")
+		return nil, gorm.ErrRecordNotFound
 	}
 
 	return products, nil
 }
 
-func (pr *ProductRepository) GetProductDetails(productID uint) (*model.Product, error) {
+func (pr *ProductRepository) GetProductDetails(productID uint, storeID uint) (*model.Product, error) {
 	var product model.Product
 
-	result := pr.db.DB.Where("id=?", productID).Preload("SKUs.SKUVariants").Preload("SKUs.Variants").Find(&product)
+	result := pr.db.DB.Where("id=? AND store_id = ?", productID, storeID).Preload("SKUs.SKUVariants").Preload("SKUs.Variants").Find(&product)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	if result.RowsAffected == 0 {
-		return nil, errors.New("product not found")
+		return nil, gorm.ErrRecordNotFound
 	}
 
 	return &product, nil
@@ -167,7 +166,7 @@ func (pr *ProductRepository) GetProductBySlug(slug string, storeID uint) (*model
 	}
 
 	if result.RowsAffected == 0 {
-		return nil, errors.New("product not found")
+		return nil, gorm.ErrRecordNotFound
 	}
 
 	return &product, nil

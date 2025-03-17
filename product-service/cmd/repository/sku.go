@@ -16,44 +16,71 @@ func NewSkuRepository(db *database.Database) *SkuRepository {
 	return &SkuRepository{db: db}
 }
 
-func (sr *SkuRepository) GetSku(skuID int) (*model.Sku, error) {
+func (sr *SkuRepository) GetSku(skuID, productID, storeID uint) (*model.Sku, error) {
 	var sku model.Sku
-	result := sr.db.DB.Model(&model.Sku{}).Where("id = ?", skuID).Preload("Variants").Preload("SKUVariants").Find(&sku)
+	// Join Product and SKU tables and find the SKU with the given id, product_id and store_id in the database and preload the variants
+	result := sr.db.DB.Model(&model.Sku{}).
+		Joins("JOIN products ON skus.product_id = products.id").
+		Where("skus.id = ? AND skus.product_id = ? AND products.store_id = ?", skuID, productID, storeID).
+		Preload("Variants").Preload("SKUVariants").First(&sku)
 	if result.RowsAffected == 0 {
-		return nil, errors.New("SKU Not Found")
+		return nil, gorm.ErrRecordNotFound
 	}
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return &sku, nil
-
 }
 
-func (sr *SkuRepository) UpdateSku(sku *model.Sku) error {
-	return sr.db.DB.Where("id= ?", sku.ID).Updates(&sku).Error
-
-}
-func (sr *SkuRepository) FindSku(skuID int) (*model.Sku, error) {
-	var sku model.Sku
-	result := sr.db.DB.Where("id = ?", skuID).Find(&sku)
+func (sr *SkuRepository) UpdateSku(sku *model.Sku, storeID uint) error {
+	result := sr.db.DB.Model(&model.Sku{}).
+		Joins("JOIN products ON skus.product_id = products.id").
+		Where("skus.id = ? AND skus.product_id = ? AND products.store_id = ?", sku.ID, sku.ProductID, storeID).
+		Updates(&sku)
 	if result.RowsAffected == 0 {
-		return nil, errors.New("Sku is not found.")
+		return gorm.ErrRecordNotFound
+	}
+	return result.Error
+}
+func (sr *SkuRepository) FindSku(skuID, productID, storeID uint) (*model.Sku, error) {
+	var sku model.Sku
+	result := sr.db.DB.Model(&model.Sku{}).
+		Joins("JOIN products ON skus.product_id = products.id").
+		Where("skus.id = ? AND skus.product_id = ? AND products.store_id = ?", skuID, productID, storeID).
+		First(&sku)
+	if result.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
 	}
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return &sku, nil
+}
+func (sr *SkuRepository) DeleteSKU(sku *model.Sku, storeID uint) error {
+	result := sr.db.DB.Model(&model.Sku{}).
+		Joins("JOIN products ON skus.product_id = products.id").
+		Where("skus.id = ? AND skus.product_id = ? AND products.store_id = ?", sku.ID, sku.ProductID, storeID).Unscoped().Delete(&sku)
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return result.Error
+}
+func (sr *SkuRepository) CreateSku(storeID uint, sku *model.Sku, variantsRequest []model.VariantRequest) (*model.Sku, error) {
+	// Check if the product exists in the store
+	var product model.Product
+	result := sr.db.DB.Where("id = ? AND store_id = ?", sku.ProductID, storeID).First(&product)
+	if result.RowsAffected == 0 {
+		return nil, errors.New("product not found or doesn't belong to the store")
+	}
+	if result.Error != nil {
+		return nil, result.Error
+	}
 
-}
-func (sr *SkuRepository) DeleteSKU(sku *model.Sku) error {
-	return sr.db.DB.Unscoped().Delete(&sku).Error
-}
-func (sr *SkuRepository) CreateSku(sku *model.Sku, variantsRequest []model.VariantRequest) (*model.Sku, error) {
 	// make transaction
 	tx := sr.db.DB.Begin()
 	// Add the SKU to the database
 	if err := tx.Create(&sku).Error; err != nil {
-		return nil, errors.New("Error creating sku in database")
+		return nil, errors.New("error creating sku in database")
 	}
 	// Create SKU Variant
 	for _, variant := range variantsRequest {

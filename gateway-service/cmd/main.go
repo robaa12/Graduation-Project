@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -62,7 +63,7 @@ func (app *Application) setupServices() error {
 func (app *Application) startServer() {
 	log.Printf("Starting server on %s:%s\n", app.config.Server.Host, app.config.Server.Port)
 	err := app.httpServer.ListenAndServe()
-	if err != nil && err != http.ErrServerClosed {
+	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatalf("Server failed to start: %v", err)
 	}
 }

@@ -80,7 +80,3 @@ func GetID(r *http.Request, key string) (int, error) {
 
 	return int(idInt), nil
 }
-func ItoS(i uint) string {
-	return strconv.Itoa(int(i))
-
-}

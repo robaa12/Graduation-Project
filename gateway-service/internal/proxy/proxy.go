@@ -1,33 +1,31 @@
 package proxy
 
 import (
+	"github.com/robaa12/gatway-service/internal/config"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"strings"
-
-	"github.com/robaa12/gatway-service/internal/config"
 )
 
-type ProxyService struct {
+type Service struct {
 	serviceConfig *config.ServiceConfig
 }
 
 func NewProxyService(serviceConfig *config.ServiceConfig) http.Handler {
-	return &ProxyService{serviceConfig: serviceConfig}
+	return &Service{serviceConfig: serviceConfig}
 }
 
-func (proxyService *ProxyService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (proxyService *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	proxy := proxyService.createProxy()
 
 	proxy.ServeHTTP(w, r)
 }
 
-func (p *ProxyService) createProxy() http.Handler {
-	target, err := url.Parse(p.serviceConfig.URL)
-	log.Println(p.serviceConfig.URL)
+func (proxyService *Service) createProxy() http.Handler {
+	target, err := url.Parse(proxyService.serviceConfig.URL)
+	log.Println(proxyService.serviceConfig.URL)
 	if err != nil {
 		panic(err)
 	}
@@ -43,13 +41,4 @@ func (p *ProxyService) createProxy() http.Handler {
 			return nil
 		},
 	}
-}
-
-// Helper function to remove the first path segment
-func stripFirstPathSegment(path string) string {
-	parts := strings.SplitN(path, "/", 3) // Split into at most 3 parts: ["", "products", "stores/1/products"]
-	if len(parts) < 3 {
-		return "/" // If there's nothing left, return root
-	}
-	return "/" + parts[2] // Return the remaining path
 }

@@ -44,7 +44,7 @@ func (cr *CollectionRepository) CreateCollection(collection model.Collection) er
 	// Generate Slug
 	baseSlug, err := utils.ValidateAndGenerateCollectionSlug(cr.db.DB, collection.Name, collection.StoreID)
 	if err != nil {
-		return errors.New("Error Generating Collection Slug")
+		return errors.New("error Generating Collection Slug")
 	}
 	collection.Slug = baseSlug
 

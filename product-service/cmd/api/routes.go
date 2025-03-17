@@ -33,15 +33,17 @@ func (app *Config) routes() http.Handler {
 		MaxAge:           300,
 	}))
 
-	// Initialize handlers
+	// Order Handler
 	OrderHandler := handlers.OrderHandler{DB: app.db.DB}
+
+	// Product Handler
 	productRepository := repository.NewProductRepository(*app.db)
 	productService := service.NewProductService(productRepository)
 	productHandler := handlers.ProductHandler{
 		ProductService: *productService,
-		DB:             app.db.DB,
 	}
-	skuHandler := handlers.SKUHandler{DB: app.db.DB}
+
+	// Collection Handler
 	collectionHandler := handlers.CollectionHandler{DB: app.db.DB, Validator: validation.NewCollectionValidator(app.db.DB)}
 
 	mux.Post("/verify-order", OrderHandler.VerifyOrderItems)

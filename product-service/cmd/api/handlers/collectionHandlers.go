@@ -96,7 +96,7 @@ func (h *CollectionHandler) GetCollection(w http.ResponseWriter, r *http.Request
 	utils.WriteJSON(w, 200, collection.ToCollectionDetailsResponse())
 }
 
-// Add product to collection - POST /stores/{store_id}/collections/{collection_id}
+// AddProductToCollection Add product to collection - POST /stores/{store_id}/collections/{collection_id}
 func (h *CollectionHandler) AddProductToCollection(w http.ResponseWriter, r *http.Request) {
 	storeID, err := utils.GetID(r, "store_id")
 	if err != nil {
@@ -144,7 +144,7 @@ func (h *CollectionHandler) AddProductToCollection(w http.ResponseWriter, r *htt
 	})
 }
 
-// Remove product from collection - DELETE /stores/{store_id}/collections/{collection_id}/products/{product_id}
+// RemoveProductFromCollection Remove product from collection - DELETE /stores/{store_id}/collections/{collection_id}/products/{product_id}
 func (h *CollectionHandler) RemoveProductFromCollection(w http.ResponseWriter, r *http.Request) {
 	storeID, err := utils.GetID(r, "store_id")
 	if err != nil {

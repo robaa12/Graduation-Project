@@ -43,7 +43,7 @@ type VerifiedItem struct {
 func (h *OrderHandler) VerifyOrderItems(w http.ResponseWriter, r *http.Request) {
 	var req VerificationRequest
 	if err := utils.ReadJSON(w, r, &req); err != nil {
-		utils.ErrorJSON(w, err)
+		_ = utils.ErrorJSON(w, err)
 		return
 	}
 
@@ -118,7 +118,7 @@ func (h *OrderHandler) VerifyOrderItems(w http.ResponseWriter, r *http.Request) 
 	})
 
 	if err != nil {
-		utils.ErrorJSON(w, err)
+		_ = utils.ErrorJSON(w, err)
 		log.Println(err)
 		return
 	}
@@ -128,7 +128,7 @@ func (h *OrderHandler) VerifyOrderItems(w http.ResponseWriter, r *http.Request) 
 		response.Message = "Verified Order Items"
 	}
 
-	utils.WriteJSON(w, http.StatusOK, response)
+	_ = utils.WriteJSON(w, http.StatusOK, response)
 }
 
 func (h *OrderHandler) UpdateInventory(w http.ResponseWriter, r *http.Request) {
@@ -137,7 +137,7 @@ func (h *OrderHandler) UpdateInventory(w http.ResponseWriter, r *http.Request) {
 
 	if err := utils.ReadJSON(w, r, &orderItems); err != nil {
 		log.Println(err)
-		utils.ErrorJSON(w, err, http.StatusBadRequest)
+		_ = utils.ErrorJSON(w, err, http.StatusBadRequest)
 	}
 
 	var skus []model.Sku
@@ -151,8 +151,8 @@ func (h *OrderHandler) UpdateInventory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := model.UpdateInventory(h.DB, skus); err != nil {
-		utils.ErrorJSON(w, errors.New("Error Updating Inventory"), http.StatusNotFound)
+		_ = utils.ErrorJSON(w, errors.New("error Updating Inventory"), http.StatusNotFound)
 	}
 
-	utils.WriteJSON(w, 200, "Inventory Updated Successfully.")
+	_ = utils.WriteJSON(w, 200, "Inventory Updated Successfully.")
 }

@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"errors"
 	"net/http"
 
+	apperrors "github.com/robaa12/product-service/cmd/errors"
 	"github.com/robaa12/product-service/cmd/model"
 	"github.com/robaa12/product-service/cmd/service"
 	"github.com/robaa12/product-service/cmd/utils"
@@ -23,85 +23,113 @@ func (h *SKUHandler) UpdateSKU(w http.ResponseWriter, r *http.Request) {
 	// Get the SKU ID from the URL
 	skuID, err := utils.GetID(r, "sku_id")
 	if err != nil {
-		utils.ErrorJSON(w, err)
+		_ = utils.ErrorJSON(w, apperrors.NewBadRequestError("invalid skuID"))
+		return
+	}
+	storeID, err := utils.GetID(r, "store_id")
+	if err != nil {
+		_ = utils.ErrorJSON(w, apperrors.NewBadRequestError("invalid storeID"))
+		return
+	}
+	productID, err := utils.GetID(r, "product_id")
+	if err != nil {
+		_ = utils.ErrorJSON(w, apperrors.NewBadRequestError("invalid productID"))
 		return
 	}
 
 	var skuRequest model.SKURequest
 	err = utils.ReadJSON(w, r, &skuRequest)
 	if err != nil {
-		utils.ErrorJSON(w, err)
+		_ = utils.ErrorJSON(w, apperrors.NewBadRequestError("invalid request payload"))
 		return
 	}
-	err = h.service.UpdateSKU(int(skuID), &skuRequest)
+	err = h.service.UpdateSKU(skuID, productID, storeID, &skuRequest)
 	if err != nil {
-		utils.ErrorJSON(w, err, http.StatusInternalServerError)
+		_ = utils.ErrorJSON(w, err)
 		return
 	}
-	utils.WriteJSON(w, 200, "SKU updated successfully.")
+	_ = utils.WriteJSON(w, http.StatusOK, "SKU updated successfully.")
 }
 
 func (h *SKUHandler) GetSKU(w http.ResponseWriter, r *http.Request) {
 	// Get the SKU ID from the URL
 	skuID, err := utils.GetID(r, "sku_id")
 	if err != nil {
-		utils.ErrorJSON(w, err)
+		_ = utils.ErrorJSON(w, apperrors.NewBadRequestError("invalid skuID"))
 		return
 	}
-	skuResponse, err := h.service.GetSKU(int(skuID))
+	storeID, err := utils.GetID(r, "store_id")
 	if err != nil {
-		utils.ErrorJSON(w, err, http.StatusInternalServerError)
+		_ = utils.ErrorJSON(w, apperrors.NewBadRequestError("invalid storeID"))
 		return
 	}
-	utils.WriteJSON(w, 200, skuResponse)
+	productID, err := utils.GetID(r, "product_id")
+	if err != nil {
+		_ = utils.ErrorJSON(w, apperrors.NewBadRequestError("invalid productID"))
+		return
+	}
+
+	skuResponse, err := h.service.GetSKU(skuID, productID, storeID)
+	if err != nil {
+		_ = utils.ErrorJSON(w, err)
+		return
+	}
+	_ = utils.WriteJSON(w, http.StatusOK, skuResponse)
 }
 
 func (h *SKUHandler) DeleteSKU(w http.ResponseWriter, r *http.Request) {
 	// Get the SKU ID from the URL
 	skuID, err := utils.GetID(r, "sku_id")
 	if err != nil {
-		utils.ErrorJSON(w, err)
+		_ = utils.ErrorJSON(w, apperrors.NewBadRequestError("invalid skuID"))
+		return
+	}
+	storeID, err := utils.GetID(r, "store_id")
+	if err != nil {
+		_ = utils.ErrorJSON(w, apperrors.NewBadRequestError("invalid storeID"))
+		return
+	}
+	productID, err := utils.GetID(r, "product_id")
+	if err != nil {
+		_ = utils.ErrorJSON(w, apperrors.NewBadRequestError("invalid productID"))
 		return
 	}
 
 	// Find SKU by ID
-	err = h.service.DeleteSKU(int(skuID))
+	err = h.service.DeleteSKU(skuID, productID, storeID)
 	if err != nil {
-		utils.ErrorJSON(w, err, http.StatusInternalServerError)
+		_ = utils.ErrorJSON(w, err)
 		return
 	}
-	utils.WriteJSON(w, 200, "SKU deleted successfully.")
+	_ = utils.WriteJSON(w, http.StatusOK, "SKU deleted successfully.")
 }
 
 func (h *SKUHandler) NewSKU(w http.ResponseWriter, r *http.Request) {
-	// Get store id from URI
 	storeID, err := utils.GetID(r, "store_id")
 	if err != nil {
-		utils.ErrorJSON(w, err)
+		_ = utils.ErrorJSON(w, apperrors.NewBadRequestError("invalid storeID"))
 		return
 	}
-	// Read the JSON request
+	productID, err := utils.GetID(r, "product_id")
+	if err != nil {
+		_ = utils.ErrorJSON(w, apperrors.NewBadRequestError("invalid productID"))
+		return
+	}
 	var skuRequest model.SKURequest
 	err = utils.ReadJSON(w, r, &skuRequest)
 	if err != nil {
-		utils.ErrorJSON(w, errors.New("Enter valid SKU data"))
-		return
-	}
-	// Get the Product ID from the URL
-	productID, err := utils.GetID(r, "product_id")
-	if err != nil {
-		utils.ErrorJSON(w, err)
+		_ = utils.ErrorJSON(w, apperrors.NewBadRequestError("invalid request payload"))
 		return
 	}
 
 	// Start Database Transaction
 	// Create a new SKU
-	skuResonse, err := h.service.NewSKU(storeID, productID, &skuRequest)
+	skuResponse, err := h.service.NewSKU(storeID, productID, &skuRequest)
 	if err != nil {
-		utils.ErrorJSON(w, err, http.StatusInternalServerError)
+		_ = utils.ErrorJSON(w, err)
 		return
 	}
 
 	// Return the SKU
-	utils.WriteJSON(w, 201, skuResonse)
+	_ = utils.WriteJSON(w, http.StatusCreated, skuResponse)
 }

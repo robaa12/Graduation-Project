@@ -5,7 +5,7 @@ type ProductRequest struct {
 	Name        string       `json:"name" binding:"required"`
 	Description string       `json:"description" binding:"required"`
 	Published   bool         `json:"published" binding:"required"`
-	StartPrice  float64      `json:"startprice" binding:"required"`
+	StartPrice  float64      `json:"startPrice" binding:"required"`
 	Slug        string       `json:"slug"`
 	Category    string       `json:"category" binding:"required"`
 	SKUs        []SKURequest `json:"skus" binding:"required"`
@@ -17,7 +17,7 @@ type ProductResponse struct {
 	Description string  `json:"description"`
 	Slug        string  `json:"slug"`
 	Published   bool    `json:"published"`
-	StartPrice  float64 `json:"start_price"`
+	StartPrice  float64 `json:"startPrice"`
 	Category    string  `json:"category"`
 }
 type ProductDetailsResponse struct {
@@ -50,9 +50,9 @@ func (p *Product) ToProductResponse() *ProductResponse {
 	}
 }
 
-// map product object ro product response object
+// ToProductDetailsResponse map product object to product response object
 func (p *Product) ToProductDetailsResponse() *ProductDetailsResponse {
-	SKUs := []SKUResponse{}
+	var SKUs []SKUResponse
 	for _, sku := range p.SKUs {
 		SKUs = append(SKUs, *sku.ToSKUResponse())
 	}

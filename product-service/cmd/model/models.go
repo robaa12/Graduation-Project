@@ -6,8 +6,6 @@ import (
 	"gorm.io/gorm"
 )
 
-const dbTimeout = time.Second * 3
-
 var db *gorm.DB
 
 func New(dbPool *gorm.DB) Models {
@@ -32,7 +30,7 @@ type Product struct {
 	Name        string         `json:"name" gorm:"size:255;not null"`
 	Description string         `json:"description" gorm:"type:text"`
 	Published   bool           `json:"published" gorm:"default:true"`
-	StartPrice  float64        `json:"startprice" gorm:"not null"`
+	StartPrice  float64        `json:"startPrice" gorm:"not null"`
 	Category    string         `json:"category" gorm:"size:255;not null"`
 	SKUs        []Sku          `json:"skus" gorm:"foreignKey:ProductID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // One-to-many relationship with SKU
 	Slug        string         `json:"slug" gorm:"size:255;not null"`
@@ -43,7 +41,6 @@ type Product struct {
 
 type Sku struct {
 	ID             uint           `json:"_" gorm:"primaryKey"`
-	StoreID        uint           `json:"store_id" gorm:"not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`   // Add store_id
 	ProductID      uint           `json:"product_id" gorm:"not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // Foreign key for Product
 	Stock          int            `json:"stock" gorm:"not null"`
 	Price          float64        `json:"price" gorm:"not null"`
@@ -88,42 +85,8 @@ type SKUVariant struct {
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
-func (p *Product) GetProduct(id string) error {
-	return db.First(p, id).Error
-}
-
-func (p *Product) UpdateProduct(id string) error {
-	return db.Save(p).Error
-}
-
-func (s *Sku) GetSKU(id string) error {
-	return db.First(s, id).Error
-}
-
-func (Product) TableName() string {
-	return "products"
-}
-
 func (p *Product) BeforeCreate(tx *gorm.DB) error {
 	return tx.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_products_store_id_slug ON products (store_id, slug)").Error
-}
-
-func GetCollectionByID(db *gorm.DB, storeID uint, collectionID uint) (Collection, error) {
-	var collection Collection
-	err := db.Where("store_id = ? AND id = ?", storeID, collectionID).First(&collection).Error
-	return collection, err
-}
-
-func GetAllCollections(db *gorm.DB) ([]Collection, error) {
-	var collections []Collection
-	err := db.Find(&collections).Error
-	return collections, err
-}
-
-func AddProductToCollection(db *gorm.DB) ([]Collection, error) {
-	var collections []Collection
-	err := db.Find(&collections).Error
-	return collections, err
 }
 
 func UpdateInventory(db *gorm.DB, skus []Sku) error {

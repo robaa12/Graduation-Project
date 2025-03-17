@@ -31,10 +31,9 @@ func (s *SKURequest) ToSKU() *Sku {
 		Margin:         s.Margin,
 	}
 }
-func (s *SKURequest) CreateSKU(productID uint, storeID uint) *Sku {
+func (s *SKURequest) CreateSKU(productID uint) *Sku {
 	sku := s.ToSKU()
 	sku.ProductID = productID
-	sku.StoreID = storeID
 	return sku
 }
 
