@@ -94,9 +94,10 @@
     "methods": ["POST"],
     "service": "product-service",
     "middlewares": ["auth", "store-ownership"]
-  },{
+  },
+  {
     "path": "/stores/{store_id}/collections/{collection_id}/products/{product_id}",
-    "methods": [ "DELETE"],
+    "methods": ["DELETE"],
     "service": "product-service",
     "middlewares": ["auth", "store-ownership"]
   },
@@ -141,5 +142,35 @@
     "methods": ["GET", "DELETE"],
     "service": "order-service",
     "middlewares": ["auth", "store-ownership", "logging"]
+  },
+  {
+    "path": "/stores/{store_id}/products/{product_id}/reviews",
+    "methods": ["GET"],
+    "service": "product-service",
+    "middlewares": []
+  },
+  {
+    "path": "/stores/{store_id}/products/{product_id}/reviews",
+    "methods": ["POST"],
+    "service": "product-service",
+    "middlewares": ["auth"]
+  },
+  {
+    "path": "/stores/{store_id}/products/{product_id}/reviews/{review_id}",
+    "methods": ["GET"],
+    "service": "product-service",
+    "middlewares": []
+  },
+  {
+    "path": "/stores/{store_id}/products/{product_id}/reviews/{review_id}",
+    "methods": ["PUT", "DELETE"],
+    "service": "product-service",
+    "middlewares": ["auth"]
+  },
+  {
+    "path": "/stores/{store_id}/products/{product_id}/reviews/statistics",
+    "methods": ["GET"],
+    "service": "product-service",
+    "middlewares": []
   }
 ]

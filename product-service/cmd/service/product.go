@@ -10,11 +10,15 @@ import (
 )
 
 type ProductService struct {
-	repository *repository.ProductRepository
+	repository    *repository.ProductRepository
+	reviewService *ReviewService
 }
 
-func NewProductService(repo *repository.ProductRepository) *ProductService {
-	return &ProductService{repository: repo}
+func NewProductService(repo *repository.ProductRepository, reviewSvc *ReviewService) *ProductService {
+	return &ProductService{
+		repository:    repo,
+		reviewService: reviewSvc,
+	}
 }
 
 // NewProduct creates a new product , skus and variants in the database
@@ -119,6 +123,16 @@ func (ps *ProductService) GetProductDetails(productID, storeID uint) (*model.Pro
 
 	// Convert the product to a detailed response
 	productDetailsResponse := product.ToProductDetailsResponse()
+
+	// Get the review statistics
+	if ps.reviewService != nil {
+		reviewsStats, err := ps.reviewService.GetReviewStatistics(productID, storeID)
+		if err != nil {
+			return nil, err
+		}
+		productDetailsResponse.ReviewStatistics = reviewsStats
+	}
+
 	return productDetailsResponse, nil
 }
 
@@ -136,5 +150,13 @@ func (ps *ProductService) GetProductBySlug(slug string, storeID uint) (*model.Pr
 
 	// Convert to detailed response
 	productDetailsResponse := product.ToProductDetailsResponse()
+
+	if ps.reviewService != nil {
+		reviewsStats, err := ps.reviewService.GetReviewStatistics(product.ID, storeID)
+		if err != nil {
+			return nil, err
+		}
+		productDetailsResponse.ReviewStatistics = reviewsStats
+	}
 	return productDetailsResponse, nil
 }

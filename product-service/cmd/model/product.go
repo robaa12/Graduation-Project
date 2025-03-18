@@ -22,7 +22,8 @@ type ProductResponse struct {
 }
 type ProductDetailsResponse struct {
 	ProductResponse
-	SKUs []SKUResponse `json:"skus"`
+	SKUs             []SKUResponse             `json:"skus"`
+	ReviewStatistics *ProductReviewsStatistics `json:"review_statistics,omitempty"`
 }
 
 func (p *ProductRequest) CreateProduct() *Product {
@@ -56,8 +57,13 @@ func (p *Product) ToProductDetailsResponse() *ProductDetailsResponse {
 	for _, sku := range p.SKUs {
 		SKUs = append(SKUs, *sku.ToSKUResponse())
 	}
+
 	return &ProductDetailsResponse{
 		ProductResponse: *p.ToProductResponse(),
 		SKUs:            SKUs,
 	}
+}
+func (p *ProductDetailsResponse) WithReviewStatistics(stats *ProductReviewsStatistics) *ProductDetailsResponse {
+	p.ReviewStatistics = stats
+	return p
 }

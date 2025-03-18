@@ -12,16 +12,35 @@ func New(dbPool *gorm.DB) Models {
 	db = dbPool
 
 	return Models{
-		Product: Product{},
-		SKU:     Sku{},
-		Variant: Variant{},
+		Product:    Product{},
+		SKU:        Sku{},
+		Variant:    Variant{},
+		Review:     Review{},
+		Collection: Collection{},
 	}
 }
 
 type Models struct {
-	Product Product
-	SKU     Sku
-	Variant Variant
+	Product    Product
+	SKU        Sku
+	Variant    Variant
+	Review     Review
+	Collection Collection
+}
+
+type Review struct {
+	ID             uint           `json:"id" gorm:"primaryKey"`
+	ProductID      uint           `json:"product_id" gorm:"not null;index;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	StoreID        uint           `json:"store_id" gorm:"not null;index"`
+	UserName       string         `json:"user_name" gorm:"size:255;not null"`
+	Rating         int            `json:"rating" gorm:"not null;check:rating >= 1 AND rating <= 5"`
+	Title          string         `json:"title" gorm:"size:255"`
+	Description    string         `json:"description" gorm:"type:text"`
+	Published      bool           `json:"published" gorm:"default:true"`
+	Classification bool           `json:"classification"`
+	CreatedAt      time.Time      `json:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at"`
+	DeletedAt      gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 type Product struct {

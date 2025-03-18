@@ -18,14 +18,14 @@ func (customerHandler *CustomerHandler) CreateNewCustomer(w http.ResponseWriter,
 	// get store_id  from Query parmeter
 	storeId, err := utils.GetID(r, "store_id")
 	if err != nil {
-		utils.ErrorJSON(w, err, http.StatusBadRequest)
+		_ = utils.ErrorJSON(w, err, http.StatusBadRequest)
 		return
 	}
 	// Read Customer Request
 	var customerRequest model.CustomerRequest
 	err = utils.ReadJSON(w, r, &customerRequest)
 	if err != nil {
-		utils.ErrorJSON(w, err, http.StatusBadRequest)
+		_ = utils.ErrorJSON(w, err, http.StatusBadRequest)
 		return
 	}
 	// Get Customer Response

@@ -37,10 +37,16 @@ func (app *Config) routes() http.Handler {
 
 	// Product Handler
 	productRepository := repository.NewProductRepository(*app.db)
-	productService := service.NewProductService(productRepository)
+	reviewRepository := repository.NewReviewRepository(*app.db)
+	reviewService := service.NewReviewService(reviewRepository)
+
+	// Dependancy Injection To access review service in product service
+	productService := service.NewProductService(productRepository, reviewService)
+
 	productHandler := handlers.ProductHandler{
 		ProductService: *productService,
 	}
+	reviewHandler := handlers.NewReviewHandler(reviewService)
 
 	mux.Post("/verify-order", OrderHandler.VerifyOrderItems)
 	mux.Post("/update-inventory", OrderHandler.UpdateInventory)
@@ -74,8 +80,11 @@ func (app *Config) routes() http.Handler {
 
 				// SKU Routes
 				r.Route("/skus", app.sku)
+				r.Get("/reviews", reviewHandler.GetProductReviews)
+				r.Get("/reviews/{review_id}", reviewHandler.GetReview)
+				r.Get("/reviews/statistics", reviewHandler.GetReviewStatistics)
+				r.Post("/reviews", reviewHandler.CreateReview)
 			})
-
 			// Collection Routes /stores/{store_id}/collections
 			r.Route("/collections", app.collection)
 		})
