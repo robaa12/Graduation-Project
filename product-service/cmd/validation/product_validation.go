@@ -6,14 +6,14 @@ import (
 	"github.com/robaa12/product-service/cmd/model"
 )
 
-func ValidateNewProduct(product model.ProductRequest) error {
+func ValidateNewProduct(storeID uint, product model.ProductRequest) error {
 	if product.Name == "" {
 		return errors.New("product name is required ++ ")
 	}
 	if product.Description == "" {
 		return errors.New("product description is required")
 	}
-	if product.StoreID == 0 {
+	if storeID == 0 {
 		return errors.New("store ID is required")
 	}
 

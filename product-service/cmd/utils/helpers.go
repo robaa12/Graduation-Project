@@ -85,3 +85,12 @@ func GetID(r *http.Request, key string) (uint, error) {
 
 	return uint(idInt), nil
 }
+
+func GetString(r *http.Request, key string) (string, error) {
+	slug := chi.URLParam(r, key)
+	if slug == "" {
+		return "", errors.New("missing slug parameter")
+	}
+
+	return slug, nil
+}

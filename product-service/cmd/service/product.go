@@ -22,7 +22,7 @@ func NewProductService(repo *repository.ProductRepository, reviewSvc *ReviewServ
 }
 
 // NewProduct creates a new product , skus and variants in the database
-func (ps *ProductService) NewProduct(productRequest model.ProductRequest) (*model.ProductResponse, error) {
+func (ps *ProductService) NewProduct(storeID uint, productRequest model.ProductRequest) (*model.ProductResponse, error) {
 	// Product Request Validation
 	if len(productRequest.Name) > 255 {
 		return nil, errors.New("product name cannot exceed 255 characters")
@@ -43,13 +43,13 @@ func (ps *ProductService) NewProduct(productRequest model.ProductRequest) (*mode
 		}
 	}
 	// TO DO : VALIDATION
-	slug, err := ps.repository.GenerateProductSlug(productRequest.Name, productRequest.StoreID)
+	slug, err := ps.repository.GenerateProductSlug(productRequest.Name, storeID)
 	if err != nil {
 		log.Println("Error Generating Product's Slug")
 		return nil, err
 	}
 	productRequest.Slug = slug
-	product, err := ps.repository.CreateProduct(productRequest)
+	product, err := ps.repository.CreateProduct(storeID, productRequest)
 	if err != nil {
 		return nil, err
 	}

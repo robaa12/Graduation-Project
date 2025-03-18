@@ -1,53 +1,61 @@
 package model
 
 type ProductRequest struct {
-	StoreID     uint         `json:"store_id" binding:"required"`
-	Name        string       `json:"name" binding:"required"`
-	Description string       `json:"description" binding:"required"`
-	Published   bool         `json:"published" binding:"required"`
-	StartPrice  float64      `json:"startPrice" binding:"required"`
-	Slug        string       `json:"slug"`
-	Category    string       `json:"category" binding:"required"`
-	SKUs        []SKURequest `json:"skus" binding:"required"`
+	Name         string   `json:"name" binding:"required"`
+	Description  string   `json:"description" binding:"required"`
+	Published    bool     `json:"published" binding:"required"`
+	StartPrice   float64  `json:"startPrice" binding:"required"`
+	Slug         string   `json:"slug"`
+	MainImageURL string   `json:"main_image_url" binding:"required"`
+	ImagesURL    []string `json:"images_url"`
+
+	SKUs     []SKURequest  `json:"skus" binding:"required"`
+	Category *CategoryInfo `json:"category,omitempty" `
 }
 type ProductResponse struct {
-	ID          uint    `json:"id"`
-	StoreID     uint    `json:"store_id"`
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	Slug        string  `json:"slug"`
-	Published   bool    `json:"published"`
-	StartPrice  float64 `json:"startPrice"`
-	Category    string  `json:"category"`
+	ID           uint          `json:"id"`
+	Name         string        `json:"name"`
+	Description  string        `json:"description"`
+	Slug         string        `json:"slug"`
+	Published    bool          `json:"published"`
+	StartPrice   float64       `json:"startPrice"`
+	MainImageURL string        `json:"main_image_url"`
+	ImagesURL    []string      `json:"images_url,omitempty"`
+	Category     *CategoryInfo `json:"category,omitempty"`
 }
 type ProductDetailsResponse struct {
 	ProductResponse
+
 	SKUs             []SKUResponse             `json:"skus"`
 	ReviewStatistics *ProductReviewsStatistics `json:"review_statistics,omitempty"`
 }
 
-func (p *ProductRequest) CreateProduct() *Product {
+func (p *ProductRequest) CreateProduct(storeID uint) *Product {
 	return &Product{
-		Name:        p.Name,
-		Description: p.Description,
-		StoreID:     p.StoreID,
-		Published:   p.Published,
-		StartPrice:  p.StartPrice,
-		Category:    p.Category,
-		Slug:        p.Slug,
+		Name:         p.Name,
+		Description:  p.Description,
+		StoreID:      storeID,
+		Published:    p.Published,
+		StartPrice:   p.StartPrice,
+		Slug:         p.Slug,
+		MainImageURL: p.MainImageURL,
+		CategoryID:   &p.Category.ID,
+
+		//ImagesURL:    p.ImagesURL,
 	}
 }
 
 func (p *Product) ToProductResponse() *ProductResponse {
 	return &ProductResponse{
-		ID:          p.ID,
-		StoreID:     p.StoreID,
-		Name:        p.Name,
-		Slug:        p.Slug,
-		Description: p.Description,
-		Published:   p.Published,
-		StartPrice:  p.StartPrice,
-		Category:    p.Category,
+		ID:           p.ID,
+		Name:         p.Name,
+		Slug:         p.Slug,
+		Description:  p.Description,
+		Published:    p.Published,
+		StartPrice:   p.StartPrice,
+		MainImageURL: p.MainImageURL,
+		Category:     p.Category.ToCategoryInfo(),
+		//ImagesURL:    p.ImagesURL,
 	}
 }
 

@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -32,12 +33,24 @@ func (pr *ProductRepository) UpdateProduct(p model.ProductResponse, id uint, sto
 	return pr.db.DB.Model(&model.Product{}).Where("id = ? AND store_id = ?", id, storeId).Updates(p).Error
 }
 
-func (pr *ProductRepository) CreateProduct(productRequest model.ProductRequest) (*model.Product, error) {
+func (pr *ProductRepository) CreateProduct(storeID uint, productRequest model.ProductRequest) (*model.Product, error) {
 	// Generate product slug
 
-	product := productRequest.CreateProduct()
+	product := productRequest.CreateProduct(storeID)
 
 	err := pr.db.DB.Transaction(func(tx *gorm.DB) error {
+		// Check if the category already exists in the database or not
+		if product.CategoryID != nil {
+
+			result := tx.Where("store_id = ? AND id = ?", storeID, product.CategoryID).First(&product.Category)
+
+			if err := result.Error; err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					return err
+				}
+				return err
+			}
+		}
 
 		// Add Product to the database
 		if err := tx.Create(&product).Error; err != nil {

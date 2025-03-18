@@ -101,6 +101,37 @@
     "service": "product-service",
     "middlewares": ["auth", "store-ownership"]
   },
+
+  {
+    "path": "/stores/{store_id}/categories",
+    "methods": ["GET"],
+    "service": "product-service",
+    "middlewares": []
+  },
+  {
+    "path": "/stores/{store_id}/categories/{category_id}",
+    "methods": ["GET"],
+    "service": "product-service",
+    "middlewares": []
+  },
+  {
+    "path": "/stores/{store_id}/categories/slug/{category_slug}",
+    "methods": ["GET"],
+    "service": "product-service",
+    "middlewares": []
+  },
+  {
+    "path": "/stores/{store_id}/categories",
+    "methods": ["POST"],
+    "service": "product-service",
+    "middlewares": ["auth", "store-ownership"]
+  },{
+    "path": "/stores/{store_id}/categories/{category_id}",
+    "methods": ["PUT", "DELETE"],
+    "service": "product-service",
+    "middlewares": ["auth", "store-ownership"]
+  },
+
   {
     "path": "/user/verify-email",
     "methods": ["POST"],

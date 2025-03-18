@@ -17,14 +17,20 @@ type ProductHandler struct {
 
 // NewProduct creates a new product , skus and variants in the database
 func (h *ProductHandler) NewProduct(w http.ResponseWriter, r *http.Request) {
+	// Get the storeID  from the URL
+	storeID, err := utils.GetID(r, "store_id")
+	if err != nil {
+		_ = utils.ErrorJSON(w, apperrors.NewBadRequestError("invalid store ID"))
+		return
+	}
 	// Read the JSON request
 	var productRequest model.ProductRequest
-	err := utils.ReadJSON(w, r, &productRequest)
+	err = utils.ReadJSON(w, r, &productRequest)
 	if err != nil {
 		_ = utils.ErrorJSON(w, apperrors.NewBadRequestError("invalid request payload"))
 		return
 	}
-	productResponse, err := h.ProductService.NewProduct(productRequest)
+	productResponse, err := h.ProductService.NewProduct(storeID, productRequest)
 
 	if err != nil {
 		_ = utils.ErrorJSON(w, err)

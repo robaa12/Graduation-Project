@@ -87,6 +87,8 @@ func (app *Config) routes() http.Handler {
 			})
 			// Collection Routes /stores/{store_id}/collections
 			r.Route("/collections", app.collection)
+			// Categories Routes /stores/{store_id}/categories
+			r.Route("/categories", app.category)
 		})
 	})
 
@@ -161,6 +163,26 @@ func (app *Config) collection(r chi.Router) {
 		r.Post("/", collectionHandler.CreateCollection)
 		r.Post("/{collection_id}/products", collectionHandler.AddProductToCollection)
 		r.Delete("/{collection_id}/products/{product_id}", collectionHandler.RemoveProductFromCollection)
+	})
+
+}
+func setupCategoryHandler(db *database.Database) *handlers.CategoryHandler {
+	categoryRepo := repository.NewCategoryRepository(db)
+	categoryService := service.NewCategoryService(categoryRepo)
+	categoryHandler := handlers.NewCategoryHandler(categoryService)
+
+	return categoryHandler
+}
+func (app *Config) category(r chi.Router) {
+	categoryHandler := setupCategoryHandler(app.db)
+	// Public endpoints
+	r.Get("/", categoryHandler.GetCategories)
+	r.Post("/", categoryHandler.CreateCategory)
+	r.Get("/slug/{category_slug}", categoryHandler.GetCategoryBySlug)
+	r.Route("/{category_id}", func(r chi.Router) {
+		r.Get("/", categoryHandler.GetCategoryByID)
+		r.Post("/", categoryHandler.UpdateCategory)
+		r.Delete("/", categoryHandler.DeleteCategory)
 	})
 
 }
