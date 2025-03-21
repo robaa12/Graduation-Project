@@ -29,28 +29,54 @@ type LoginResponse struct {
 	Token    string `json:"token"`
 	UserID   int    `json:"user_id"`
 	StoresID []int  `json:"stores_id"`
-	Email 	string `json:"email"`
-	Image 	string `json:"image"`
-	Name 	string `json:"name"`
+	Email    string `json:"email"`
+	Image    string `json:"image"`
+	Name     string `json:"name"`
+}
+
+type AuthResponse struct {
+	Token       string  `json:"token"`
+	UserID      int     `json:"user_id"`
+	FirstName   string  `json:"first_name"`
+	LastName    string  `json:"last_name"`
+	Email       string  `json:"email"`
+	StoresID    []int   `json:"stores_id,omitempty"`
+	IsActive    bool    `json:"is_active,omitempty"`
+	IsBanned    bool    `json:"is_banned,omitempty"`
+	PhoneNumber *string `json:"phone_number,omitempty"`
+	Address     *string `json:"address,omitempty"`
+	Image       string  `json:"image,omitempty"`
+	CreatedAt   string  `json:"created_at,omitempty"`
+	UpdatedAt   string  `json:"updated_at,omitempty"`
 }
 
 type UserResponse struct {
-	ID        int    `json:"id"`
-	Email     string `json:"email"`
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
-	StoresID  []int  `json:"stores_id,omitempty"`
-}
-
-type RegisterResponse struct {
-	User  UserResponse `json:"user"`
-	Token string       `json:"token"`
+	ID          int     `json:"id"`
+	FirstName   string  `json:"firstName"`
+	LastName    string  `json:"lastName"`
+	IsActive    bool    `json:"isActive"`
+	Email       string  `json:"email"`
+	IsBanned    bool    `json:"is_banned"`
+	PhoneNumber *string `json:"phoneNumber"`
+	StoresID    []int   `json:"stores_id"`
+	Address     *string `json:"address"`
+	CreateAt    string  `json:"createAt"`
+	UpdateAt    string  `json:"updateAt"`
 }
 
 type APIResponse struct {
 	Status  bool         `json:"status"`
 	Message string       `json:"message"`
 	Data    UserResponse `json:"data"`
+}
+
+type RegisterAPIResponse struct {
+	Status    bool   `json:"status"`
+	ID        int    `json:"id"`
+	Email     string `json:"email"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	StoresID  []int  `json:"stores_id"`
 }
 
 func NewAuthService(cfg *config.Config) *AuthService {
@@ -62,8 +88,7 @@ func NewAuthService(cfg *config.Config) *AuthService {
 
 // Register handles the register request
 func (s *AuthService) Register(w http.ResponseWriter, r *http.Request) {
-	// Make request to user service (Solve this when we know the endpoint path)
-
+	// Make request to user service
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/user", s.userService.URL), r.Body)
 	if err != nil {
 		utils.ErrorJSON(w, err, http.StatusInternalServerError)
@@ -79,41 +104,51 @@ func (s *AuthService) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusCreated {
 		log.Println(resp.StatusCode)
 		utils.ErrorJSON(w, errors.New("error registering user"), http.StatusInternalServerError)
 		return
 	}
 
-	var user UserResponse
-
-	// Read response body manually
+	// Read response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		utils.ErrorJSON(w, err, http.StatusInternalServerError)
 		return
 	}
 
-	// Unmarshal JSON manually
-	err = json.Unmarshal(body, &user)
+	// Log the raw response for debugging
+	log.Printf("Registration API Response: %s", string(body))
+
+	// Parse the response using the struct that matches the actual format
+	var registerResp RegisterAPIResponse
+	err = json.Unmarshal(body, &registerResp)
 	if err != nil {
-		utils.ErrorJSON(w, err, http.StatusInternalServerError)
+		log.Printf("Failed to unmarshal API response: %v", err)
+		utils.ErrorJSON(w, errors.New("Failed to parse user data"), http.StatusInternalServerError)
 		return
 	}
 
 	// Generate JWT Token
-	token, err := s.jwtService.GenerateToken(user.ID, user.StoresID)
+	token, err := s.jwtService.GenerateToken(registerResp.ID, registerResp.StoresID)
 	if err != nil {
 		utils.ErrorJSON(w, errors.New("Error Generating JWT Token"), http.StatusInternalServerError)
 		return
 	}
 
-	// Send response
-	utils.WriteJSON(w, http.StatusCreated, RegisterResponse{
-		User:  user,
-		Token: token,
+	// Create the response with all available fields
+	utils.WriteJSON(w, http.StatusCreated, AuthResponse{
+		Token:     token,
+		UserID:    registerResp.ID,
+		FirstName: registerResp.FirstName,
+		LastName:  registerResp.LastName,
+		Email:     registerResp.Email,
+		StoresID:  registerResp.StoresID,
+		// Other fields might not be available in the register response
+		// but can be added if they are
+		Image: "",
 	})
-
 }
 
 // Login handles the login request
@@ -140,14 +175,21 @@ func (s *AuthService) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Send response
-	utils.WriteJSON(w, http.StatusOK, LoginResponse{
-		Token:    token,
-		UserID:   user.ID,
-		StoresID: user.StoresID,
-		Email: user.Email,
-		Image : "",
-		Name : user.FirstName + " " + user.LastName,
+	// Send response with all available user data
+	utils.WriteJSON(w, http.StatusOK, AuthResponse{
+		Token:       token,
+		UserID:      user.ID,
+		FirstName:   user.FirstName,
+		LastName:    user.LastName,
+		Email:       user.Email,
+		StoresID:    user.StoresID,
+		IsActive:    user.IsActive,
+		IsBanned:    user.IsBanned,
+		PhoneNumber: user.PhoneNumber,
+		Address:     user.Address,
+		Image:       "", // Default empty image
+		CreatedAt:   user.CreateAt,
+		UpdatedAt:   user.UpdateAt,
 	})
 }
 
@@ -159,7 +201,7 @@ func (s *AuthService) validateCredentials(login LoginRequest) (*UserResponse, er
 		return nil, err
 	}
 
-	// Make request to user service (Solve this when we know the endpoint path)
+	// Make request to user service
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/user/login", s.userService.URL), strings.NewReader(string(reqBody)))
 	if err != nil {
 		return nil, err
@@ -178,18 +220,22 @@ func (s *AuthService) validateCredentials(login LoginRequest) (*UserResponse, er
 	if resp.StatusCode != http.StatusOK {
 		return nil, errors.New("invalid credentials")
 	}
-	// Store the response data in a struct
 
+	// Read and log the raw response for debugging
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	log.Printf("Login API Response: %s", string(body))
+
+	// Parse the response
 	var apiResponse APIResponse
-
-	err = json.NewDecoder(resp.Body).Decode(&apiResponse)
+	err = json.Unmarshal(body, &apiResponse)
 	if err != nil {
 		return nil, err
 	}
 
-	user := apiResponse.Data
-	fmt.Println(user)
-	return &user, nil
+	return &apiResponse.Data, nil
 }
 
 func (s *AuthService) AuthMiddleware(next http.Handler) http.Handler {
