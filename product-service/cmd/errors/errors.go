@@ -41,21 +41,6 @@ func NewInternalServerError(message string) AppError {
 	}
 }
 
-func NewUnauthorizedError(message string) AppError {
-	return AppError{
-		Type:       "UNAUTHORIZED",
-		Message:    message,
-		StatusCode: http.StatusUnauthorized,
-	}
-}
-
-func NewForbiddenError(message string) AppError {
-	return AppError{
-		Type:       "FORBIDDEN",
-		Message:    message,
-		StatusCode: http.StatusForbidden,
-	}
-}
 func ErrCheck(err error) error {
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

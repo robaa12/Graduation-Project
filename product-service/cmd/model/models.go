@@ -3,6 +3,7 @@ package model
 import (
 	"time"
 
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
@@ -49,18 +50,18 @@ type Review struct {
 }
 
 type Product struct {
-	ID           uint    `json:"_" gorm:"primaryKey"`
-	StoreID      uint    `json:"store_id" gorm:"not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // Foreign key for Store
-	CategoryID   *uint   `json:"category_id" gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`      // Nullable FK for Category
-	Name         string  `json:"name" gorm:"size:255;not null"`
-	Description  string  `json:"description" gorm:"type:text"`
-	Published    bool    `json:"published" gorm:"default:true"`
-	StartPrice   float64 `json:"startPrice" gorm:"not null"`
-	SKUs         []Sku   `json:"skus" gorm:"foreignKey:ProductID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // One-to-many relationship with SKU
-	Slug         string  `json:"slug" gorm:"size:255;not null"`
-	MainImageURL string  `json:"main_image_url" gorm:"size:255;not null"`
-	//ImagesURL    []string `json:"images_url" gorm:"size:255"`
-	Category Category `json:"category"`
+	ID           uint           `json:"_" gorm:"primaryKey"`
+	StoreID      uint           `json:"store_id" gorm:"not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // Foreign key for Store
+	CategoryID   *uint          `json:"category_id" gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`      // Nullable FK for Category
+	Name         string         `json:"name" gorm:"size:255;not null"`
+	Description  string         `json:"description" gorm:"type:text"`
+	Published    bool           `json:"published" gorm:"default:true"`
+	StartPrice   float64        `json:"startPrice" gorm:"not null"`
+	SKUs         []Sku          `json:"skus" gorm:"foreignKey:ProductID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // One-to-many relationship with SKU
+	Slug         string         `json:"slug" gorm:"size:255;not null"`
+	MainImageURL string         `json:"main_image_url" gorm:"size:255;not null"`
+	ImagesURL    pq.StringArray `json:"images_url" gorm:"type:text[];not null;default:'{}'"`
+	Category     Category       `json:"category"`
 	BaseModel
 }
 
@@ -73,6 +74,7 @@ type Sku struct {
 	CostPerItem    float64      `json:"cost_per_item" gorm:"not null"`
 	Profit         float64      `json:"profit" gorm:"not null"`
 	Margin         float64      `json:"margin" gorm:"not null"`
+	ImageURL       string       `json:"image_url" gorm:"size:255"`
 	Variants       []Variant    `json:"variants" gorm:"many2many:sku_variants;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // Many-to-many with Variants
 	SKUVariants    []SKUVariant `json:"sku_variants" gorm:"foreignKey:SkuID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`   // One-to-many relationship with SKUVariant
 	BaseModel

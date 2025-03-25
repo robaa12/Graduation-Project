@@ -59,10 +59,9 @@ func WriteJSON(w http.ResponseWriter, status int, data any, headers ...http.Head
 func ErrorJSON(w http.ResponseWriter, err error, status ...int) error {
 	statusCode := http.StatusBadRequest
 
-	if appErr, ok := err.(apperrors.AppError); ok {
+	var appErr apperrors.AppError
+	if errors.As(err, &appErr) {
 		statusCode = appErr.StatusCode
-	} else if len(status) > 0 {
-		statusCode = status[0]
 	}
 
 	var payload jsonResponse

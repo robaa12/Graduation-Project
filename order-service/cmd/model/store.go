@@ -12,8 +12,8 @@ type StoreOrderResponse struct {
 }
 
 // CreateStore creates a Store object from an OrderRequestDetails object.
-func (order *OrderRequestDetails) CreateStore() *Store {
-	return &Store{ID: order.StoreID} // Returns a Store object with the ID set to the StoreID from OrderRequestDetails.
+func (orderRequest *OrderRequestDetails) CreateStore() *Store {
+	return &Store{ID: orderRequest.StoreID} // Returns a Store object with the ID set to the StoreID from OrderRequestDetails.
 }
 
 // CreateStoreResponse creates a StoreResponse object from a Store object.
@@ -23,8 +23,8 @@ func (store *Store) CreateStoreResponse() *StoreResponse {
 	}
 }
 
-// CreateStoreOrderResonpse creates a StoreOrderResponse object from a Store object.
-func (store *Store) CreateStoreOrderResonpse() *StoreOrderResponse {
+// CreateStoreOrderResponse  creates a StoreOrderResponse object from a Store object.
+func (store *Store) CreateStoreOrderResponse() *StoreOrderResponse {
 	var orders []OrderResponse
 	for _, order := range store.Orders {
 		// Creates an OrderResponse for each order and appends it to the list.

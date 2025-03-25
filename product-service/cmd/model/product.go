@@ -1,16 +1,21 @@
 package model
 
-type ProductRequest struct {
-	Name         string   `json:"name" binding:"required"`
-	Description  string   `json:"description" binding:"required"`
-	Published    bool     `json:"published" binding:"required"`
-	StartPrice   float64  `json:"startPrice" binding:"required"`
-	Slug         string   `json:"slug"`
-	MainImageURL string   `json:"main_image_url" binding:"required"`
-	ImagesURL    []string `json:"images_url"`
+import (
+	"strings"
 
-	SKUs     []SKURequest  `json:"skus" binding:"required"`
-	Category *CategoryInfo `json:"category,omitempty" `
+	"github.com/lib/pq"
+)
+
+type ProductRequest struct {
+	Name         string        `json:"name" binding:"required"`
+	Description  string        `json:"description" binding:"required"`
+	Published    bool          `json:"published" binding:"required"`
+	StartPrice   float64       `json:"startPrice" binding:"required"`
+	Slug         string        `json:"slug"`
+	MainImageURL string        `json:"main_image_url" binding:"required,url"`
+	ImagesURL    []string      `json:"images_url"`
+	SKUs         []SKURequest  `json:"skus" binding:"required"`
+	Category     *CategoryInfo `json:"category,omitempty" `
 }
 type ProductResponse struct {
 	ID           uint          `json:"id"`
@@ -20,7 +25,7 @@ type ProductResponse struct {
 	Published    bool          `json:"published"`
 	StartPrice   float64       `json:"startPrice"`
 	MainImageURL string        `json:"main_image_url"`
-	ImagesURL    []string      `json:"images_url,omitempty"`
+	ImagesURL    []string      `json:"images_url"`
 	Category     *CategoryInfo `json:"category,omitempty"`
 }
 type ProductDetailsResponse struct {
@@ -31,6 +36,14 @@ type ProductDetailsResponse struct {
 }
 
 func (p *ProductRequest) CreateProduct(storeID uint) *Product {
+	mainImageURL := sanitizeURL(p.MainImageURL)
+	imagesURL := make(pq.StringArray, 0)
+	for _, url := range p.ImagesURL {
+		if sanitizedURL := sanitizeURL(url); sanitizedURL != "" {
+			imagesURL = append(imagesURL, sanitizedURL)
+		}
+	}
+
 	return &Product{
 		Name:         p.Name,
 		Description:  p.Description,
@@ -38,14 +51,18 @@ func (p *ProductRequest) CreateProduct(storeID uint) *Product {
 		Published:    p.Published,
 		StartPrice:   p.StartPrice,
 		Slug:         p.Slug,
-		MainImageURL: p.MainImageURL,
+		MainImageURL: mainImageURL,
 		CategoryID:   &p.Category.ID,
-
-		//ImagesURL:    p.ImagesURL,
+		ImagesURL:    imagesURL,
 	}
 }
 
 func (p *Product) ToProductResponse() *ProductResponse {
+	images := make([]string, len(p.ImagesURL))
+	for i, url := range p.ImagesURL {
+		images[i] = url
+	}
+
 	return &ProductResponse{
 		ID:           p.ID,
 		Name:         p.Name,
@@ -55,7 +72,7 @@ func (p *Product) ToProductResponse() *ProductResponse {
 		StartPrice:   p.StartPrice,
 		MainImageURL: p.MainImageURL,
 		Category:     p.Category.ToCategoryInfo(),
-		//ImagesURL:    p.ImagesURL,
+		ImagesURL:    images,
 	}
 }
 
@@ -74,4 +91,12 @@ func (p *Product) ToProductDetailsResponse() *ProductDetailsResponse {
 func (p *ProductDetailsResponse) WithReviewStatistics(stats *ProductReviewsStatistics) *ProductDetailsResponse {
 	p.ReviewStatistics = stats
 	return p
+}
+
+func sanitizeURL(url string) string {
+	url = strings.TrimSpace(url)
+	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
+		return "https://" + url
+	}
+	return url
 }

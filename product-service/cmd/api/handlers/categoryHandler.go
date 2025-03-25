@@ -34,7 +34,7 @@ func (ch *CategoryHandler) CreateCategory(w http.ResponseWriter, r *http.Request
 		_ = utils.ErrorJSON(w, err)
 		return
 	}
-	utils.WriteJSON(w, http.StatusCreated, categoryResponse)
+	_ = utils.WriteJSON(w, http.StatusCreated, categoryResponse)
 }
 
 // GetCategories - GET /stores/{store_id}/categories/
@@ -51,7 +51,7 @@ func (ch *CategoryHandler) GetCategories(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusOK, categories)
+	_ = utils.WriteJSON(w, http.StatusOK, categories)
 }
 
 // GetCategoryByID - GET /stores/{store_id}/categories/{category_id}
@@ -73,7 +73,7 @@ func (ch *CategoryHandler) GetCategoryByID(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusOK, category)
+	_ = utils.WriteJSON(w, http.StatusOK, category)
 }
 
 // GetCategoryBySlug - GET /stores/{store_id}/categories/{category_slug}
@@ -95,7 +95,7 @@ func (ch *CategoryHandler) GetCategoryBySlug(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusOK, category)
+	_ = utils.WriteJSON(w, http.StatusOK, category)
 }
 
 // UpdateCategory Update Category - POST /stores/{store_id}/categories/{category_id}
@@ -116,13 +116,13 @@ func (ch *CategoryHandler) UpdateCategory(w http.ResponseWriter, r *http.Request
 		_ = utils.ErrorJSON(w, apperrors.NewBadRequestError("invalid request payload"))
 		return
 	}
-	err = ch.service.UpdateCategory(storeID, categoryID, &categoryRequest)
+	err = ch.service.UpdateCategory(storeID, categoryID)
 	if err != nil {
 		_ = utils.ErrorJSON(w, err)
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusOK, map[string]string{
+	_ = utils.WriteJSON(w, http.StatusOK, map[string]string{
 		"message": "Category Updated successfully",
 	})
 
@@ -146,7 +146,7 @@ func (ch *CategoryHandler) DeleteCategory(w http.ResponseWriter, r *http.Request
 		_ = utils.ErrorJSON(w, err)
 		return
 	}
-	utils.WriteJSON(w, http.StatusOK, map[string]string{
+	_ = utils.WriteJSON(w, http.StatusOK, map[string]string{
 		"message": "Category Deleted successfully",
 	})
 }

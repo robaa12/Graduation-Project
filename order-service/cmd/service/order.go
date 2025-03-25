@@ -41,13 +41,13 @@ func (s *OrderService) AddNewOrder(orderRequest *model.OrderRequestDetails) (*mo
 
 }
 
-func (s *OrderService) GetAllOrder(store_id string) ([]model.OrderResponse, error) {
+func (s *OrderService) GetAllOrder(storeId string) ([]model.OrderResponse, error) {
 
-	orders, err := s.OrderRepo.GetAllOrder(store_id)
+	orders, err := s.OrderRepo.GetAllOrder(storeId)
 	if err != nil {
 		return nil, err
 	}
-	// mapping orderitem model into order item response
+	// mapping order item model into order item response
 	var orderResponse []model.OrderResponse
 	for _, item := range orders {
 		orderResponse = append(orderResponse, *item.CreateOrderResponse())
@@ -56,9 +56,9 @@ func (s *OrderService) GetAllOrder(store_id string) ([]model.OrderResponse, erro
 	return orderResponse, nil
 }
 
-func (s *OrderService) GetOrderDetails(order_id string) (*model.OrderDetailsResponse, error) {
+func (s *OrderService) GetOrderDetails(orderId string) (*model.OrderDetailsResponse, error) {
 	var order model.Order
-	err := s.OrderRepo.GetOrderDetails(&order, order_id)
+	err := s.OrderRepo.GetOrderDetails(&order, orderId)
 	if err != nil {
 		return nil, err
 	}
@@ -67,9 +67,9 @@ func (s *OrderService) GetOrderDetails(order_id string) (*model.OrderDetailsResp
 	return orderDetailsResponse, nil
 }
 
-func (s *OrderService) GetOrder(order_id string) (*model.OrderResponse, error) {
+func (s *OrderService) GetOrder(orderId string) (*model.OrderResponse, error) {
 	var order model.Order
-	err := s.OrderRepo.GetOrder(&order, order_id)
+	err := s.OrderRepo.GetOrder(&order, orderId)
 	if err != nil {
 		return nil, err
 	}
@@ -78,15 +78,15 @@ func (s *OrderService) GetOrder(order_id string) (*model.OrderResponse, error) {
 	return orderResponse, nil
 }
 
-func (s *OrderService) UpdateOrder(order_id uint, orderRequest *model.OrderRequest) error {
+func (s *OrderService) UpdateOrder(orderId uint, orderRequest *model.OrderRequest) error {
 	var order model.Order
-	rowAffected, err := s.OrderRepo.FindOrder(&order, utils.ItoS(order_id))
+	rowAffected, err := s.OrderRepo.FindOrder(&order, utils.ItoS(orderId))
 	if err != nil {
 		return err
 	} else if rowAffected == 0 {
 		return errors.New("order not found")
 	}
-	err = s.OrderRepo.UpdateOrder(orderRequest, order_id)
+	err = s.OrderRepo.UpdateOrder(orderRequest, orderId)
 	if err != nil {
 		return err
 	}
@@ -94,10 +94,10 @@ func (s *OrderService) UpdateOrder(order_id uint, orderRequest *model.OrderReque
 	return nil
 }
 
-func (s *OrderService) DeleteOrder(order_id string) error {
+func (s *OrderService) DeleteOrder(orderId string) error {
 	// Delete order  from database by order id
 	var order model.Order
-	rowAffected, err := s.OrderRepo.FindOrder(&order, order_id)
+	rowAffected, err := s.OrderRepo.FindOrder(&order, orderId)
 	if err != nil {
 		return err
 	} else if rowAffected == 0 {

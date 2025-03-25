@@ -19,10 +19,10 @@ func NewOrderItemRepository(db *gorm.DB) *OrderItemRepository {
 func (r *OrderItemRepository) GetOrderItem(item *model.OrderItem, id string) error {
 	return r.db.First(item, id).Error
 }
-func (r *OrderItemRepository) GetAllOrderItems(order_id string) ([]model.OrderItem, error) {
+func (r *OrderItemRepository) GetAllOrderItems(orderId string) ([]model.OrderItem, error) {
 
 	var order model.Order
-	err := r.db.Preload("OrderItems").First(&order, order_id).Error
+	err := r.db.Preload("OrderItems").First(&order, orderId).Error
 	if err != nil {
 
 		return nil, err
@@ -31,7 +31,7 @@ func (r *OrderItemRepository) GetAllOrderItems(order_id string) ([]model.OrderIt
 	return order.OrderItems, nil
 }
 
-// Create funtions for each model
+// CreateOrderItem Create functions for each model
 func CreateOrderItem(orderItem *model.OrderItem, tx *gorm.DB) error {
 	return tx.Create(orderItem).Error
 }

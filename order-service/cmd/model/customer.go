@@ -29,13 +29,6 @@ func (customer *CustomerRequest) CreateCustomer() *Customer {
 	}
 }
 
-// CreateCustomerByID creates a Customer object from a customerID .
-func CreateCustomerByID(customerID uint) *Customer {
-	return &Customer{
-		ID: customerID, // Sets the customer's id
-	}
-}
-
 // CreateCustomerResponse creates a CustomerResponse object from a Customer object.
 func (customer *Customer) CreateCustomerResponse() *CustomerResponse {
 	return &CustomerResponse{

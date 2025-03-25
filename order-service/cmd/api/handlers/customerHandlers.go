@@ -31,69 +31,69 @@ func (customerHandler *CustomerHandler) CreateNewCustomer(w http.ResponseWriter,
 	// Get Customer Response
 	customerResponse, err := customerHandler.CustomerService.CreateNewCustomer(&customerRequest, storeId)
 	if err != nil {
-		utils.ErrorJSON(w, err, http.StatusConflict)
+		_ = utils.ErrorJSON(w, err, http.StatusConflict)
 		return
 	}
-	utils.WriteJSON(w, http.StatusCreated, customerResponse)
+	_ = utils.WriteJSON(w, http.StatusCreated, customerResponse)
 }
 func (customerHandler *CustomerHandler) GetAllCustomers(w http.ResponseWriter, r *http.Request) {
-	// get store_id  from Query parmeter
+	// get store_id  from Query parameter
 	storeId, err := utils.GetID(r, "store_id")
 	if err != nil {
-		utils.ErrorJSON(w, err, http.StatusBadRequest)
+		_ = utils.ErrorJSON(w, err, http.StatusBadRequest)
 		return
 	}
 	// Get All Customers Response
 	customersResponse, err := customerHandler.CustomerService.GetAllCustomers(storeId)
 	if err != nil {
-		utils.ErrorJSON(w, err, http.StatusNotFound)
+		_ = utils.ErrorJSON(w, err, http.StatusNotFound)
 		return
 	}
-	utils.WriteJSON(w, http.StatusOK, customersResponse)
+	_ = utils.WriteJSON(w, http.StatusOK, customersResponse)
 
 }
 func (customerHandler *CustomerHandler) GetCustomer(w http.ResponseWriter, r *http.Request) {
-	// get store_id , customer_id from Query parmeter
+	// get store_id , customer_id from Query parameter
 	storeId, err := utils.GetID(r, "store_id")
 	if err != nil {
-		utils.ErrorJSON(w, err, http.StatusBadRequest)
+		_ = utils.ErrorJSON(w, err, http.StatusBadRequest)
 		return
 	}
 	customerId, err := utils.GetID(r, "customer_id")
 	if err != nil {
-		utils.ErrorJSON(w, err, http.StatusBadRequest)
+		_ = utils.ErrorJSON(w, err, http.StatusBadRequest)
 		return
 	}
 	// Get Customer Response
 	customerResponse, err := customerHandler.CustomerService.GetCustomer(storeId, customerId)
 	if err != nil {
-		utils.ErrorJSON(w, err, http.StatusNotFound)
+		_ = utils.ErrorJSON(w, err, http.StatusNotFound)
 		return
 	}
-	utils.WriteJSON(w, http.StatusOK, customerResponse)
+	_ = utils.WriteJSON(w, http.StatusOK, customerResponse)
 }
 
-// TODO:
+// UpdateCustomer TODO:
 func (customerHandler *CustomerHandler) UpdateCustomer(w http.ResponseWriter, r *http.Request) {}
 func (customerHandler *CustomerHandler) DeleteCustomer(w http.ResponseWriter, r *http.Request) {
 	// get store_id , customer_id from Query parmeter
 	storeId, err := utils.GetID(r, "store_id")
 	if err != nil {
-		utils.ErrorJSON(w, err, http.StatusBadRequest)
+		_ = utils.ErrorJSON(w, err, http.StatusBadRequest)
 		return
 	}
 	customerId, err := utils.GetID(r, "customer_id")
 	if err != nil {
-		utils.ErrorJSON(w, err, http.StatusBadRequest)
+		_ = utils.ErrorJSON(w, err, http.StatusBadRequest)
 		return
 	}
 	// Delete Customer
 	err = customerHandler.CustomerService.DeleteCustomer(storeId, customerId)
 	if err != nil {
-		utils.ErrorJSON(w, err, http.StatusNotFound)
+		_ = utils.ErrorJSON(w, err, http.StatusNotFound)
 		return
 	}
-	// write json resonpse
-	utils.WriteJSON(w, http.StatusNoContent, "Order deleted successfully.")
+	// write json response
+	_ = utils.WriteJSON(w, http.StatusNoContent, "Order deleted successfully.")
 
 }

@@ -4,7 +4,6 @@ import (
 	"time"
 )
 
-// orderRequest and thier fuction which's mapping orderRequest to orderModel
 type OrderRequestDetails struct {
 	StoreID uint `json:"store_id" binding:"required"`
 	OrderRequest
@@ -24,7 +23,7 @@ type OrderRequest struct {
 	ShippingMethod string  `json:"shipping_method" binding:"required"`
 }
 
-// orderResponse with their fuction that mapping OrderModel into OrderResponse
+// orderResponse with their function that mapping OrderModel into OrderResponse
 
 type OrderResponseInfo struct {
 	ID             uint      `json:"order_id"`
@@ -47,7 +46,7 @@ type OrderResponse struct {
 	OrderResponseInfo
 }
 
-// orderDetailsResponse with their fuction that mapping OrderModel using CustomerModel as arg into OrderDetailsResponse
+// OrderDetailsResponse  with their function that mapping OrderModel using CustomerModel as arg into OrderDetailsResponse
 type OrderDetailsResponse struct {
 	OrderResponse
 	OrderItems []OrderItemResponse `json:"order_items"`
@@ -96,7 +95,7 @@ func (order *Order) CreateOrderResponse() *OrderResponse {
 
 }
 
-// NOTE MAKE SURE IF customerinto is important to be on OrderDetailsResponse ------->
+// CreateOrderDetailsResponse NOTE MAKE SURE IF customer is important to be on OrderDetailsResponse ------->
 func (order *Order) CreateOrderDetailsResponse() *OrderDetailsResponse {
 
 	var orderItems []OrderItemResponse

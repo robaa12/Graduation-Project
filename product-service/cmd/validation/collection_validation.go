@@ -11,10 +11,6 @@ type CollectionValidator struct {
 	DB *gorm.DB
 }
 
-func NewCollectionValidator(db *gorm.DB) *CollectionValidator {
-	return &CollectionValidator{DB: db}
-}
-
 func (v *CollectionValidator) CollectionExists(storeID, collectionID uint) (*model.Collection, error) {
 	var collection model.Collection
 	if err := v.DB.Where("store_id = ? AND id = ?", storeID, collectionID).First(&collection).Error; err != nil {

@@ -16,7 +16,7 @@ import (
 type RouteManager struct {
 	Router *chi.Mux
 	Cfg    *config.Config
-	Auth   *auth.AuthService
+	Auth   *auth.Service
 }
 
 func NewRouter(cfg *config.Config) *RouteManager {
@@ -104,12 +104,12 @@ func (rm *RouteManager) coreRoutes() {
 	rm.Router.Post("/login", rm.Auth.Login)
 	rm.Router.Post("/register", rm.Auth.Register)
 	rm.Router.Get("/", rm.sayHello())
+	rm.Router.Post("/refresh", rm.Auth.RefreshToken)
 }
 
 func (rm *RouteManager) sayHello() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello, World!")
-
 	}
 }
 

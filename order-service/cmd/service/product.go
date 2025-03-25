@@ -11,13 +11,6 @@ import (
 type ProductService struct {
 	ProductServiceURL string
 }
-
-func NewProductService(url string) *ProductService {
-	return &ProductService{
-		ProductServiceURL: url,
-	}
-}
-
 type VerificationResponse struct {
 	Valid   bool           `json:"valid"`
 	Message string         `json:"messages"`

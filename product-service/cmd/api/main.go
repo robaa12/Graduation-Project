@@ -13,7 +13,6 @@ import (
 const WebPort = "8083"
 
 // Database connection times
-var counts int
 
 type Config struct {
 	db     *database.Database
@@ -24,13 +23,19 @@ func main() {
 	log.Printf("Starting Product Service On Port %s...\n", WebPort)
 
 	// Setup Database (migrations, indexes)
-	database, err := database.New()
-	database.SetupDatabase()
+	DB, err := database.New()
+	if err != nil {
+		log.Panic(err)
+	}
+	err = DB.SetupDatabase()
+	if err != nil {
+		return
+	}
 
 	// Set up config
 	app := Config{
-		db:     database,
-		models: model.New(database.DB),
+		db:     DB,
+		models: model.New(DB.DB),
 	}
 
 	srv := &http.Server{

@@ -42,13 +42,18 @@ func (ps *ProductService) NewProduct(storeID uint, productRequest model.ProductR
 			return nil, errors.New("cost per item cannot be greater than selling price")
 		}
 	}
-	// TO DO : VALIDATION
+
+	if err := validateProductImages(productRequest); err != nil {
+		return nil, err
+	}
+
 	slug, err := ps.repository.GenerateProductSlug(productRequest.Name, storeID)
 	if err != nil {
 		log.Println("Error Generating Product's Slug")
 		return nil, err
 	}
 	productRequest.Slug = slug
+
 	product, err := ps.repository.CreateProduct(storeID, productRequest)
 	if err != nil {
 		return nil, err
@@ -159,4 +164,27 @@ func (ps *ProductService) GetProductBySlug(slug string, storeID uint) (*model.Pr
 		productDetailsResponse.ReviewStatistics = reviewsStats
 	}
 	return productDetailsResponse, nil
+}
+
+func validateProductImages(product model.ProductRequest) error {
+	if product.MainImageURL == "" {
+		return apperrors.NewBadRequestError("main image URL is required")
+	}
+
+	const maxAdditionalImages = 10
+	if len(product.ImagesURL) > maxAdditionalImages {
+		return apperrors.NewBadRequestError("maximum of 10 additional images are allowed")
+	}
+	seenURLs := make(map[string]bool)
+	seenURLs[product.MainImageURL] = true
+	for _, url := range product.ImagesURL {
+		if url == "" {
+			continue
+		}
+		if seenURLs[url] {
+			continue
+		}
+		seenURLs[url] = true
+	}
+	return nil
 }

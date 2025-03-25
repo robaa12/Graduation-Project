@@ -102,17 +102,17 @@ func (app *Config) routes() http.Handler {
 			}
 
 			if err := utils.ReadJSON(w, r, &req); err != nil {
-				utils.ErrorJSON(w, err)
+				_ = utils.ErrorJSON(w, err)
 				return
 			}
 
 			token, err := utils.GenerateToken(req.UserID, req.StoreID, req.Role)
 			if err != nil {
-				utils.ErrorJSON(w, err)
+				_ = utils.ErrorJSON(w, err)
 				return
 			}
 
-			utils.WriteJSON(w, http.StatusOK, map[string]string{
+			_ = utils.WriteJSON(w, http.StatusOK, map[string]string{
 				"token": token,
 			})
 		})

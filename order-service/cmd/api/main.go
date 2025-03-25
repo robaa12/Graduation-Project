@@ -23,7 +23,10 @@ func main() {
 	if err != nil {
 		log.Panic(err)
 	}
-	db.SetupDatabase()
+	err = db.SetupDatabase()
+	if err != nil {
+		return
+	}
 	app := Config{
 		db: db.DB,
 	}

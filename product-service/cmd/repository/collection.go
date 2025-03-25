@@ -48,7 +48,7 @@ func (cr *CollectionRepository) CreateCollection(collection *model.Collection) e
 	return cr.db.DB.Create(&collection).Error
 }
 
-// ValidateAndGenerateCollectionSlug checks if the slug is unique within the store and generates a new one if necessary.
+// GenerateCollectionSlug checks if the slug is unique within the store and generates a new one if necessary.
 func (cr *CollectionRepository) GenerateCollectionSlug(name string, storeID uint) (string, error) {
 	// Generate the base slug from the collection name
 	baseSlug := strings.ToLower(strings.ReplaceAll(name, " ", "-"))

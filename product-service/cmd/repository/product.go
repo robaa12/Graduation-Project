@@ -22,7 +22,7 @@ func NewProductRepository(db database.Database) *ProductRepository {
 func (pr *ProductRepository) GetProduct(productId uint, storeId uint) (*model.Product, error) {
 	var product model.Product
 	// Find the product with the given id and store_id
-	err := pr.db.DB.Where("id = ? AND store_id = ?", productId, storeId).First(&product).Error
+	err := pr.db.DB.Preload("Category").Where("id = ? AND store_id = ?", productId, storeId).First(&product).Error
 	if err != nil {
 		return nil, gorm.ErrRecordNotFound
 	}
@@ -41,15 +41,16 @@ func (pr *ProductRepository) CreateProduct(storeID uint, productRequest model.Pr
 	err := pr.db.DB.Transaction(func(tx *gorm.DB) error {
 		// Check if the category already exists in the database or not
 		if product.CategoryID != nil {
-
-			result := tx.Where("store_id = ? AND id = ?", storeID, product.CategoryID).First(&product.Category)
+			var category model.Category
+			result := tx.Where("store_id = ? AND id = ?", storeID, product.CategoryID).First(&category)
 
 			if err := result.Error; err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
-					return err
+					return fmt.Errorf("category with id %d not found", *product.CategoryID)
 				}
-				return err
+				return result.Error
 			}
+			product.Category = category
 		}
 
 		// Add Product to the database
@@ -57,6 +58,15 @@ func (pr *ProductRepository) CreateProduct(storeID uint, productRequest model.Pr
 			log.Println("Error creating product in database")
 			return err
 		}
+		var verifyProduct model.Product
+		if err := tx.First(&verifyProduct, product.ID).Error; err != nil {
+			return err
+		}
+
+		if len(verifyProduct.ImagesURL) != len(product.ImagesURL) {
+			return fmt.Errorf("failed to store all images")
+		}
+
 		for _, skuRequest := range productRequest.SKUs {
 			// Create a new SKU
 			sku := skuRequest.CreateSKU(product.ID)
@@ -155,7 +165,7 @@ func (pr *ProductRepository) GetStoreProducts(storeID uint) ([]model.Product, er
 func (pr *ProductRepository) GetProductDetails(productID uint, storeID uint) (*model.Product, error) {
 	var product model.Product
 
-	result := pr.db.DB.Where("id=? AND store_id = ?", productID, storeID).Preload("SKUs.SKUVariants").Preload("SKUs.Variants").Find(&product)
+	result := pr.db.DB.Where("id=? AND store_id = ?", productID, storeID).Preload("SKUs.SKUVariants").Preload("SKUs.Variants").Preload("Category").Find(&product)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -172,6 +182,7 @@ func (pr *ProductRepository) GetProductBySlug(slug string, storeID uint) (*model
 	result := pr.db.DB.Where("slug = ? AND store_id = ?", slug, storeID).
 		Preload("SKUs.SKUVariants").
 		Preload("SKUs.Variants").
+		Preload("Category").
 		First(&product)
 
 	if result.Error != nil {

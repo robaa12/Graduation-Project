@@ -12,9 +12,6 @@ type VariantRepository struct {
 	db database.Database
 }
 
-func NewVariantRepository(db database.Database) *VariantRepository {
-	return &VariantRepository{db: db}
-}
 func AddVariant(v *model.Variant, tx *gorm.DB) error {
 	if err := tx.FirstOrCreate(&v, model.Variant{Name: v.Name}).Error; err != nil {
 		log.Println("Error creating variant in database")

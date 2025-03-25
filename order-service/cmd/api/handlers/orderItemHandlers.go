@@ -16,129 +16,129 @@ func NewOrderItemsHandler(orderItemService *service.OrderItemService) *OrderItem
 	return &OrderItemsHandler{OrderItemService: orderItemService}
 }
 func (orderItemsHandler *OrderItemsHandler) AddOrderItem(w http.ResponseWriter, r *http.Request) {
-	// get order_id from Query parmeter
+	// get order_id from Query parameter
 	orderId, err := utils.GetID(r, "order_id")
 	if err != nil {
-		utils.ErrorJSON(w, err)
+		_ = utils.ErrorJSON(w, err)
 		return
 	}
 	// Read OrderItem Request from json
 	var orderItemRequest model.OrderItemRequest
 	err = utils.ReadJSON(w, r, &orderItemRequest)
 	if err != nil {
-		utils.ErrorJSON(w, errors.New("enter valid order item data"))
+		_ = utils.ErrorJSON(w, errors.New("enter valid order item data"))
 		return
 	}
 
-	// give orderitem respone from service layer
+	// give order item response from service layer
 	orderItemResponse, err := orderItemsHandler.OrderItemService.AddOrderItem(orderId, &orderItemRequest)
 	if err != nil {
-		utils.ErrorJSON(w, err)
+		_ = utils.ErrorJSON(w, err)
 		return
 	}
 
-	// write json resonpse
+	// write json response
 	err = utils.WriteJSON(w, 201, orderItemResponse)
 	if err != nil {
-		utils.ErrorJSON(w, err)
+		_ = utils.ErrorJSON(w, err)
 		return
 	}
 
 }
 
 func (orderItemsHandler *OrderItemsHandler) GetAllOrderItems(w http.ResponseWriter, r *http.Request) {
-	// get order_id from Query parmeter
-	order_id, err := utils.GetID(r, "order_id")
+	// get order_id from Query parameter
+	orderId, err := utils.GetID(r, "order_id")
 	if err != nil {
 
-		utils.ErrorJSON(w, err)
+		_ = utils.ErrorJSON(w, err)
 		return
 	}
-	// get Orderitem response from service layer
-	orderItemsResponse, err := orderItemsHandler.OrderItemService.GetAllOrderItems(utils.ItoS(order_id))
+	// get Order item response from service layer
+	orderItemsResponse, err := orderItemsHandler.OrderItemService.GetAllOrderItems(utils.ItoS(orderId))
 	if err != nil {
 
-		utils.ErrorJSON(w, err)
+		_ = utils.ErrorJSON(w, err)
 		return
 	}
 
-	// write json resonpse
+	// write json response
 	err = utils.WriteJSON(w, 200, orderItemsResponse)
 	if err != nil {
-		utils.ErrorJSON(w, err)
+		_ = utils.ErrorJSON(w, err)
 		return
 	}
 
 }
 func (orderItemsHandler *OrderItemsHandler) GetOrderItem(w http.ResponseWriter, r *http.Request) {
-	// get orderitem_id from Query parmeter
+	// get order item_id from Query parameter
 	orderItemId, err := utils.GetID(r, "item_id")
 	if err != nil {
-		utils.ErrorJSON(w, err)
+		_ = utils.ErrorJSON(w, err)
 		return
 	}
 
-	// get Orderitem response from service layer
+	// get Order item response from service layer
 	orderItemResponse, err := orderItemsHandler.OrderItemService.GetOrderItem(utils.ItoS(orderItemId))
 	if err != nil {
-		utils.ErrorJSON(w, err)
+		_ = utils.ErrorJSON(w, err)
 		return
 	}
-	// write json resonpse
+	// write json response
 	err = utils.WriteJSON(w, 200, orderItemResponse)
 	if err != nil {
-		utils.ErrorJSON(w, err)
+		_ = utils.ErrorJSON(w, err)
 		return
 	}
 
 }
 func (orderItemsHandler *OrderItemsHandler) UpdateOrderItem(w http.ResponseWriter, r *http.Request) {
-	// get orderitem_id from Query parmeter
-	orderItem_id, err := utils.GetID(r, "item_id")
+	// get order item ID from Query parameter
+	orderItemId, err := utils.GetID(r, "item_id")
 	if err != nil {
-		utils.ErrorJSON(w, err)
+		_ = utils.ErrorJSON(w, err)
 		return
 	}
 
-	//Read orderitem request from json
+	//Read order item request from json
 	var orderItemRequest *model.OrderItemRequest
 	err = utils.ReadJSON(w, r, &orderItemRequest)
 	if err != nil {
-		utils.ErrorJSON(w, err)
+		_ = utils.ErrorJSON(w, err)
 		return
 	}
-	// get Orderitem response from service layer
-	err = orderItemsHandler.OrderItemService.UpdateOrderItem(utils.ItoS(orderItem_id), orderItemRequest)
+	// get Order item response from service layer
+	err = orderItemsHandler.OrderItemService.UpdateOrderItem(utils.ItoS(orderItemId), orderItemRequest)
 	if err != nil {
-		utils.ErrorJSON(w, err)
+		_ = utils.ErrorJSON(w, err)
 		return
 	}
 
 	// write json response
 	err = utils.WriteJSON(w, 200, "Order item updated successfully.")
 	if err != nil {
-		utils.ErrorJSON(w, err)
+		_ = utils.ErrorJSON(w, err)
 		return
 	}
 
 }
 func (orderItemsHandler *OrderItemsHandler) DeleteOrderItem(w http.ResponseWriter, r *http.Request) {
-	// get orderitem_id from Query parmeter
-	orderitem_id, err := utils.GetID(r, "item_id")
+	// get order item_id from Query parameter
+	orderItemId, err := utils.GetID(r, "item_id")
 	if err != nil {
-		utils.ErrorJSON(w, err)
+		_ = utils.ErrorJSON(w, err)
 		return
 	}
-	// get Orderitem response from service layer
-	err = orderItemsHandler.OrderItemService.DeleteOrderItem(utils.ItoS(orderitem_id))
+	// get Order item response from service layer
+	err = orderItemsHandler.OrderItemService.DeleteOrderItem(utils.ItoS(orderItemId))
 	if err != nil {
-		utils.ErrorJSON(w, err)
+		_ = utils.ErrorJSON(w, err)
 		return
 	}
-	// write json resonpse
+	// write json response
 	err = utils.WriteJSON(w, 200, "Order item deleted successfully.")
 	if err != nil {
-		utils.ErrorJSON(w, err)
+		_ = utils.ErrorJSON(w, err)
 		return
 	}
 

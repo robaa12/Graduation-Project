@@ -69,7 +69,7 @@ func (r *CustomerRepository) CreateCustomer(customer *model.Customer, storeID ui
 	return nil
 }
 
-// GetCustomerByID retrieves a customer by ID along with their orders
+// GetStoreCustomerWithOrders retrieves a customer by ID along with their orders
 func (r *CustomerRepository) GetStoreCustomerWithOrders(storeCustomer *model.StoreCustomer) (*model.Customer, error) {
 	var customer *model.Customer
 	err := r.db.Preload("Orders", "store_id = ?", storeCustomer.StoreID).First(&customer, storeCustomer.CustomerID).
@@ -81,7 +81,7 @@ func (r *CustomerRepository) GetStoreCustomerWithOrders(storeCustomer *model.Sto
 	return customer, nil
 }
 
-// GetCustomerByEmail retrieves a customer using their email with their orders
+// GetStoreCustomerByEmail retrieves a customer using their email with their orders
 func (r *CustomerRepository) GetStoreCustomerByEmail(customer *model.Customer, storeID uint) error {
 
 	return r.db.Preload("Orders", "store_id = ?", storeID).Where("email = ?", customer.Email).First(&customer).Error
@@ -113,7 +113,7 @@ func (r *CustomerRepository) GetStoreCustomers(storeID uint) ([]model.StoreCusto
 	return storeCustomerItems, nil
 }
 
-// Find Store Customer  retrieves rows Affected
+// FindStoreCustomer Find Store Customer retrieves rows Affected
 func (r *CustomerRepository) FindStoreCustomer(storeCustomer *model.StoreCustomer) (int64, error) {
 
 	result := r.db.Where("store_id = ? AND customer_id = ?", storeCustomer.StoreID, storeCustomer.CustomerID).Find(storeCustomer)
@@ -154,7 +154,7 @@ func (r *CustomerRepository) DeleteStoreCustomer(storeCustomer *model.StoreCusto
 	return nil
 }
 
-// Find Customer By ID retrieves rows Affected
+// FindCustomer Find Customer By ID retrieves rows Affected
 func (r *CustomerRepository) FindCustomer(customer *model.Customer) (int64, error) {
 
 	result := r.db.Find(customer, customer.ID)

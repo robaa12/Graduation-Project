@@ -33,7 +33,7 @@ func (h *CollectionHandler) CreateCollection(w http.ResponseWriter, r *http.Requ
 		_ = utils.ErrorJSON(w, err)
 		return
 	}
-	utils.WriteJSON(w, http.StatusCreated, collectionResponse)
+	_ = utils.WriteJSON(w, http.StatusCreated, collectionResponse)
 }
 
 // GetCollections - GET /stores/{store_id}/collections/
@@ -49,7 +49,7 @@ func (h *CollectionHandler) GetCollections(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusOK, collections)
+	_ = utils.WriteJSON(w, http.StatusOK, collections)
 }
 
 // GetCollection - GET /stores/{store_id}/collections/{collection_id}
@@ -70,7 +70,7 @@ func (h *CollectionHandler) GetCollection(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusOK, collection)
+	_ = utils.WriteJSON(w, http.StatusOK, collection)
 }
 
 // AddProductToCollection Add product to collection - POST /stores/{store_id}/collections/{collection_id}
@@ -98,7 +98,7 @@ func (h *CollectionHandler) AddProductToCollection(w http.ResponseWriter, r *htt
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusOK, map[string]string{
+	_ = utils.WriteJSON(w, http.StatusOK, map[string]string{
 		"message": "Products added to collection successfully",
 	})
 }
@@ -125,7 +125,7 @@ func (h *CollectionHandler) RemoveProductFromCollection(w http.ResponseWriter, r
 		_ = utils.ErrorJSON(w, err)
 		return
 	}
-	utils.WriteJSON(w, http.StatusOK, map[string]string{
+	_ = utils.WriteJSON(w, http.StatusOK, map[string]string{
 		"message": "Product removed from collection successfully",
 	})
 }

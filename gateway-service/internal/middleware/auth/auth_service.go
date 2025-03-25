@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -15,282 +16,425 @@ import (
 	"github.com/robaa12/gatway-service/utils"
 )
 
-type AuthService struct {
+type Service struct {
 	jwtService  *JWTService
 	userService config.ServiceConfig
+	client      *http.Client
 }
 
-type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
+type (
+	LoginRequest struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	TokenResponse struct {
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+		ExpiresIn    int64  `json:"expires_in"`
+	}
 
-type LoginResponse struct {
-	Token    string `json:"token"`
-	UserID   int    `json:"user_id"`
-	StoresID []int  `json:"stores_id"`
-	Email    string `json:"email"`
-	Image    string `json:"image"`
-	Name     string `json:"name"`
-}
+	UserData struct {
+		ID          int     `json:"id"`
+		FirstName   string  `json:"firstName"`
+		LastName    string  `json:"lastName"`
+		Email       string  `json:"email"`
+		IsActive    bool    `json:"isActive"`
+		IsBanned    bool    `json:"is_banned"`
+		PhoneNumber *string `json:"phoneNumber,omitempty"`
+		Address     *string `json:"address,omitempty"`
+		CreateAt    string  `json:"createAt,omitempty"`
+		UpdateAt    string  `json:"updateAt,omitempty"`
+		StoresID    []int   // We'll compute this from Stores
+	}
 
-type AuthResponse struct {
-	Token       string  `json:"token"`
-	UserID      int     `json:"user_id"`
-	FirstName   string  `json:"first_name"`
-	LastName    string  `json:"last_name"`
-	Email       string  `json:"email"`
-	StoresID    []int   `json:"stores_id,omitempty"`
-	IsActive    bool    `json:"is_active,omitempty"`
-	IsBanned    bool    `json:"is_banned,omitempty"`
-	PhoneNumber *string `json:"phone_number,omitempty"`
-	Address     *string `json:"address,omitempty"`
-	Image       string  `json:"image,omitempty"`
-	CreatedAt   string  `json:"created_at,omitempty"`
-	UpdatedAt   string  `json:"updated_at,omitempty"`
-}
+	LoginResponse struct {
+		UserID   int    `json:"user_id"`
+		StoresID []int  `json:"stores_id"`
+		Email    string `json:"email"`
+		Image    string `json:"image"`
+		Name     string `json:"name"`
+		TokenResponse
+	}
 
-type UserResponse struct {
-	ID          int     `json:"id"`
-	FirstName   string  `json:"firstName"`
-	LastName    string  `json:"lastName"`
-	IsActive    bool    `json:"isActive"`
-	Email       string  `json:"email"`
-	IsBanned    bool    `json:"is_banned"`
-	PhoneNumber *string `json:"phoneNumber"`
-	StoresID    []int   `json:"stores_id"`
-	Address     *string `json:"address"`
-	CreateAt    string  `json:"createAt"`
-	UpdateAt    string  `json:"updateAt"`
-}
+	RefreshTokenRequest struct {
+		RefreshToken string `json:"refresh_token"`
+	}
 
-type APIResponse struct {
-	Status  bool         `json:"status"`
-	Message string       `json:"message"`
-	Data    UserResponse `json:"data"`
-}
+	APIResponse struct {
+		ID        int    `json:"id"`
+		Email     string `json:"email"`
+		FirstName string `json:"first_name"` // matches the user service response
+		LastName  string `json:"last_name"`  // matches the user service response
+		StoresID  []int  `json:"stores_id"`
+	}
+	LoginAPIResponse struct {
+		Message string `json:"message"`
+		Data    struct {
+			ID        int     `json:"id"`
+			FirstName string  `json:"firstName"` // Note the camelCase
+			LastName  string  `json:"lastName"`  // Note the camelCase
+			Email     string  `json:"email"`
+			IsActive  bool    `json:"isActive"`
+			IsBanned  bool    `json:"is_banned"`
+			Phone     *string `json:"phoneNumber,omitempty"`
+			Address   *string `json:"address,omitempty"`
+			CreateAt  string  `json:"createAt,omitempty"`
+			UpdateAt  string  `json:"updateAt,omitempty"`
+			Stores    []Store `json:"stores,omitempty"`
+		} `json:"data"`
+	}
+	Store struct {
+		ID     int `json:"id"`
+		UserID int `json:"userId"`
+	}
+)
 
-type RegisterAPIResponse struct {
-	Status    bool   `json:"status"`
-	ID        int    `json:"id"`
-	Email     string `json:"email"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	StoresID  []int  `json:"stores_id"`
-}
-
-func NewAuthService(cfg *config.Config) *AuthService {
-	return &AuthService{
-		jwtService:  NewJWTService(cfg.Auth.JWTSecret, cfg.Auth.TokenExp),
+func NewAuthService(cfg *config.Config) *Service {
+	return &Service{
+		jwtService:  NewJWTService(cfg.Auth.JWTSecret, cfg.Auth.AccessTokenExp, cfg.Auth.RefreshTokenExp),
 		userService: cfg.Services["user-service"],
+		client:      &http.Client{Timeout: 5 * time.Second},
 	}
 }
 
-// Register handles the register request
-func (s *AuthService) Register(w http.ResponseWriter, r *http.Request) {
-	// Make request to user service
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/user", s.userService.URL), r.Body)
-	if err != nil {
-		utils.ErrorJSON(w, err, http.StatusInternalServerError)
-		return
-	}
-	req.Header.Set("Content-Type", "application/json")
-	client := &http.Client{
-		Timeout: 5 * time.Second,
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		utils.ErrorJSON(w, err, http.StatusInternalServerError)
-		return
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusCreated {
-		log.Println(resp.StatusCode)
-		utils.ErrorJSON(w, errors.New("error registering user"), http.StatusInternalServerError)
-		return
-	}
-
-	// Read response body
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		utils.ErrorJSON(w, err, http.StatusInternalServerError)
-		return
-	}
-
-	// Log the raw response for debugging
-	log.Printf("Registration API Response: %s", string(body))
-
-	// Parse the response using the struct that matches the actual format
-	var registerResp RegisterAPIResponse
-	err = json.Unmarshal(body, &registerResp)
-	if err != nil {
-		log.Printf("Failed to unmarshal API response: %v", err)
-		utils.ErrorJSON(w, errors.New("Failed to parse user data"), http.StatusInternalServerError)
-		return
-	}
-
-	// Generate JWT Token
-	token, err := s.jwtService.GenerateToken(registerResp.ID, registerResp.StoresID)
-	if err != nil {
-		utils.ErrorJSON(w, errors.New("Error Generating JWT Token"), http.StatusInternalServerError)
-		return
-	}
-
-	// Create the response with all available fields
-	utils.WriteJSON(w, http.StatusCreated, AuthResponse{
-		Token:     token,
-		UserID:    registerResp.ID,
-		FirstName: registerResp.FirstName,
-		LastName:  registerResp.LastName,
-		Email:     registerResp.Email,
-		StoresID:  registerResp.StoresID,
-		// Other fields might not be available in the register response
-		// but can be added if they are
-		Image: "",
-	})
-}
-
-// Login handles the login request
-func (s *AuthService) Login(w http.ResponseWriter, r *http.Request) {
+// Login handles user authentication
+func (s *Service) Login(w http.ResponseWriter, r *http.Request) {
 	var loginReq LoginRequest
 	err := utils.ReadJSON(w, r, &loginReq)
 	if err != nil {
-		utils.ErrorJSON(w, errors.New("invalid request body"), http.StatusBadRequest)
+		_ = utils.ErrorJSON(w, errors.New("invalid request body"), http.StatusBadRequest)
 		return
 	}
 
-	// Call user service to authenticate user
-	user, err := s.validateCredentials(loginReq)
+	userData, err := s.authenticateUser(loginReq)
 	if err != nil {
-		log.Printf("err:%s", err)
-		utils.ErrorJSON(w, errors.New("invalid credentials"), http.StatusUnauthorized)
+		_ = utils.ErrorJSON(w, err, http.StatusUnauthorized)
 		return
 	}
 
-	// Generate JWT token
-	token, err := s.jwtService.GenerateToken(user.ID, user.StoresID)
+	response, err := s.generateLoginResponse(userData)
 	if err != nil {
-		utils.ErrorJSON(w, errors.New("error generating token"), http.StatusInternalServerError)
+		_ = utils.ErrorJSON(w, err, http.StatusInternalServerError)
+		return
+	}
+	// Send the response back to the client
+	_ = utils.WriteJSON(w, http.StatusOK, response)
+}
+
+// Register handles user registration
+func (s *Service) Register(w http.ResponseWriter, r *http.Request) {
+	var registerReq struct {
+		Email       string  `json:"email"`
+		Password    string  `json:"password"`
+		FirstName   string  `json:"firstName"`
+		LastName    string  `json:"lastName"`
+		PhoneNumber *string `json:"phoneNumber,omitempty"`
+		Address     *string `json:"address,omitempty"`
+	}
+
+	if err := utils.ReadJSON(w, r, &registerReq); err != nil {
+		_ = utils.ErrorJSON(w, fmt.Errorf("invalid request body: %v", err), http.StatusBadRequest)
 		return
 	}
 
-	// Send response with all available user data
-	utils.WriteJSON(w, http.StatusOK, AuthResponse{
-		Token:       token,
-		UserID:      user.ID,
-		FirstName:   user.FirstName,
-		LastName:    user.LastName,
-		Email:       user.Email,
-		StoresID:    user.StoresID,
-		IsActive:    user.IsActive,
-		IsBanned:    user.IsBanned,
-		PhoneNumber: user.PhoneNumber,
-		Address:     user.Address,
-		Image:       "", // Default empty image
-		CreatedAt:   user.CreateAt,
-		UpdatedAt:   user.UpdateAt,
-	})
+	// Log the incoming request
+	log.Printf("Registration request received: %+v", registerReq)
+
+	// Basic validation
+	if registerReq.Email == "" || registerReq.Password == "" || registerReq.FirstName == "" || registerReq.LastName == "" {
+		_ = utils.ErrorJSON(w, errors.New("email, password, firstName, and lastName are required"), http.StatusBadRequest)
+		return
+	}
+
+	// Convert request to JSON
+	jsonData, err := json.Marshal(registerReq)
+	if err != nil {
+		_ = utils.ErrorJSON(w, fmt.Errorf("error preparing request: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Log the outgoing request to user service
+	log.Printf("Sending to user service: %s", string(jsonData))
+
+	// Register the user
+	userData, err := s.registerUser(bytes.NewReader(jsonData))
+	if err != nil {
+		log.Printf("Registration error: %v", err)
+		statusCode := http.StatusInternalServerError
+		if strings.Contains(err.Error(), "already exists") {
+			statusCode = http.StatusConflict
+		} else if strings.Contains(err.Error(), "status 400") {
+			statusCode = http.StatusBadRequest
+		}
+		_ = utils.ErrorJSON(w, err, statusCode)
+		return
+	}
+
+	// Log successful registration
+	log.Printf("User registered successfully: %+v", userData)
+
+	// Generate tokens
+	response, err := s.generateLoginResponse(userData)
+	if err != nil {
+		_ = utils.ErrorJSON(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	// Send the response
+	_ = utils.WriteJSON(w, http.StatusCreated, response)
+}
+
+// RefreshToken handles token refresh requests
+func (s *Service) RefreshToken(w http.ResponseWriter, r *http.Request) {
+	var req RefreshTokenRequest
+	if err := utils.ReadJSON(w, r, &req); err != nil {
+		_ = utils.ErrorJSON(w, errors.New("invalid request body"), http.StatusBadRequest)
+		return
+	}
+
+	claims, err := s.validateRefreshToken(req.RefreshToken)
+	if err != nil {
+		_ = utils.ErrorJSON(w, err, http.StatusUnauthorized)
+		return
+	}
+
+	tokenResponse, err := s.generateNewTokenPair(claims.UserID, claims.StoresID)
+	if err != nil {
+		_ = utils.ErrorJSON(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	_ = utils.WriteJSON(w, http.StatusOK, tokenResponse)
 }
 
 // validateCredentials validates the user credentials
-func (s *AuthService) validateCredentials(login LoginRequest) (*UserResponse, error) {
-	// Call user service to validate user
+func (s *Service) authenticateUser(login LoginRequest) (*UserData, error) {
 	reqBody, err := json.Marshal(login)
 	if err != nil {
 		return nil, err
 	}
 
-	// Make request to user service
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/user/login", s.userService.URL), strings.NewReader(string(reqBody)))
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{
-		Timeout: 5 * time.Second,
-	}
-
-	resp, err := client.Do(req)
+	resp, err := s.makeUserServiceRequest("POST", "/user/login", reqBody)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading response: %v", err)
+	}
+
+	// Log raw response for debugging
+	log.Printf("Raw login response: %s", string(bodyBytes))
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, errors.New("invalid credentials")
 	}
 
-	// Read and log the raw response for debugging
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	log.Printf("Login API Response: %s", string(body))
-
-	// Parse the response
-	var apiResponse APIResponse
-	err = json.Unmarshal(body, &apiResponse)
-	if err != nil {
-		return nil, err
+	var loginResp LoginAPIResponse
+	if err := json.Unmarshal(bodyBytes, &loginResp); err != nil {
+		return nil, fmt.Errorf("error parsing login response: %v", err)
 	}
 
-	return &apiResponse.Data, nil
+	// Extract store IDs from the stores array
+	storeIDs := make([]int, 0)
+	if loginResp.Data.Stores != nil {
+		for _, store := range loginResp.Data.Stores {
+			storeIDs = append(storeIDs, store.ID)
+		}
+	}
+
+	userData := &UserData{
+		ID:          loginResp.Data.ID,
+		FirstName:   loginResp.Data.FirstName,
+		LastName:    loginResp.Data.LastName,
+		Email:       loginResp.Data.Email,
+		IsActive:    loginResp.Data.IsActive,
+		IsBanned:    loginResp.Data.IsBanned,
+		PhoneNumber: loginResp.Data.Phone,
+		Address:     loginResp.Data.Address,
+		CreateAt:    loginResp.Data.CreateAt,
+		UpdateAt:    loginResp.Data.UpdateAt,
+		StoresID:    storeIDs,
+	}
+
+	if userData.ID == 0 {
+		return nil, fmt.Errorf("invalid user data received from login: %+v", userData)
+	}
+
+	return userData, nil
 }
 
-func (s *AuthService) AuthMiddleware(next http.Handler) http.Handler {
+func (s *Service) AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("Applying middleware: AuthMiddleware")
-		// Get token from header
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
-			utils.ErrorJSON(w, errors.New("Authorization header is required"), http.StatusUnauthorized)
+		token := strings.Replace(r.Header.Get("Authorization"), "Bearer ", "", 1)
+		if token == "" {
+			_ = utils.ErrorJSON(w, errors.New("authorization header required"), http.StatusUnauthorized)
 			return
 		}
 
-		// Remove "Bearer " prefix
-		token := strings.Replace(authHeader, "Bearer ", "", 1)
-
-		// Validate token
 		claims, err := s.jwtService.ValidateToken(token)
 		if err != nil {
-			utils.ErrorJSON(w, errors.New("Invalid token"), http.StatusUnauthorized)
+			_ = utils.ErrorJSON(w, err, http.StatusUnauthorized)
 			return
 		}
 
-		// Add claims to context
 		ctx := context.WithValue(r.Context(), "user", claims)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
-func (s *AuthService) StoreOwnershipMiddleware(next http.Handler) http.Handler {
+func (s *Service) StoreOwnershipMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Get token from user context
 		claims, ok := r.Context().Value("user").(*Claims)
-
 		if !ok {
-			utils.ErrorJSON(w, errors.New("Invalid Store owner"), http.StatusUnauthorized)
+			_ = utils.ErrorJSON(w, errors.New("invalid store owner"), http.StatusUnauthorized)
 			return
 		}
 
-		// Get store ID from URL
 		storeID, err := utils.GetID(r, "store_id")
 		if err != nil {
-			utils.ErrorJSON(w, errors.New("Store ID is required"), http.StatusBadRequest)
+			_ = utils.ErrorJSON(w, err, http.StatusBadRequest)
 			return
 		}
 
-		// Check if store ID is in user's stores
-		// Loop through user's stores array and check if storeID is in them
-		for _, id := range claims.StoresID {
-			if id == storeID {
-				next.ServeHTTP(w, r)
-				return
-			}
+		if !contains(claims.StoresID, storeID) {
+			_ = utils.ErrorJSON(w, errors.New("unauthorized owner"), http.StatusUnauthorized)
+			return
 		}
-		// If store ID is not in user's stores
-		utils.ErrorJSON(w, errors.New("Unauthorized Owner"), http.StatusUnauthorized)
 
+		next.ServeHTTP(w, r)
 	})
+}
+
+func (s *Service) makeUserServiceRequest(method, path string, body any) (*http.Response, error) {
+	var reqBody io.Reader
+	if body != nil {
+		switch v := body.(type) {
+		case io.Reader:
+			reqBody = v
+		case []byte:
+			reqBody = strings.NewReader(string(v))
+		default:
+			return nil, errors.New("invalid request body")
+		}
+	}
+	req, err := http.NewRequest(method, fmt.Sprintf("%s%s", s.userService.URL, path), reqBody)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	return s.client.Do(req)
+}
+
+func (s *Service) generateLoginResponse(userData *UserData) (*LoginResponse, error) {
+	if userData == nil {
+		return nil, errors.New("user data is nil")
+	}
+
+	name := strings.TrimSpace(fmt.Sprintf("%s %s", userData.FirstName, userData.LastName))
+	if name == "" {
+		name = "Unknown"
+	}
+
+	accessToken, refreshToken, err := s.jwtService.GenerateTokenPair(userData.ID, userData.StoresID)
+	if err != nil {
+		return nil, err
+	}
+
+	response := &LoginResponse{
+		TokenResponse: TokenResponse{
+			AccessToken:  accessToken,
+			RefreshToken: refreshToken,
+			ExpiresIn:    int64(s.jwtService.accessTokenExpiry.Seconds()),
+		},
+		UserID:   userData.ID,
+		StoresID: userData.StoresID,
+		Email:    userData.Email,
+		Name:     name,
+		Image:    "", // Add image handling if needed
+	}
+
+	return response, nil
+}
+func (s *Service) registerUser(body io.Reader) (*UserData, error) {
+	resp, err := s.makeUserServiceRequest("POST", "/user", body)
+	if err != nil {
+		return nil, fmt.Errorf("request error: %v", err)
+	}
+	defer resp.Body.Close()
+
+	// Read the response body
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading response: %v", err)
+	}
+
+	// Log the raw response for debugging
+	log.Printf("Raw response from user service: %s", string(bodyBytes))
+
+	if resp.StatusCode != http.StatusCreated {
+		return nil, fmt.Errorf("error registering user: status %d, body: %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	var apiResponse APIResponse
+	if err := json.Unmarshal(bodyBytes, &apiResponse); err != nil {
+		return nil, fmt.Errorf("error parsing response: %v, body: %s", err, string(bodyBytes))
+	}
+
+	// Log the parsed response
+	log.Printf("Parsed API response: %+v", apiResponse)
+
+	// Convert the flat APIResponse to UserData
+	userData := &UserData{
+		ID:        apiResponse.ID,
+		FirstName: apiResponse.FirstName,
+		LastName:  apiResponse.LastName,
+		Email:     apiResponse.Email,
+		StoresID:  apiResponse.StoresID,
+		IsActive:  true, // Default for new users
+	}
+
+	// Validate the user data
+	if userData.ID == 0 {
+		return nil, fmt.Errorf("invalid user data received: %+v, raw response: %s", userData, string(bodyBytes))
+	}
+
+	return userData, nil
+}
+
+func (s *Service) validateRefreshToken(token string) (*Claims, error) {
+	claims, err := s.jwtService.ValidateToken(token)
+	if err != nil {
+		return nil, err
+	}
+
+	if claims.TokenType != "refresh" {
+		return nil, errors.New("invalid token type")
+	}
+
+	return claims, nil
+}
+
+func (s *Service) generateNewTokenPair(userID int, storesID []int) (*TokenResponse, error) {
+	accessToken, refreshToken, err := s.jwtService.GenerateTokenPair(userID, storesID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &TokenResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		ExpiresIn:    int64(s.jwtService.accessTokenExpiry.Seconds()),
+	}, nil
+}
+
+func contains(slice []int, item int) bool {
+	for _, s := range slice {
+		if s == item {
+			return true
+		}
+	}
+	return false
 }

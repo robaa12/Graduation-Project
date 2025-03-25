@@ -1,13 +1,13 @@
 package model
 
-// OrderItemReqest with their Fuction which's mapping OrderItemRequest using orderId as arg Into OrderItemModel
+// OrderItemRequest  with their Function which map OrderItemRequest using orderId as arg Into OrderItemModel
 type OrderItemRequest struct {
 	SkuID    uint    `json:"sku_id" binding:"required"`
 	Price    float64 `json:"price" binding:"required"`
 	Quantity uint    `json:"quantity" binding:"required"`
 }
 
-// OrderItemResponse with their Fuction that mapping OrderItemModel into OrderItemResponse
+// OrderItemResponse with their Function that mapping OrderItemModel into OrderItemResponse
 type OrderItemResponse struct {
 	ID       uint    `json:"id"`
 	OrderID  uint    `json:"order_id"`

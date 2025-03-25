@@ -35,8 +35,9 @@ type ServiceConfig struct {
 }
 
 type AuthConfig struct {
-	JWTSecret string
-	TokenExp  time.Duration
+	JWTSecret       string
+	AccessTokenExp  time.Duration
+	RefreshTokenExp time.Duration
 }
 
 type RateLimitConfig struct {
@@ -90,8 +91,9 @@ func Load() (*Config, error) {
 		},
 
 		Auth: AuthConfig{
-			JWTSecret: getEnv("JWT_SECRET", "Messi is better than Ronaldo"),
-			TokenExp:  getDurationEnv("JWT_EXPIRATION", 24*time.Hour),
+			JWTSecret:       getEnv("JWT_SECRET", "Messi is better than Ronaldo"),
+			AccessTokenExp:  getDurationEnv("JWT_ACCESS_EXPIRATION", 24*time.Hour),
+			RefreshTokenExp: getDurationEnv("JWT_REFRESH_EXPIRATION", 7*24*time.Hour),
 		},
 		RateLimit: RateLimitConfig{
 			MaxRequests: getEnvInt("RATE_LIMIT_MAX_REQUESTS", 100),

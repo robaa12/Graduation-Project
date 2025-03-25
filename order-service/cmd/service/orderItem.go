@@ -30,16 +30,16 @@ func (s *OrderItemService) AddOrderItem(orderId uint, orderItemRequest *model.Or
 	return orderItemResponse, nil
 }
 
-func (s *OrderItemService) GetAllOrderItems(order_id string) ([]model.OrderItemResponse, error) {
+func (s *OrderItemService) GetAllOrderItems(orderId string) ([]model.OrderItemResponse, error) {
 
 	// Query to Get all order item from database
-	orderItems, err := s.OrderItemRepo.GetAllOrderItems(order_id)
+	orderItems, err := s.OrderItemRepo.GetAllOrderItems(orderId)
 	if err != nil {
 
 		return nil, err
 	}
 
-	// mapping orderitem model into order item response
+	// mapping order item model into order item response
 	var orderItemsResponse []model.OrderItemResponse
 	for _, item := range orderItems {
 		orderItemsResponse = append(orderItemsResponse, *item.CreateOrderItemResponse())
@@ -54,35 +54,35 @@ func (s *OrderItemService) GetOrderItem(orderItemId string) (*model.OrderItemRes
 	if err != nil {
 		return nil, err
 	}
-	// mapping orderitem model into order item response
+	// mapping order item model into order item response
 	orderItemResponse := orderItem.CreateOrderItemResponse()
 	return orderItemResponse, nil
 }
-func (s *OrderItemService) UpdateOrderItem(orderItem_id string, orderItemRequest *model.OrderItemRequest) error {
+func (s *OrderItemService) UpdateOrderItem(orderItemId string, orderItemRequest *model.OrderItemRequest) error {
 
 	var orderItem model.OrderItem
-	rowAffected, err := s.OrderItemRepo.FindOrderItem(&orderItem, orderItem_id)
+	rowAffected, err := s.OrderItemRepo.FindOrderItem(&orderItem, orderItemId)
 	if err != nil {
 		return err
 	} else if rowAffected == 0 {
 		return errors.New("order item not found")
 	}
-	// verfiy sku id comming from request as same in database
+	// verify sku id coming from request as same in database
 	if orderItem.SkuID != orderItemRequest.SkuID && orderItemRequest.SkuID != 0 {
 		return errors.New("can't change sku for item")
 	}
 
-	err = s.OrderItemRepo.UpdateOrderItem(orderItemRequest, orderItem_id)
+	err = s.OrderItemRepo.UpdateOrderItem(orderItemRequest, orderItemId)
 	if err != nil {
 		return err
 	}
 
 	return nil
 }
-func (s *OrderItemService) DeleteOrderItem(orderItem_id string) error {
+func (s *OrderItemService) DeleteOrderItem(orderItemId string) error {
 	// Delete orderItem  from database by order id
 	var orderItem model.OrderItem
-	rowAffected, err := s.OrderItemRepo.FindOrderItem(&orderItem, orderItem_id)
+	rowAffected, err := s.OrderItemRepo.FindOrderItem(&orderItem, orderItemId)
 	if err != nil {
 		return err
 	} else if rowAffected == 0 {

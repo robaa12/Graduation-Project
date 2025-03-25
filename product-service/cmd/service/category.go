@@ -85,7 +85,7 @@ func (cs *CategoryService) GetCategoryBySlug(storeID uint, CategorySlug string) 
 }
 
 // UpdateCategory Update Category - POST /stores/{store_id}/categories/{category_id}
-func (cs *CategoryService) UpdateCategory(storeID, categoryID uint, categoryRequest *model.CategoryRequest) error {
+func (cs *CategoryService) UpdateCategory(storeID, categoryID uint) error {
 	// Validate category
 	category, err := cs.repository.FindCategory(storeID, categoryID)
 	err = apperrors.ErrCheck(err)
