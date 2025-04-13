@@ -1,4 +1,4 @@
-# Motager - E-Commerce Platform
+# Motager - Build Your Own E-commerce website
 
 **Motager** is a scalable e-commerce platform, similar to Shopify, built using microservices. It enables users to create their own online stores with features like:
 
