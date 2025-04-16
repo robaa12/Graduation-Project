@@ -40,7 +40,12 @@ func (cr *CategoryRepository) UpdateCategory(storeID, categoryID uint, category 
 }
 
 func (cr *CategoryRepository) CreateCategory(category *model.Category) error {
-
+	// TODO: remove when adding Distributed Transaction
+	//add new store if not exist in database using firstorcreate
+	store := model.Store{ID: category.StoreID}
+	if err := cr.db.DB.FirstOrCreate(&store, store).Error; err != nil {
+		return err
+	}
 	// Create category
 	return cr.db.DB.Create(&category).Error
 }

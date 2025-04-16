@@ -18,6 +18,7 @@ func New(dbPool *gorm.DB) Models {
 		Variant:    Variant{},
 		Review:     Review{},
 		Collection: Collection{},
+		Store:      Store{},
 	}
 }
 
@@ -27,6 +28,7 @@ type Models struct {
 	Variant    Variant
 	Review     Review
 	Collection Collection
+	Store      Store
 }
 
 // BaseModel to reduce code repetition
@@ -36,6 +38,16 @@ type BaseModel struct {
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
+// Store related with products, reviews,collections,categories 'one to many'
+type Store struct {
+	ID uint `json:"id" gorm:"primaryKey"` // Primary key
+	//ID         uint         `json:"id" gorm:"primaryKey;autoIncrement:false"`// Disable auto-increment
+	Product    []Product    `json:"products" gorm:"foreignKey:StoreID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`    // One-to-many relationship with products
+	Review     []Review     `json:"reviews" gorm:"foreignKey:StoreID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`     // One-to-many relationship with reviews
+	Collection []Collection `json:"collections" gorm:"foreignKey:StoreID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // One-to-many relationship with collections
+	Category   []Category   `json:"categories" gorm:"foreignKey:StoreID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`  // One-to-many relationship with categories
+	BaseModel
+}
 type Review struct {
 	ID             uint   `json:"id" gorm:"primaryKey"`
 	ProductID      uint   `json:"product_id" gorm:"not null;index;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
@@ -100,7 +112,7 @@ type Category struct {
 	ID          uint   `json:"id" gorm:"primaryKey"`
 	StoreID     uint   `json:"store_id" gorm:"not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // Foreign key for Store
 	Name        string `json:"name" gorm:"size:255;not null"`
-	Slug        string `json:"slug" gorm:"size:255;not null;uniqueIndex"`
+	Slug        string `json:"slug" gorm:"size:255;not null"`
 	Description string `json:"description" gorm:"type:text"`
 	BaseModel
 	Products []Product `json:"products" gorm:"foreignKey:CategoryID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // One-to-many relationship with product

@@ -80,7 +80,7 @@ type (
 			Address   *string `json:"address,omitempty"`
 			CreateAt  string  `json:"createAt,omitempty"`
 			UpdateAt  string  `json:"updateAt,omitempty"`
-			Stores    []Store `json:"stores,omitempty"`
+			Stores    []int   `json:"stores_id,omitempty"`
 		} `json:"data"`
 	}
 	Store struct {
@@ -236,14 +236,14 @@ func (s *Service) authenticateUser(login LoginRequest) (*UserData, error) {
 	if err := json.Unmarshal(bodyBytes, &loginResp); err != nil {
 		return nil, fmt.Errorf("error parsing login response: %v", err)
 	}
-
-	// Extract store IDs from the stores array
-	storeIDs := make([]int, 0)
-	if loginResp.Data.Stores != nil {
-		for _, store := range loginResp.Data.Stores {
-			storeIDs = append(storeIDs, store.ID)
-		}
-	}
+	/*
+		// Extract store IDs from the stores array
+		storeIDs := make([]int, 0)
+		if loginResp.Data.Stores != nil {
+			for _, store := range loginResp.Data.Stores {
+				storeIDs = append(storeIDs, store.ID)
+			}
+		}*/
 
 	userData := &UserData{
 		ID:          loginResp.Data.ID,
@@ -256,7 +256,7 @@ func (s *Service) authenticateUser(login LoginRequest) (*UserData, error) {
 		Address:     loginResp.Data.Address,
 		CreateAt:    loginResp.Data.CreateAt,
 		UpdateAt:    loginResp.Data.UpdateAt,
-		StoresID:    storeIDs,
+		StoresID:    loginResp.Data.Stores,
 	}
 
 	if userData.ID == 0 {
