@@ -157,7 +157,7 @@ func (pr *ProductRepository) DeleteProduct(productID uint, storeID uint) error {
 func (pr *ProductRepository) GetStoreProducts(storeID uint) ([]model.Product, error) {
 	var products []model.Product
 
-	result := pr.db.DB.Model(&model.Product{}).Where("store_id = ?", storeID).Find(&products)
+	result := pr.db.DB.Model(&model.Product{}).Preload("Category").Where("store_id = ?", storeID).Find(&products)
 
 	if result.Error != nil {
 		return nil, result.Error

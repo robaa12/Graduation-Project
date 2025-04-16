@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	apperrors "github.com/robaa12/product-service/cmd/errors"
@@ -92,4 +93,11 @@ func GetString(r *http.Request, key string) (string, error) {
 	}
 
 	return slug, nil
+}
+func SanitizeURL(url string) string {
+	url = strings.TrimSpace(url)
+	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
+		return "https://" + url
+	}
+	return url
 }

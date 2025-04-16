@@ -20,7 +20,7 @@ func NewCollectionRepository(db *database.Database) *CollectionRepository {
 
 func (cr *CollectionRepository) GetCollectionByID(storeID uint, collectionID uint) (*model.Collection, error) {
 	var collection model.Collection
-	err := cr.db.DB.Where("store_id = ? AND id = ?", storeID, collectionID).Preload("Products").First(&collection).Error
+	err := cr.db.DB.Where("store_id = ? AND id = ?", storeID, collectionID).Preload("Products.Category").First(&collection).Error
 	return &collection, err
 }
 

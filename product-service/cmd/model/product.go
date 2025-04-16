@@ -1,9 +1,8 @@
 package model
 
 import (
-	"strings"
-
 	"github.com/lib/pq"
+	"github.com/robaa12/product-service/cmd/utils"
 )
 
 type ProductRequest struct {
@@ -36,10 +35,10 @@ type ProductDetailsResponse struct {
 }
 
 func (p *ProductRequest) CreateProduct(storeID uint) *Product {
-	mainImageURL := sanitizeURL(p.MainImageURL)
+	mainImageURL := utils.SanitizeURL(p.MainImageURL)
 	imagesURL := make(pq.StringArray, 0)
 	for _, url := range p.ImagesURL {
-		if sanitizedURL := sanitizeURL(url); sanitizedURL != "" {
+		if sanitizedURL := utils.SanitizeURL(url); sanitizedURL != "" {
 			imagesURL = append(imagesURL, sanitizedURL)
 		}
 	}
@@ -91,12 +90,4 @@ func (p *Product) ToProductDetailsResponse() *ProductDetailsResponse {
 func (p *ProductDetailsResponse) WithReviewStatistics(stats *ProductReviewsStatistics) *ProductDetailsResponse {
 	p.ReviewStatistics = stats
 	return p
-}
-
-func sanitizeURL(url string) string {
-	url = strings.TrimSpace(url)
-	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
-		return "https://" + url
-	}
-	return url
 }
