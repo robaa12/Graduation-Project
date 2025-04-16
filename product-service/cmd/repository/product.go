@@ -39,6 +39,14 @@ func (pr *ProductRepository) CreateProduct(storeID uint, productRequest model.Pr
 	product := productRequest.CreateProduct(storeID)
 
 	err := pr.db.DB.Transaction(func(tx *gorm.DB) error {
+		// TODO: remove when adding Distributed Transaction
+		//add new store if not exist in database using firstorcreate
+		store := model.Store{ID: storeID}
+		if err := tx.FirstOrCreate(&store, store).Error; err != nil {
+			log.Println("Error creating store in database")
+			return err
+		}
+
 		// Check if the category already exists in the database or not
 		if product.CategoryID != nil {
 			var category model.Category
@@ -149,7 +157,7 @@ func (pr *ProductRepository) DeleteProduct(productID uint, storeID uint) error {
 func (pr *ProductRepository) GetStoreProducts(storeID uint) ([]model.Product, error) {
 	var products []model.Product
 
-	result := pr.db.DB.Model(&model.Product{}).Where("store_id = ?", storeID).Find(&products)
+	result := pr.db.DB.Model(&model.Product{}).Preload("Category").Where("store_id = ?", storeID).Find(&products)
 
 	if result.Error != nil {
 		return nil, result.Error

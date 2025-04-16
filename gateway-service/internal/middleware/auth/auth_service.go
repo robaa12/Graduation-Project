@@ -220,8 +220,6 @@ func (s *Service) authenticateUser(login LoginRequest) (*UserData, error) {
 	if err := json.Unmarshal(bodyBytes, &loginResp); err != nil {
 		return nil, fmt.Errorf("error parsing login response: %v", err)
 	}
-
-	// Extract store IDs from the stores array
 	userData := loginResp.Data
 
 	if userData.ID == 0 {

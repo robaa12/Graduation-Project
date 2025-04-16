@@ -20,7 +20,7 @@ func NewCollectionRepository(db *database.Database) *CollectionRepository {
 
 func (cr *CollectionRepository) GetCollectionByID(storeID uint, collectionID uint) (*model.Collection, error) {
 	var collection model.Collection
-	err := cr.db.DB.Where("store_id = ? AND id = ?", storeID, collectionID).Preload("Products").First(&collection).Error
+	err := cr.db.DB.Where("store_id = ? AND id = ?", storeID, collectionID).Preload("Products.Category").First(&collection).Error
 	return &collection, err
 }
 
@@ -43,6 +43,12 @@ func (cr *CollectionRepository) UpdateCollection(collection model.Collection) er
 }
 
 func (cr *CollectionRepository) CreateCollection(collection *model.Collection) error {
+	// TODO: remove when adding Distributed Transaction
+	//add new store if not exist in database using firstorcreate
+	store := model.Store{ID: collection.StoreID}
+	if err := cr.db.DB.FirstOrCreate(&store, store).Error; err != nil {
+		return err
+	}
 
 	// Create Collection
 	return cr.db.DB.Create(&collection).Error

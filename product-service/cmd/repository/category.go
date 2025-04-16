@@ -40,7 +40,14 @@ func (cr *CategoryRepository) UpdateCategory(storeID, categoryID uint, category 
 }
 
 func (cr *CategoryRepository) CreateCategory(category *model.Category) error {
-	return cr.db.DB.Create(category).Error
+	// TODO: remove when adding Distributed Transaction
+	//add new store if not exist in database using firstorcreate
+	store := model.Store{ID: category.StoreID}
+	if err := cr.db.DB.FirstOrCreate(&store, store).Error; err != nil {
+		return err
+	}
+	// Create category
+	return cr.db.DB.Create(&category).Error
 }
 
 // GenerateCategorySlug checks if the slug is unique within the store and generates a new one if necessary.
