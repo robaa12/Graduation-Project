@@ -125,10 +125,6 @@ type SKUVariant struct {
 	BaseModel
 }
 
-func (p *Product) BeforeCreate(tx *gorm.DB) error {
-	return tx.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_products_store_id_slug ON products (store_id, slug)").Error
-}
-
 func UpdateInventory(db *gorm.DB, skus []Sku) error {
 	// Update inventory for each SKU
 	tx := db.Begin()

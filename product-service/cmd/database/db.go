@@ -44,14 +44,14 @@ func (d *Database) SetupDatabase() error {
 		return fmt.Errorf("failed to create unique index: %w", err)
 	}
 	if err := d.DB.Exec(`
-			CREATE UNIQUE INDEX IF NOT EXISTS idx_collections_store_id_slug
-			ON collections (store_id, slug)
+			CREATE UNIQUE INDEX IF NOT EXISTS idx_categories_store_id_slug
+			ON categories (store_id, slug)
 		`).Error; err != nil {
 		return fmt.Errorf("failed to create unique index: %w", err)
 	}
 	if err := d.DB.Exec(`
-			CREATE UNIQUE INDEX IF NOT EXISTS idx_categories_store_id_slug
-			ON categories (store_id, slug)
+			CREATE UNIQUE INDEX IF NOT EXISTS idx_collections_store_id_slug
+			ON collections (store_id, slug)
 		`).Error; err != nil {
 		return fmt.Errorf("failed to create unique index: %w", err)
 	}
