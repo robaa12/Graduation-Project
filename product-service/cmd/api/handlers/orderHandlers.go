@@ -66,7 +66,10 @@ func (h *OrderHandler) VerifyOrderItems(w http.ResponseWriter, r *http.Request) 
 	// Fetch all SKUs in a single query
 	var skus []model.Sku
 	err := h.DB.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Where("id IN ? AND store_id = ?", skuIDs, req.StoreID).Find(&skus).Error; err != nil {
+		// Fix: Properly specify the join condition and table references
+		if err := tx.Joins("JOIN products ON skus.product_id = products.id").
+			Where("skus.id IN ? AND products.store_id = ?", skuIDs, req.StoreID).
+			Find(&skus).Error; err != nil {
 			return err
 		}
 
