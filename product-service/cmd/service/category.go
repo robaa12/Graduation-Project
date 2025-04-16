@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"log"
 
 	apperrors "github.com/robaa12/product-service/cmd/errors"
@@ -26,6 +27,7 @@ func (cs *CategoryService) CreateCategory(storeID uint, categoryRequest *model.C
 	}
 	category := categoryRequest.ToCategory(storeID)
 	slug, err := cs.repository.GenerateCategorySlug(category.Name, category.StoreID)
+	fmt.Println(slug)
 	if err != nil {
 		log.Println("Error Generating Category's Slug")
 		return nil, err

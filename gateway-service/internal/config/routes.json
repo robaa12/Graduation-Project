@@ -1,7 +1,7 @@
 [
   {
     "path": "/orders/{order_id}/items",
-    "methods": ["GET", "POST"],
+    "methods": ["GET"],
     "service": "order-service",
     "middlewares": ["auth", "logging"]
   },
@@ -13,13 +13,25 @@
   },
   {
     "path": "/stores/{store_id}/orders",
-    "methods": ["GET", "POST"],
+    "methods": ["GET"],
+    "service": "order-service",
+    "middlewares": ["auth", "store-ownership", "logging"]
+  },
+  {
+    "path": "/stores/{store_id}/orders",
+    "methods": ["POST"],
     "service": "order-service",
     "middlewares": ["logging"]
   },
   {
     "path": "/stores/{store_id}/orders/{order_id}",
-    "methods": ["GET", "PUT", "DELETE"],
+    "methods": ["PUT", "DELETE"],
+    "service": "order-service",
+    "middlewares": ["auth", "store-ownership", "logging"]
+  },
+  {
+    "path": "/stores/{store_id}/orders/{order_id}",
+    "methods": ["GET"],
     "service": "order-service",
     "middlewares": ["logging"]
   },
@@ -27,7 +39,7 @@
     "path": "/stores/{store_id}/orders/{order_id}/details",
     "methods": ["GET"],
     "service": "order-service",
-    "middlewares": ["auth", "logging"]
+    "middlewares": ["logging"]
   },
   {
     "path": "/stores/{store_id}/products",
@@ -39,128 +51,141 @@
     "path": "/stores/{store_id}/products/slug/{slug}",
     "methods": ["GET"],
     "service": "product-service",
-    "middlewares": []
+    "middlewares": ["logging"]
   },
   {
     "path": "/stores/{store_id}/products",
     "methods": ["POST"],
     "service": "product-service",
-    "middlewares": ["auth", "store-ownership"]
+    "middlewares": ["auth", "store-ownership", "logging"]
   },
   {
     "path": "/stores/{store_id}/products/{product_id}",
-    "methods": ["GET", "PUT", "DELETE"],
+    "methods": ["GET"],
     "service": "product-service",
-    "middlewares": ["auth", "store-ownership"]
+    "middlewares": ["logging"]
+  },
+  {
+    "path": "/stores/{store_id}/products/{product_id}",
+    "methods": ["PUT", "DELETE"],
+    "service": "product-service",
+    "middlewares": ["auth", "store-ownership", "logging"]
   },
   {
     "path": "/stores/{store_id}/products/{product_id}/details",
     "methods": ["GET"],
     "service": "product-service",
-    "middlewares": []
+    "middlewares": ["logging"]
   },
   {
     "path": "/stores/{store_id}/products/{product_id}/skus",
     "methods": ["POST"],
     "service": "product-service",
-    "middlewares": ["auth", "store-ownership"]
+    "middlewares": ["auth", "store-ownership", "logging"]
   },
   {
     "path": "/stores/{store_id}/products/{product_id}/skus/{sku_id}",
-    "methods": ["GET", "PUT", "DELETE"],
+    "methods": ["GET"],
     "service": "product-service",
-    "middlewares": ["auth", "store-ownership"]
+    "middlewares": ["logging"]
+  },
+  {
+    "path": "/stores/{store_id}/products/{product_id}/skus/{sku_id}",
+    "methods": ["PUT", "DELETE"],
+    "service": "product-service",
+    "middlewares": ["auth", "store-ownership", "logging"]
   },
   {
     "path": "/stores/{store_id}/collections",
     "methods": ["GET"],
     "service": "product-service",
-    "middlewares": []
+    "middlewares": ["logging"]
   },
   {
     "path": "/stores/{store_id}/collections/{collection_id}",
     "methods": ["GET"],
     "service": "product-service",
-    "middlewares": []
+    "middlewares": ["logging"]
   },
   {
     "path": "/stores/{store_id}/collections",
     "methods": ["POST"],
     "service": "product-service",
-    "middlewares": ["auth", "store-ownership"]
+    "middlewares": ["auth", "store-ownership", "logging"]
   },
   {
     "path": "/stores/{store_id}/collections/{collection_id}/products",
     "methods": ["POST"],
     "service": "product-service",
-    "middlewares": ["auth", "store-ownership"]
+    "middlewares": ["auth", "store-ownership", "logging"]
   },
   {
     "path": "/stores/{store_id}/collections/{collection_id}/products/{product_id}",
     "methods": ["DELETE"],
     "service": "product-service",
-    "middlewares": ["auth", "store-ownership"]
+    "middlewares": ["auth", "store-ownership", "logging"]
   },
 
   {
     "path": "/stores/{store_id}/categories",
     "methods": ["GET"],
     "service": "product-service",
-    "middlewares": []
+    "middlewares": ["logging"]
   },
   {
     "path": "/stores/{store_id}/categories/{category_id}",
     "methods": ["GET"],
     "service": "product-service",
-    "middlewares": []
+    "middlewares": ["logging"]
   },
   {
     "path": "/stores/{store_id}/categories/slug/{category_slug}",
     "methods": ["GET"],
     "service": "product-service",
-    "middlewares": []
+    "middlewares": ["logging"]
   },
   {
     "path": "/stores/{store_id}/categories",
     "methods": ["POST"],
     "service": "product-service",
-    "middlewares": ["auth", "store-ownership"]
-  },{
+    "middlewares": ["auth", "store-ownership", "logging"]
+  },
+  {
     "path": "/stores/{store_id}/categories/{category_id}",
     "methods": ["PUT", "DELETE"],
     "service": "product-service",
-    "middlewares": ["auth", "store-ownership"]
+    "middlewares": ["auth", "store-ownership", "logging"]
   },
 
   {
     "path": "/user/verify-email",
     "methods": ["POST"],
     "service": "user-service",
-    "middlewares": []
+    "middlewares": ["logging"]
   },
   {
     "path": "/user",
     "methods": ["GET"],
     "service": "user-service",
-    "middlewares": ["auth"]
+    "middlewares": ["auth", "logging"]
   },
   {
     "path": "/user/{id}",
     "methods": ["GET", "PATCH", "DELETE"],
     "service": "user-service",
-    "middlewares": ["auth"]
+    "middlewares": ["auth", "logging"]
   },
   {
     "path": "/store",
     "methods": ["GET", "POST"],
     "service": "user-service",
-    "middlewares": ["auth"]
+    "middlewares": ["auth", "logging"]
   },
   {
     "path": "/store/{store_id}",
     "methods": ["GET"],
     "service": "user-service",
-    "middlewares": []
+    "middlewares": ["logging"]
   },
   {
     "path": "/stores/{store_id}/customers",
@@ -178,30 +203,30 @@
     "path": "/stores/{store_id}/products/{product_id}/reviews",
     "methods": ["GET"],
     "service": "product-service",
-    "middlewares": []
+    "middlewares": ["logging"]
   },
   {
     "path": "/stores/{store_id}/products/{product_id}/reviews",
     "methods": ["POST"],
     "service": "product-service",
-    "middlewares": ["auth"]
+    "middlewares": ["logging"]
   },
   {
     "path": "/stores/{store_id}/products/{product_id}/reviews/{review_id}",
     "methods": ["GET"],
     "service": "product-service",
-    "middlewares": []
+    "middlewares": ["auth", "store-ownership", "logging"]
   },
   {
     "path": "/stores/{store_id}/products/{product_id}/reviews/{review_id}",
     "methods": ["PUT", "DELETE"],
     "service": "product-service",
-    "middlewares": ["auth"]
+    "middlewares": ["auth", "store-ownership", "logging"]
   },
   {
     "path": "/stores/{store_id}/products/{product_id}/reviews/statistics",
     "methods": ["GET"],
     "service": "product-service",
-    "middlewares": []
+    "middlewares": ["auth", "store-ownership", "logging"]
   }
 ]

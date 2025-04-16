@@ -44,7 +44,7 @@ type (
 		Address     *string `json:"address,omitempty"`
 		CreateAt    string  `json:"createAt,omitempty"`
 		UpdateAt    string  `json:"updateAt,omitempty"`
-		StoresID    []int   // We'll compute this from Stores
+		StoresID    []int   `json:"stores_id"`
 	}
 
 	LoginResponse struct {
@@ -63,29 +63,14 @@ type (
 	APIResponse struct {
 		ID        int    `json:"id"`
 		Email     string `json:"email"`
-		FirstName string `json:"first_name"` // matches the user service response
-		LastName  string `json:"last_name"`  // matches the user service response
+		FirstName string `json:"first_name"`
+		LastName  string `json:"last_name"`
 		StoresID  []int  `json:"stores_id"`
 	}
 	LoginAPIResponse struct {
-		Message string `json:"message"`
-		Data    struct {
-			ID        int     `json:"id"`
-			FirstName string  `json:"firstName"` // Note the camelCase
-			LastName  string  `json:"lastName"`  // Note the camelCase
-			Email     string  `json:"email"`
-			IsActive  bool    `json:"isActive"`
-			IsBanned  bool    `json:"is_banned"`
-			Phone     *string `json:"phoneNumber,omitempty"`
-			Address   *string `json:"address,omitempty"`
-			CreateAt  string  `json:"createAt,omitempty"`
-			UpdateAt  string  `json:"updateAt,omitempty"`
-			Stores    []Store `json:"stores,omitempty"`
-		} `json:"data"`
-	}
-	Store struct {
-		ID     int `json:"id"`
-		UserID int `json:"userId"`
+		Message string   `json:"message"`
+		Status  bool     `json:"status"`
+		Data    UserData `json:"data"`
 	}
 )
 
@@ -221,11 +206,10 @@ func (s *Service) authenticateUser(login LoginRequest) (*UserData, error) {
 	defer resp.Body.Close()
 
 	bodyBytes, err := io.ReadAll(resp.Body)
+
 	if err != nil {
 		return nil, fmt.Errorf("error reading response: %v", err)
 	}
-
-	// Log raw response for debugging
 	log.Printf("Raw login response: %s", string(bodyBytes))
 
 	if resp.StatusCode != http.StatusOK {
@@ -238,32 +222,13 @@ func (s *Service) authenticateUser(login LoginRequest) (*UserData, error) {
 	}
 
 	// Extract store IDs from the stores array
-	storeIDs := make([]int, 0)
-	if loginResp.Data.Stores != nil {
-		for _, store := range loginResp.Data.Stores {
-			storeIDs = append(storeIDs, store.ID)
-		}
-	}
-
-	userData := &UserData{
-		ID:          loginResp.Data.ID,
-		FirstName:   loginResp.Data.FirstName,
-		LastName:    loginResp.Data.LastName,
-		Email:       loginResp.Data.Email,
-		IsActive:    loginResp.Data.IsActive,
-		IsBanned:    loginResp.Data.IsBanned,
-		PhoneNumber: loginResp.Data.Phone,
-		Address:     loginResp.Data.Address,
-		CreateAt:    loginResp.Data.CreateAt,
-		UpdateAt:    loginResp.Data.UpdateAt,
-		StoresID:    storeIDs,
-	}
+	userData := loginResp.Data
 
 	if userData.ID == 0 {
 		return nil, fmt.Errorf("invalid user data received from login: %+v", userData)
 	}
 
-	return userData, nil
+	return &userData, nil
 }
 
 func (s *Service) AuthMiddleware(next http.Handler) http.Handler {

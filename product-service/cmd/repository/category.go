@@ -40,9 +40,7 @@ func (cr *CategoryRepository) UpdateCategory(storeID, categoryID uint, category 
 }
 
 func (cr *CategoryRepository) CreateCategory(category *model.Category) error {
-
-	// Create category
-	return cr.db.DB.Create(&category).Error
+	return cr.db.DB.Create(category).Error
 }
 
 // GenerateCategorySlug checks if the slug is unique within the store and generates a new one if necessary.

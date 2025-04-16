@@ -90,7 +90,7 @@ type Collection struct {
 	ID          uint   `json:"id" gorm:"primaryKey"`
 	StoreID     uint   `json:"store_id" gorm:"not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // Foreign key for Store
 	Name        string `json:"name" gorm:"size:255;not null"`
-	Slug        string `json:"slug" gorm:"size:255;not null;uniqueIndex"`
+	Slug        string `json:"slug" gorm:"size:255;not null"`
 	ImageURL    string `json:"image_url" gorm:"size:255"`
 	Description string `json:"description" gorm:"type:text"`
 	BaseModel
@@ -100,7 +100,7 @@ type Category struct {
 	ID          uint   `json:"id" gorm:"primaryKey"`
 	StoreID     uint   `json:"store_id" gorm:"not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // Foreign key for Store
 	Name        string `json:"name" gorm:"size:255;not null"`
-	Slug        string `json:"slug" gorm:"size:255;not null;uniqueIndex"`
+	Slug        string `json:"slug" gorm:"size:255;not null"`
 	Description string `json:"description" gorm:"type:text"`
 	BaseModel
 	Products []Product `json:"products" gorm:"foreignKey:CategoryID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // One-to-many relationship with product
@@ -111,10 +111,6 @@ type SKUVariant struct {
 	VariantID uint   `gorm:"primaryKey;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // Foreign key for Variant
 	Value     string `json:"value" gorm:"size:255;not null"`                          // Added correct `size` syntax
 	BaseModel
-}
-
-func (p *Product) BeforeCreate(tx *gorm.DB) error {
-	return tx.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_products_store_id_slug ON products (store_id, slug)").Error
 }
 
 func UpdateInventory(db *gorm.DB, skus []Sku) error {
