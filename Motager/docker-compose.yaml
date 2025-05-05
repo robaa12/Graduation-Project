@@ -65,7 +65,7 @@ services:
       - user-db-data:/var/lib/postgresql/data
     networks:
       - user-network
-      
+
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -181,9 +181,27 @@ services:
       user-db:
         condition: service_healthy
 
+  rabbitmq:
+    image: rabbitmq:4-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - internal-network
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   product-db-data:
   order-db-data:
   user-db-data:
   mongo-db-data:
-
+  rabbitmq-data:
