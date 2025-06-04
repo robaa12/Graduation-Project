@@ -34,6 +34,15 @@ type ProductDetailsResponse struct {
 	ReviewStatistics *ProductReviewsStatistics `json:"review_statistics,omitempty"`
 }
 
+// PaginatedProductsResponse represents a paginated list of products
+type PaginatedProductsResponse struct {
+	Products    []ProductResponse `json:"products"`
+	Total       int64             `json:"total"`
+	Limit       int               `json:"limit"`
+	Offset      int               `json:"offset"`
+	IsPaginated bool              `json:"is_paginated"`
+}
+
 func (p *ProductRequest) CreateProduct(storeID uint) *Product {
 	mainImageURL := utils.SanitizeURL(p.MainImageURL)
 	imagesURL := make(pq.StringArray, 0)

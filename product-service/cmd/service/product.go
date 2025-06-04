@@ -100,13 +100,25 @@ func (ps *ProductService) DeleteProduct(productID uint, storeID uint) error {
 	return apperrors.ErrCheck(err)
 }
 
-func (ps *ProductService) GetStoreProducts(storeID uint) ([]model.ProductResponse, error) {
+func (ps *ProductService) GetStoreProducts(storeID uint, limit, offset int) (*model.PaginatedProductsResponse, error) {
+	// Check if we're fetching all products or using pagination
+	isPaginated := limit > 0
+	
+	if isPaginated {
+		log.Printf("GetStoreProducts: Paginated request - storeID=%d, limit=%d, offset=%d", storeID, limit, offset)
+	} else {
+		log.Printf("GetStoreProducts: Fetching all products for storeID=%d", storeID)
+	}
+	
 	// Call the repository to get the products
-	products, err := ps.repository.GetStoreProducts(storeID)
+	products, total, err := ps.repository.GetStoreProducts(storeID, limit, offset)
 	err = apperrors.ErrCheck(err)
 	if err != nil {
+		log.Printf("Error getting products: %v", err)
 		return nil, err
 	}
+
+	log.Printf("Retrieved %d products out of total %d", len(products), total)
 
 	// Convert products to response objects
 	var productsResponse []model.ProductResponse
@@ -115,7 +127,17 @@ func (ps *ProductService) GetStoreProducts(storeID uint) ([]model.ProductRespons
 		productsResponse = append(productsResponse, *productResponse)
 	}
 
-	return productsResponse, nil
+	// Create response with pagination info
+	paginatedResponse := &model.PaginatedProductsResponse{
+		Products: productsResponse,
+		Total:    total,
+		Limit:    limit,
+		Offset:   offset,
+		// Add a flag to indicate if this was a paginated request
+		IsPaginated: isPaginated,
+	}
+
+	return paginatedResponse, nil
 }
 
 func (ps *ProductService) GetProductDetails(productID, storeID uint) (*model.ProductDetailsResponse, error) {

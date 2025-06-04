@@ -131,7 +131,48 @@ func (h *ProductHandler) GetStoreProducts(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	productsResponse, err := h.ProductService.GetStoreProducts(storeID)
+	// Check if pagination parameters are present
+	limitStr := r.URL.Query().Get("limit")
+	offsetStr := r.URL.Query().Get("offset")
+	
+	// Default to no pagination if no parameters are provided
+	limit := 0 // 0 means no limit
+	offset := 0
+	
+	// If both parameters are absent, don't apply pagination
+	isPaginated := limitStr != "" || offsetStr != ""
+	
+	if isPaginated {
+		// Default limit when pagination is requested
+		limit = 10
+		
+		// Get limit from query params if provided
+		if limitStr != "" {
+			parsedLimit, err := strconv.Atoi(limitStr)
+			if err == nil && parsedLimit > 0 {
+				limit = parsedLimit
+			} else if err != nil {
+				_ = utils.ErrorJSON(w, apperrors.NewBadRequestError("invalid limit parameter"))
+				return
+			}
+		}
+		
+		// Get offset from query params if provided
+		if offsetStr != "" {
+			parsedOffset, err := strconv.Atoi(offsetStr)
+			if err == nil && parsedOffset >= 0 {
+				offset = parsedOffset
+			} else if err != nil {
+				_ = utils.ErrorJSON(w, apperrors.NewBadRequestError("invalid offset parameter"))
+				return
+			} else if parsedOffset < 0 {
+				_ = utils.ErrorJSON(w, apperrors.NewBadRequestError("offset cannot be negative"))
+				return
+			}
+		}
+	}
+
+	productsResponse, err := h.ProductService.GetStoreProducts(storeID, limit, offset)
 	if err != nil {
 		_ = utils.ErrorJSON(w, err)
 		return

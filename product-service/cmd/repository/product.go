@@ -154,20 +154,39 @@ func (pr *ProductRepository) DeleteProduct(productID uint, storeID uint) error {
 	return pr.db.DB.Unscoped().Delete(&product).Error
 }
 
-func (pr *ProductRepository) GetStoreProducts(storeID uint) ([]model.Product, error) {
+func (pr *ProductRepository) GetStoreProducts(storeID uint, limit, offset int) ([]model.Product, int64, error) {
 	var products []model.Product
+	var total int64
 
-	result := pr.db.DB.Model(&model.Product{}).Preload("Category").Where("store_id = ?", storeID).Find(&products)
+	// Count total products for pagination info
+	if err := pr.db.DB.Model(&model.Product{}).Where("store_id = ?", storeID).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Build the base query
+	query := pr.db.DB.Model(&model.Product{}).Preload("Category").Where("store_id = ?", storeID).Order("id ASC")
+	
+	// Apply limit only if pagination is requested
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+	
+	// Apply offset only if pagination is requested
+	if limit > 0 || offset > 0 {
+		query = query.Offset(offset)
+	}
+
+	result := query.Find(&products)
 
 	if result.Error != nil {
-		return nil, result.Error
+		return nil, 0, result.Error
 	}
 
-	if len(products) == 0 {
-		return nil, gorm.ErrRecordNotFound
+	if len(products) == 0 && offset == 0 {
+		return nil, 0, gorm.ErrRecordNotFound
 	}
 
-	return products, nil
+	return products, total, nil
 }
 
 func (pr *ProductRepository) GetProductDetails(productID uint, storeID uint) (*model.Product, error) {
