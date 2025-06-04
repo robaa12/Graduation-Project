@@ -32,7 +32,10 @@ export class UserService {
       email: user.email,
       is_banned: user.is_banned,
       phoneNumber: user.phoneNumber,
-      stores_id: user.stores.map((store) => store.id),
+      stores: user.stores.map((store) => ({
+        id: store.id,
+        name: store.store_name,
+      })),
       address: user.address,
       createAt: user.createAt,
       updateAt: user.updateAt,

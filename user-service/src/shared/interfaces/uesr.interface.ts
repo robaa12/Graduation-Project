@@ -4,7 +4,7 @@ export interface IUser{
     id: number;
     firstName: string;
     lastName: string;
-    stores_id:number[]
+    stores:{id:number,name:string}[]
     isActive: boolean;
     email: string;
     is_banned: boolean;
