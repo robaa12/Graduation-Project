@@ -33,6 +33,11 @@ type (
 		ExpiresIn    int64  `json:"expires_in"`
 	}
 
+	Store struct {
+		ID   int    `json:"id"`
+		Name string `json:"name"`
+	}
+
 	UserData struct {
 		ID          int     `json:"id"`
 		FirstName   string  `json:"firstName"`
@@ -44,15 +49,15 @@ type (
 		Address     *string `json:"address,omitempty"`
 		CreateAt    string  `json:"createAt,omitempty"`
 		UpdateAt    string  `json:"updateAt,omitempty"`
-		StoresID    []int   `json:"stores_id"`
+		Stores      []Store `json:"stores"`
 	}
 
 	LoginResponse struct {
-		UserID   int    `json:"user_id"`
-		StoresID []int  `json:"stores_id"`
-		Email    string `json:"email"`
-		Image    string `json:"image"`
-		Name     string `json:"name"`
+		UserID int     `json:"user_id"`
+		Stores []Store `json:"stores"`
+		Email  string  `json:"email"`
+		Image  string  `json:"image"`
+		Name   string  `json:"name"`
 		TokenResponse
 	}
 
@@ -61,11 +66,11 @@ type (
 	}
 
 	APIResponse struct {
-		ID        int    `json:"id"`
-		Email     string `json:"email"`
-		FirstName string `json:"first_name"`
-		LastName  string `json:"last_name"`
-		StoresID  []int  `json:"stores_id"`
+		ID        int     `json:"id"`
+		Email     string  `json:"email"`
+		FirstName string  `json:"first_name"`
+		LastName  string  `json:"last_name"`
+		Stores    []Store `json:"stores"`
 	}
 	LoginAPIResponse struct {
 		Message string   `json:"message"`
@@ -300,8 +305,12 @@ func (s *Service) generateLoginResponse(userData *UserData) (*LoginResponse, err
 	if name == "" {
 		name = "Unknown"
 	}
-
-	accessToken, refreshToken, err := s.jwtService.GenerateTokenPair(userData.ID, userData.StoresID)
+	// Get All stores ID and store them in array
+	stores := []int{}
+	for _, store := range userData.Stores {
+		stores = append(stores, store.ID)
+	}
+	accessToken, refreshToken, err := s.jwtService.GenerateTokenPair(userData.ID, stores)
 	if err != nil {
 		return nil, err
 	}
@@ -312,11 +321,11 @@ func (s *Service) generateLoginResponse(userData *UserData) (*LoginResponse, err
 			RefreshToken: refreshToken,
 			ExpiresIn:    int64(s.jwtService.accessTokenExpiry.Seconds()),
 		},
-		UserID:   userData.ID,
-		StoresID: userData.StoresID,
-		Email:    userData.Email,
-		Name:     name,
-		Image:    "", // Add image handling if needed
+		UserID: userData.ID,
+		Stores: userData.Stores,
+		Email:  userData.Email,
+		Name:   name,
+		Image:  "", // Add image handling if needed
 	}
 
 	return response, nil
@@ -355,7 +364,7 @@ func (s *Service) registerUser(body io.Reader) (*UserData, error) {
 		FirstName: apiResponse.FirstName,
 		LastName:  apiResponse.LastName,
 		Email:     apiResponse.Email,
-		StoresID:  apiResponse.StoresID,
+		Stores:    apiResponse.Stores,
 		IsActive:  true, // Default for new users
 	}
 

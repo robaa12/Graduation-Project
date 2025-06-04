@@ -47,6 +47,12 @@ func (s *OrderService) GetAllOrder(storeId string) ([]model.OrderResponse, error
 	if err != nil {
 		return nil, err
 	}
+	
+	// Check if no orders were found
+	if len(orders) == 0 {
+		return nil, errors.New("no orders found")
+	}
+	
 	// mapping order item model into order item response
 	var orderResponse []model.OrderResponse
 	for _, item := range orders {

@@ -27,7 +27,7 @@ export class UserController {
       email: user.email, // Match Go `Email`
       first_name: user.firstName, // Match Go `FirstName`
       last_name: user.lastName, // Match Go `LastName`
-      stores_id: user.stores_id, // Match Go `StoresID`
+      stores: user.stores, // Match Go `StoresID`
     };
   }
 

@@ -51,6 +51,10 @@ func (orderHandler *OrderHandler) GetAllOrder(w http.ResponseWriter, r *http.Req
 	// get Order response from service layer
 	orderResponse, err := orderHandler.OrderService.GetAllOrder(utils.ItoS(storeId))
 	if err != nil {
+		if err.Error() == "no orders found" {
+			_ = utils.ErrorJSON(w, errors.New("no orders found"), http.StatusNotFound)
+			return
+		}
 		_ = utils.ErrorJSON(w, err)
 		return
 	}
