@@ -28,6 +28,7 @@ type OrderRequest struct {
 type OrderResponseInfo struct {
 	ID             uint      `json:"order_id"`
 	StoreID        uint      `json:"store_id"`
+	StoreName      string    `json:"store_name"`
 	CustomerName   string    `json:"customer_name"`
 	PhoneNumber    string    `json:"phone_number" `
 	Address        string    `json:"address"`
@@ -73,6 +74,7 @@ func (order *Order) CreateOrderResponseInfo() *OrderResponseInfo {
 	return &OrderResponseInfo{
 		ID:             order.ID,
 		StoreID:        order.StoreID,
+		StoreName:      "", // Will be populated by the service layer
 		TotalPrice:     order.TotalPrice,
 		CustomerName:   order.CustomerName,
 		PhoneNumber:    order.PhoneNumber,

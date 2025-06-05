@@ -27,11 +27,6 @@ type (
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
-	TokenResponse struct {
-		AccessToken  string `json:"access_token"`
-		RefreshToken string `json:"refresh_token"`
-		ExpiresIn    int64  `json:"expires_in"`
-	}
 
 	Store struct {
 		ID   int    `json:"id"`
@@ -296,6 +291,7 @@ func (s *Service) makeUserServiceRequest(method, path string, body any) (*http.R
 	return s.client.Do(req)
 }
 
+// generateLoginResponse generates the login response including tokens
 func (s *Service) generateLoginResponse(userData *UserData) (*LoginResponse, error) {
 	if userData == nil {
 		return nil, errors.New("user data is nil")
@@ -319,7 +315,7 @@ func (s *Service) generateLoginResponse(userData *UserData) (*LoginResponse, err
 		TokenResponse: TokenResponse{
 			AccessToken:  accessToken,
 			RefreshToken: refreshToken,
-			ExpiresIn:    int64(s.jwtService.accessTokenExpiry.Seconds()),
+			ExpiresIn:    int64(s.jwtService.GetAccessTokenExpiry().Seconds()),
 		},
 		UserID: userData.ID,
 		Stores: userData.Stores,
@@ -398,7 +394,7 @@ func (s *Service) generateNewTokenPair(userID int, storesID []int) (*TokenRespon
 	return &TokenResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
-		ExpiresIn:    int64(s.jwtService.accessTokenExpiry.Seconds()),
+		ExpiresIn:    int64(s.jwtService.GetAccessTokenExpiry().Seconds()),
 	}, nil
 }
 

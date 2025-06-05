@@ -7,6 +7,13 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
+// TokenResponse defines the structure for authentication token responses
+type TokenResponse struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	ExpiresIn    int64  `json:"expires_in"`
+}
+
 type Claims struct {
 	UserID    int    `json:"user_id"`
 	StoresID  []int  `json:"stores_id"`
@@ -18,6 +25,11 @@ type JWTService struct {
 	secretKey          []byte
 	accessTokenExpiry  time.Duration
 	refreshTokenExpiry time.Duration
+}
+
+// GetAccessTokenExpiry returns the configured access token expiry duration
+func (s *JWTService) GetAccessTokenExpiry() time.Duration {
+	return s.accessTokenExpiry
 }
 
 func NewJWTService(secretKey string, accessExpiry, refreshExpiry time.Duration) *JWTService {

@@ -17,12 +17,16 @@ import (
 type Handler struct {
 	userService config.ServiceConfig
 	client      *http.Client
+	cfg         *config.Config
+	jwtService  *auth.JWTService
 }
 
 func NewStoreHandler(cfg *config.Config) *Handler {
 	return &Handler{
 		userService: cfg.Services["user-service"],
 		client:      &http.Client{Timeout: cfg.Services["user-service"].Timeout},
+		cfg:         cfg,
+		jwtService:  auth.NewJWTService(cfg.Auth.JWTSecret, cfg.Auth.AccessTokenExp, cfg.Auth.RefreshTokenExp),
 	}
 }
 
@@ -88,9 +92,84 @@ func (h *Handler) CreateStore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Copy response headers
+	// If store was created successfully
+	if resp.StatusCode == http.StatusCreated {
+		// Parse the store response to extract the store ID
+		var storeResponse map[string]interface{}
+		if err := json.Unmarshal(respBody, &storeResponse); err != nil {
+			log.Printf("Error parsing store response: %v", err)
+			// Continue anyway to return the original response
+		} else {
+			// Try to extract the store ID from the response
+			// The structure might be different based on your API, adjust this part if needed
+			var newStoreID int
+			
+			// Assuming the response has a structure like: { "id": 123, ... } or { "data": { "id": 123, ... } }
+			if id, ok := storeResponse["id"].(float64); ok {
+				newStoreID = int(id)
+			} else if data, ok := storeResponse["data"].(map[string]interface{}); ok {
+				if id, ok := data["id"].(float64); ok {
+					newStoreID = int(id)
+				}
+			}
+			
+			if newStoreID > 0 {
+				// Get the current user claims from context
+				claims, ok := r.Context().Value("user").(*auth.Claims)
+				if ok {
+					// Check if the store ID is already in the claims
+					storeExists := false
+					for _, sid := range claims.StoresID {
+						if sid == newStoreID {
+							storeExists = true
+							break
+						}
+					}
+					
+					// Add the new store ID to the claims if it doesn't exist
+					if !storeExists {
+						updatedStoreIDs := append(claims.StoresID, newStoreID)
+						
+						// Generate new tokens with updated store IDs
+						accessToken, refreshToken, err := h.jwtService.GenerateTokenPair(claims.UserID, updatedStoreIDs)
+						if err == nil {
+							// Create an enhanced response with both the store data and new tokens
+							tokenResponse := auth.TokenResponse{
+								AccessToken:  accessToken,
+								RefreshToken: refreshToken,
+								ExpiresIn:    int64(h.jwtService.GetAccessTokenExpiry().Seconds()),
+							}
+							
+							// Create enhanced response structure
+							enhancedResponse := map[string]interface{}{
+								"store_data": storeResponse,
+								"tokens":     tokenResponse,
+							}
+							
+							// Replace the response body with the enhanced version
+							enhancedRespBody, err := json.Marshal(enhancedResponse)
+							if err == nil {
+								respBody = enhancedRespBody
+							} else {
+								log.Printf("Error creating enhanced response: %v", err)
+							}
+						} else {
+							log.Printf("Error generating new tokens: %v", err)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Set content type to JSON
+	w.Header().Set("Content-Type", "application/json")
+	
+	// Copy other response headers
 	for k, v := range resp.Header {
-		w.Header()[k] = v
+		if k != "Content-Type" && k != "Content-Length" {
+			w.Header()[k] = v
+		}
 	}
 
 	// Set status code

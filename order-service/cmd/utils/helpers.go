@@ -82,5 +82,12 @@ func GetID(r *http.Request, key string) (uint, error) {
 }
 func ItoS(i uint) string {
 	return strconv.Itoa(int(i))
+}
 
+func StoUint(s string) uint {
+	i, err := strconv.ParseUint(s, 10, 32)
+	if err != nil {
+		return 0
+	}
+	return uint(i)
 }

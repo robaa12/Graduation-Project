@@ -151,6 +151,7 @@ services:
       - DSN=host=order-db port=5432 user=postgres password=password dbname=orders sslmode=disable timezone=UTC connect_timeout=5
       - APP_ENV=production
       - PRODUCT_SERVICE_URL=http://product-service:8083
+      - USER_SERVICE_URL=http://user-service:3000
     networks:
       - internal-network
       - order-network
