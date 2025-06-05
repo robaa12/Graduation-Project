@@ -37,9 +37,13 @@ export class StoreService {
   }
 
   async findOne(id: number):Promise<Store> {
-    return await this.storeRepository.findOne(
+    const store =  await this.storeRepository.findOne(
       {where:{id} }
     );
+    if(!store){
+      throw new NotFoundException('Store not found');
+    }
+    return store;
   }
 
   async createStoreTheme(CreateStoreThemeDto:CreateStoreThemeDto){
