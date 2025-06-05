@@ -1,3 +1,4 @@
+// File: Graduation-Project/gateway-service/internal/routes/manager.go
 package routes
 
 import (
@@ -9,27 +10,31 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/robaa12/gatway-service/internal/config"
+	store "github.com/robaa12/gatway-service/internal/handlers"
 	"github.com/robaa12/gatway-service/internal/middleware/auth"
 	"github.com/robaa12/gatway-service/internal/proxy"
 )
 
 type RouteManager struct {
-	Router *chi.Mux
-	Cfg    *config.Config
-	Auth   *auth.Service
+	Router       *chi.Mux
+	Cfg          *config.Config
+	Auth         *auth.Service
+	StoreHandler *store.Handler
 }
 
 func NewRouter(cfg *config.Config) *RouteManager {
 	rm := RouteManager{
-		Router: chi.NewRouter(),
-		Cfg:    cfg,
-		Auth:   auth.NewAuthService(cfg),
+		Router:       chi.NewRouter(),
+		Cfg:          cfg,
+		Auth:         auth.NewAuthService(cfg),
+		StoreHandler: store.NewStoreHandler(cfg),
 	}
 	rm.setupRouter()
 	rm.coreRoutes()
 	rm.registerRoutes()
 	return &rm
 }
+
 func (rm *RouteManager) setupRouter() {
 	// Middleware
 	rm.Router.Use(middleware.Logger)
@@ -44,28 +49,48 @@ func (rm *RouteManager) setupRouter() {
 		AllowCredentials: true,
 		MaxAge:           300,
 	}))
-
 }
 
 func (rm *RouteManager) registerRoutes() {
 	// API Routes
 	rm.Router.Route("/", func(r chi.Router) {
-
 		for _, route := range rm.Cfg.Routes {
+			// Skip the store POST route since we're handling it separately
+			if route.Path == "/store" && contains(route.Methods, "POST") {
+				// For store POST, we'll handle it in coreRoutes()
+				// But we still need to register other methods for this path
+				methods := []string{}
+				for _, method := range route.Methods {
+					if method != "POST" {
+						methods = append(methods, method)
+					}
+				}
+
+				if len(methods) > 0 {
+					routeCopy := route
+					routeCopy.Methods = methods
+					handler := rm.createRouteHandler(routeCopy)
+					for _, method := range methods {
+						r.Method(method, route.Path, handler)
+					}
+				}
+				continue
+			}
+
 			handler := rm.createRouteHandler(route)
-			log.Println(route)
+
 			// Ensure methods are provided
 			if len(route.Methods) == 0 {
 				log.Printf("Warning: No methods defined for route %s", route.Path)
-
+				continue
 			}
+
 			// add methods to router
 			for _, method := range route.Methods {
 				r.Method(method, route.Path, handler)
 			}
 		}
 	})
-
 }
 
 func (rm *RouteManager) createRouteHandler(route config.RouteConfig) http.Handler {
@@ -105,6 +130,9 @@ func (rm *RouteManager) coreRoutes() {
 	rm.Router.Post("/register", rm.Auth.Register)
 	rm.Router.Get("/", rm.sayHello())
 	rm.Router.Post("/refresh", rm.Auth.RefreshToken)
+
+	// Custom store creation route with auth middleware
+	rm.Router.With(rm.Auth.AuthMiddleware).Post("/store", rm.StoreHandler.CreateStore)
 }
 
 func (rm *RouteManager) sayHello() http.HandlerFunc {
