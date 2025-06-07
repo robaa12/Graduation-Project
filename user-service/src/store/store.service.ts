@@ -59,7 +59,12 @@ export class StoreService {
     if(!user){
       throw new NotFoundException('User not found');
     }
-    return await this.storeRepository.find({where:{user}});
+    return await this.storeRepository.find({where:{
+      user:{
+        id:userId
+      }
+    } 
+    });
   }
 
   async createStoreTheme(CreateStoreThemeDto:CreateStoreThemeDto){

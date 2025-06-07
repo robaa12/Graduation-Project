@@ -37,8 +37,8 @@ export class StoreController {
     }
   @Get('user/:userId')
   @ApiOperation({summary:'Find Stores by User ID'})
-  async findStoreByUserId(@Param('userId') userId: string) {
-      let store = await this.storeService.findAllStoresByUserId(+userId);
+  async findStoreByUserId(@Param('userId') userId: number) {
+      let store = await this.storeService.findAllStoresByUserId(userId);
       return {
         message: 'Store fetched successfully',
         data : store
