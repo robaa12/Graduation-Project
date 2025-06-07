@@ -3,11 +3,10 @@ package handlers
 import (
 	"log"
 	"net/http"
-
-	apperrors "github.com/robaa12/product-service/cmd/errors"
-	"github.com/robaa12/product-service/cmd/model"
-	"github.com/robaa12/product-service/cmd/service"
-	"github.com/robaa12/product-service/cmd/utils"
+	apperrors "order-service/cmd/errors"
+	"order-service/cmd/model"
+	"order-service/cmd/service"
+	"order-service/cmd/utils"
 )
 
 type StoreHandler struct {

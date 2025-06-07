@@ -25,7 +25,7 @@ type StoreHandler struct {
 }
 
 // NewStoreHandler creates a new store handler
-func NewStoreHandler(config config.Config) *StoreHandler {
+func NewStoreHandler(config *config.Config) *StoreHandler {
 	return &StoreHandler{
 		userServiceURL:    config.Services["user-service"].URL,
 		productServiceURL: config.Services["product-service"].URL,
@@ -37,8 +37,44 @@ func NewStoreHandler(config config.Config) *StoreHandler {
 	}
 }
 
+type StoreResponse struct {
+	Data    StoreInfo `json:"data"`
+	Message string    `json:"message"`
+	Status  bool      `json:"status"`
+}
+
+type StoreInfo struct {
+	BusinessPhone string   `json:"business_phone"`
+	CategoryID    int      `json:"category_id"`
+	Description   string   `json:"description"`
+	Href          string   `json:"href"` // nil in the example
+	ID            uint     `json:"id"`
+	PlanID        int      `json:"plan_id"`
+	Slug          string   `json:"slug"` // nil in the example
+	StoreCurrency string   `json:"store_currency"`
+	StoreName     string   `json:"store_name"`
+	User          UserData `json:"user"`
+}
+
+type UserData struct {
+	Address     string     `json:"address"` // nil in the example
+	CreateAt    string     `json:"createAt"`
+	Email       string     `json:"email"`
+	FirstName   string     `json:"firstName"`
+	ID          int        `json:"id"`
+	IsActive    bool       `json:"isActive"`
+	IsBanned    bool       `json:"is_banned"`
+	LastName    string     `json:"lastName"`
+	PhoneNumber string     `json:"phoneNumber"` // nil in the example
+	Stores      []StoreRef `json:"stores"`
+	UpdateAt    string     `json:"updateAt"`
+}
+
+type StoreRef struct {
+	ID int `json:"id"`
+}
 type ServicesStoreRequest struct {
-	ID   int    `json:"id"`
+	ID   uint   `json:"id"`
 	Name string `json:"name" validate:"required"`
 }
 
@@ -98,6 +134,7 @@ func (h *StoreHandler) CreateStore(w http.ResponseWriter, r *http.Request) {
 
 	// Step 1: Create store in user service
 	userServiceResp, storeData, err := h.createStoreInUserService(&storeRequest)
+	log.Printf("User service response: %v, Store Data: %+v", userServiceResp, storeData)
 	if err != nil {
 		utils.ErrorJSON(w, fmt.Errorf("failed to create store in user service: %v", err), http.StatusBadGateway)
 		return
@@ -115,22 +152,8 @@ func (h *StoreHandler) CreateStore(w http.ResponseWriter, r *http.Request) {
 
 	// Extract the store ID from the response
 	StoreRequest := ServicesStoreRequest{
-		UserID:  claims.UserID,
-		StoreID: storeResponse.Store.ID,
-	}
-
-	// Extract store name for other services
-	if name, ok := storeResponse["store_name"].(string); ok {
-		storeName = name
-	} else if data, ok := storeResponse["data"].(map[string]interface{}); ok {
-		if name, ok := data["store_name"].(string); ok {
-			storeName = name
-		}
-	}
-
-	if storeID == 0 {
-		utils.ErrorJSON(w, fmt.Errorf("invalid store ID from user service"), http.StatusInternalServerError)
-		return
+		ID:   storeResponse.Store.ID,
+		Name: storeResponse.Store.StoreName,
 	}
 
 	// Step 2: Concurrently create store in other services
@@ -143,12 +166,9 @@ func (h *StoreHandler) CreateStore(w http.ResponseWriter, r *http.Request) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		productStoreReq := map[string]interface{}{
-			"id":   storeID,
-			"name": storeName,
-		}
-		productReqBody, _ := json.Marshal(productStoreReq)
-		resp, respBody, err := h.sendRequest(http.MethodPost, h.productServiceURL+"/api/stores", productReqBody)
+
+		productReqBody, _ := json.Marshal(StoreRequest)
+		resp, respBody, err := h.sendRequest(http.MethodPost, h.productServiceURL+"/stores", productReqBody)
 
 		mu.Lock()
 		defer mu.Unlock()
@@ -162,7 +182,7 @@ func (h *StoreHandler) CreateStore(w http.ResponseWriter, r *http.Request) {
 			// Store was created successfully
 			successfulServices = append(successfulServices, "product_service")
 			if respBody != nil {
-				var data map[string]interface{}
+				var data ServicesStoreRequest
 				if json.Unmarshal(respBody, &data) == nil {
 					result.Data = data
 				}
@@ -175,12 +195,9 @@ func (h *StoreHandler) CreateStore(w http.ResponseWriter, r *http.Request) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		orderStoreReq := map[string]interface{}{
-			"id":   storeID,
-			"name": storeName,
-		}
-		orderReqBody, _ := json.Marshal(orderStoreReq)
-		resp, respBody, err := h.sendRequest(http.MethodPost, h.orderServiceURL+"/api/stores", orderReqBody)
+
+		orderReqBody, _ := json.Marshal(storeRequest)
+		resp, respBody, err := h.sendRequest(http.MethodPost, h.orderServiceURL+"/stores", orderReqBody)
 
 		mu.Lock()
 		defer mu.Unlock()
@@ -194,7 +211,7 @@ func (h *StoreHandler) CreateStore(w http.ResponseWriter, r *http.Request) {
 			// Store was created successfully
 			successfulServices = append(successfulServices, "order_service")
 			if respBody != nil {
-				var data map[string]interface{}
+				var data ServicesStoreRequest
 				if json.Unmarshal(respBody, &data) == nil {
 					result.Data = data
 				}
@@ -231,9 +248,9 @@ func (h *StoreHandler) CreateStore(w http.ResponseWriter, r *http.Request) {
 				var err error
 				switch service {
 				case "product_service":
-					err = h.deleteStoreFromProductService(storeID)
+					err = h.deleteStoreFromProductService(storeData.ID)
 				case "order_service":
-					err = h.deleteStoreFromOrderService(storeID)
+					err = h.deleteStoreFromOrderService(storeData.ID)
 				}
 
 				if err != nil {
@@ -246,7 +263,7 @@ func (h *StoreHandler) CreateStore(w http.ResponseWriter, r *http.Request) {
 
 		// Also delete from user service
 		go func() {
-			if err := h.deleteStoreFromUserService(storeID, r.Header); err != nil {
+			if err := h.deleteStoreFromUserService(storeData.ID); err != nil {
 				log.Printf("Failed to delete store from user service: %v", err)
 			} else {
 				log.Printf("Successfully deleted store from user service")
@@ -265,7 +282,7 @@ func (h *StoreHandler) CreateStore(w http.ResponseWriter, r *http.Request) {
 	// Add the new store ID to the claims if it doesn't exist
 	storeExists := false
 	for _, sid := range claims.StoresID {
-		if sid == storeID {
+		if sid == int(storeData.ID) {
 			storeExists = true
 			break
 		}
@@ -273,7 +290,7 @@ func (h *StoreHandler) CreateStore(w http.ResponseWriter, r *http.Request) {
 
 	var tokenResponse *auth.TokenResponse
 	if !storeExists {
-		updatedStoreIDs := append(claims.StoresID, storeID)
+		updatedStoreIDs := append(claims.StoresID, int(storeData.ID))
 
 		// Generate new tokens with updated store IDs
 		accessToken, refreshToken, err := h.jwtService.GenerateTokenPair(claims.UserID, updatedStoreIDs)
@@ -310,7 +327,7 @@ func (h *StoreHandler) createStoreInUserService(storeRequest *StoreCreateRequest
 	if err != nil {
 		return nil, StoreData{}, fmt.Errorf("marshaling request body failed: %w", err)
 	}
-	req, err := http.NewRequest(http.MethodPost, h.userServiceURL+"/api/stores", bytes.NewBuffer(requestBody))
+	req, err := http.NewRequest(http.MethodPost, h.userServiceURL+"/store", bytes.NewBuffer(requestBody))
 	if err != nil {
 		return nil, StoreData{}, fmt.Errorf("creating request failed: %w", err)
 	}
@@ -333,6 +350,16 @@ func (h *StoreHandler) createStoreInUserService(storeRequest *StoreCreateRequest
 	if err != nil {
 		return nil, StoreData{}, fmt.Errorf("unmarshaling response body failed: %w", err)
 	}
+	// Parse the store response to extract the store IDAdd commentMore actions
+	var storeResponse StoreResponse
+	if err := json.Unmarshal(respBody, &storeResponse); err != nil {
+		log.Printf("Error parsing store response: %v", err)
+		// Continue anyway to return the original response
+	}
+	log.Printf("Store created in user service: %+v", storeResponse)
+	log.Printf("Store data: %+v", storeData)
+	storeData.ID = storeResponse.Data.ID // Ensure we have the correct ID
+	storeData.StoreName = storeResponse.Data.StoreName
 
 	return resp, storeData, nil
 }
@@ -371,15 +398,15 @@ func (h *StoreHandler) sendRequest(method, url string, body []byte) (*http.Respo
 }
 
 // Compensating transaction: Delete store from user service
-func (h *StoreHandler) deleteStoreFromUserService(storeID uint, authToken string) error {
-	url := fmt.Sprintf("%s/api/stores/%d", h.userServiceURL, storeID)
+func (h *StoreHandler) deleteStoreFromUserService(storeID uint) error {
+	url := fmt.Sprintf("%s/store/%d", h.userServiceURL, storeID)
 
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {
 		return fmt.Errorf("creating request failed: %w", err)
 	}
 
-	req.Header.Set("Authorization", authToken)
+	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := h.client.Do(req)
 	if err != nil {
@@ -396,7 +423,7 @@ func (h *StoreHandler) deleteStoreFromUserService(storeID uint, authToken string
 
 // Compensating transaction: Delete store from product service
 func (h *StoreHandler) deleteStoreFromProductService(storeID uint) error {
-	url := fmt.Sprintf("%s/api/stores/%d", h.productServiceURL, storeID)
+	url := fmt.Sprintf("%s/stores/%d", h.productServiceURL, storeID)
 
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {
@@ -418,7 +445,7 @@ func (h *StoreHandler) deleteStoreFromProductService(storeID uint) error {
 
 // Compensating transaction: Delete store from order service
 func (h *StoreHandler) deleteStoreFromOrderService(storeID uint) error {
-	url := fmt.Sprintf("%s/api/stores/%d", h.orderServiceURL, storeID)
+	url := fmt.Sprintf("%s/stores/%d", h.orderServiceURL, storeID)
 
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {

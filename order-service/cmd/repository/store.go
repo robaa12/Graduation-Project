@@ -6,30 +6,49 @@ import (
 	"gorm.io/gorm"
 )
 
-// StoreRepository handles database operations for stores
 type StoreRepository struct {
 	db *gorm.DB
 }
 
-// CreateStore inserts a new store into the database
-func CreateStore(store *model.Store, tx *gorm.DB) error {
-	return tx.FirstOrCreate(store, model.Store{ID: store.ID}).Error
+func NewStoreRepository(db *gorm.DB) *StoreRepository {
+	return &StoreRepository{db: db}
 }
 
-// GetStoreWithOrders retrieves a store by ID with its orders
-func (r *StoreRepository) GetStoreWithOrders(store *model.Store) error {
-	return r.db.Preload("Orders.Customers").First(&store, store.ID).Error
-
+func AddStore(store *model.Store, tx *gorm.DB) error {
+	result := tx.Create(store)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
 }
 
-// FindStore Find Store By ID retrieves rows Affected
-func (r *OrderItemRepository) FindStore(store *model.Store) (int64, error) {
-
-	result := r.db.Find(store, store.ID)
-	return result.RowsAffected, result.Error
+// create store to the database
+func (sr *StoreRepository) CreateStore(store *model.Store) error {
+	result := sr.db.Create(store)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
 }
 
-// DeleteStore removes a store by ID
-func (r *StoreRepository) DeleteStore(storeID uint) error {
-	return r.db.Delete(&model.Store{}, storeID).Error
+// delete store from the database
+func (sr *StoreRepository) DeleteStore(storeID uint) error {
+	result := sr.db.Delete(&model.Store{}, storeID)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
+// get store by id from the database
+func (sr *StoreRepository) GetStoreByID(storeID uint) (*model.Store, error) {
+	result := &model.Store{}
+	err := sr.db.First(result, storeID).Error
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }

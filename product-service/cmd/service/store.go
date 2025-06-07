@@ -1,14 +1,12 @@
 package service
 
 import (
-	"github.com/robaa12/product-service/cmd/database"
 	apperrors "github.com/robaa12/product-service/cmd/errors"
 	"github.com/robaa12/product-service/cmd/model"
 	"github.com/robaa12/product-service/cmd/repository"
 )
 
 type StoreService struct {
-	db   *database.Database
 	repo *repository.StoreRepository
 }
 

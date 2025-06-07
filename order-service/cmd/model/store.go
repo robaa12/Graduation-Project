@@ -1,9 +1,16 @@
 package model
 
 // StoreResponse represents the basic response data for a store.
+// / StoreRequest is the request structure for store-related operations
+type StoreRequest struct {
+	ID   uint   `json:"id"`
+	Name string `json:"name" gorm:"size:255;not null"`
+}
+
+// / StoreResponse is the response structure for store-related operations
 type StoreResponse struct {
-	StoreID uint   `json:"store_id" binding:"required"` // Unique identifier of the store.
-	Name    string `json:"name" binding:"required"`     // Name of the store.
+	ID   uint   `json:"id"`
+	Name string `json:"name"`
 }
 
 // StoreOrderResponse represents a store's response containing a list of orders.
@@ -21,7 +28,7 @@ func CreateStore(storeId uint) *Store {
 // CreateStoreResponse creates a StoreResponse object from a Store object.
 func (store *Store) CreateStoreResponse() *StoreResponse {
 	return &StoreResponse{
-		StoreID: store.ID, // Returns a StoreResponse object with the StoreID set to the ID of the Store.
+		ID: store.ID, // Returns a StoreResponse object with the StoreID set to the ID of the Store.
 	}
 }
 
@@ -36,5 +43,21 @@ func (store *Store) CreateStoreOrderResponse() *StoreOrderResponse {
 	return &StoreOrderResponse{
 		StoreResponse: *store.CreateStoreResponse(), // Embeds the store's basic information.
 		Orders:        orders,                       // Sets the list of orders associated with the store.
+	}
+}
+
+// Store represents a store in the system
+func (s *Store) ToStoreResponse() *StoreResponse {
+	return &StoreResponse{
+		ID:   s.ID,
+		Name: s.Name,
+	}
+}
+
+// / ToStore converts StoreRequest to Store model
+func (sr *StoreRequest) ToStore() *Store {
+	return &Store{
+		ID:   sr.ID,
+		Name: sr.Name,
 	}
 }
