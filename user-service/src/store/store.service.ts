@@ -36,6 +36,14 @@ export class StoreService {
     return await this.storeRepository.find();
   }
 
+  async deleteStore(id: number):Promise<void> {
+    const store = await this.storeRepository.findOne({where:{id}});
+    if(!store){
+      throw new NotFoundException('Store not found');
+    }
+    await this.storeRepository.delete(id);
+  }
+
   async findOne(id: number):Promise<Store> {
     const store =  await this.storeRepository.findOne(
       {where:{id} }
@@ -44,6 +52,14 @@ export class StoreService {
       throw new NotFoundException('Store not found');
     }
     return store;
+  }
+
+  async findAllStoresByUserId(userId: number):Promise<Store[]> {
+    const user = await this.UserService.findOne(userId);
+    if(!user){
+      throw new NotFoundException('User not found');
+    }
+    return await this.storeRepository.find({where:{user}});
   }
 
   async createStoreTheme(CreateStoreThemeDto:CreateStoreThemeDto){

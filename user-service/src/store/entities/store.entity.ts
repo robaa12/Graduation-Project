@@ -31,9 +31,9 @@ export class Store {
     @Column()
     store_currency: string;
 
-    @ManyToOne(()=> User, user=>user.stores)
+    @ManyToOne(()=> User, user=>user.stores , {onDelete: 'CASCADE'})
     user: User;
 
-    @ManyToOne(()=> Category, category=>category.stores)
+    @ManyToOne(()=> Category, category=>category.stores , {onDelete: 'CASCADE'})
     category: Category;
 }

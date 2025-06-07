@@ -35,6 +35,15 @@ export class StoreController {
         data : store
       }
     }
+  @Get('user/:userId')
+  @ApiOperation({summary:'Find Stores by User ID'})
+  async findStoreByUserId(@Param('userId') userId: string) {
+      let store = await this.storeService.findAllStoresByUserId(+userId);
+      return {
+        message: 'Store fetched successfully',
+        data : store
+      }
+  }
 
     @Post('theme')
     @ApiOperation({summary:'Create Store Theme'})
@@ -64,6 +73,15 @@ export class StoreController {
     return {
       message: 'Store theme updated successfully',
       data : theme
+    }
+  }
+
+  @Delete(':id')
+  @ApiOperation({summary:'Delete Store'})
+  async deleteStore(@Param('id') id: number) {
+    const store = await this.storeService.deleteStore(id);
+    return {
+      message: 'Store deleted successfully',
     }
   }
 
