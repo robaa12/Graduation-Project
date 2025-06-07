@@ -29,7 +29,7 @@ func (db *Database) SetupDatabase() error {
 		return fmt.Errorf("failed to setup join table: %w", err)
 	}
 
-	err := db.DB.AutoMigrate(&model.Order{}, &model.OrderItem{}, &model.Customer{}, &model.Store{}, &model.StoreCustomer{})
+	err := db.DB.AutoMigrate(&model.Order{}, &model.OrderItem{}, &model.Customer{}, &model.Store{}, &model.StoreCustomer{}, &model.OrderStatusHistory{})
 	if err != nil {
 		return fmt.Errorf("failed to run migration: %w", err)
 	}

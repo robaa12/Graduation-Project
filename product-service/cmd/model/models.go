@@ -79,6 +79,7 @@ type Product struct {
 
 type Sku struct {
 	ID             uint         `json:"_" gorm:"primaryKey"`
+	Name           string       `json:"name" gorm:"size:255;not null"`
 	ProductID      uint         `json:"product_id" gorm:"not null;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // Foreign key for Product
 	Stock          int          `json:"stock" gorm:"not null"`
 	Price          float64      `json:"price" gorm:"not null"`

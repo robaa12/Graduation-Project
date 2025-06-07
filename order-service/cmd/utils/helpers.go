@@ -80,6 +80,14 @@ func GetID(r *http.Request, key string) (uint, error) {
 
 	return uint(idInt), nil
 }
+func GetString(r *http.Request, key string) (string, error) {
+	value := chi.URLParam(r, key)
+	if value == "" {
+		return value, errors.New("missing  parameter")
+	}
+
+	return value, nil
+}
 func ItoS(i uint) string {
 	return strconv.Itoa(int(i))
 }

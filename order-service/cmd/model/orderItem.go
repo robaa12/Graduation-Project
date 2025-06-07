@@ -9,16 +9,16 @@ type OrderItemRequest struct {
 
 // OrderItemResponse with their Function that mapping OrderItemModel into OrderItemResponse
 type OrderItemResponse struct {
-	ID         uint    `json:"id"`
-	OrderID    uint    `json:"order_id"`
-	SkuID      uint    `json:"sku_id"`
-	SkuName    string  `json:"sku_name"`
-	ProductID  uint    `json:"product_id,omitempty"`
-	ProductName string `json:"product_name,omitempty"`
-	ImageURL   string  `json:"image_url,omitempty"`
-	Price      float64 `json:"price"`
-	Quantity   uint    `json:"quantity"`
-	Subtotal   float64 `json:"subtotal"`
+	ID          uint    `json:"id"`
+	OrderID     uint    `json:"order_id"`
+	SkuID       uint    `json:"sku_id"`
+	SkuName     string  `json:"sku_name"`
+	ProductID   uint    `json:"product_id,omitempty"`
+	ProductName string  `json:"product_name,omitempty"`
+	ImageURL    string  `json:"image_url,omitempty"`
+	Price       float64 `json:"price"`
+	Quantity    uint    `json:"quantity"`
+	Subtotal    float64 `json:"subtotal"`
 }
 
 func (orderItemRequest *OrderItemRequest) CreateOrderItem(orderID uint) *OrderItem {

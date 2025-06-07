@@ -53,32 +53,32 @@ func NewOrderService(r *repository.OrderRepository) *OrderService {
 func (s *OrderService) GetStoreDetails(storeID uint) (*StoreDetails, error) {
 	// Create request to user service
 	url := fmt.Sprintf("%s/store/%d", s.UserServiceURL, storeID)
-	
+
 	// Make GET request
 	resp, err := s.client.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to user service: %w", err)
 	}
 	defer resp.Body.Close()
-	
+
 	// Check response status
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("failed to get store details, status code: %d", resp.StatusCode)
 	}
-	
+
 	// Parse response
 	var response UserServiceResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return nil, fmt.Errorf("failed to parse store details: %w", err)
 	}
-	
+
 	// Debug log to check response content
 	fmt.Printf("Store details response: %+v\n", response)
-	
+
 	return &response.Data, nil
 }
-func (s *OrderService) AddNewOrder(orderRequest *model.OrderRequestDetails) (*model.OrderResponse, error) {
-	err := s.ProductService.VerifyOrderItems(orderRequest.StoreID, orderRequest.OrderItems)
+func (s *OrderService) AddNewOrder(storeId uint, orderRequest *model.OrderRequestDetails) (*model.OrderResponse, error) {
+	err := s.ProductService.VerifyOrderItems(storeId, orderRequest.OrderItems)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func (s *OrderService) AddNewOrder(orderRequest *model.OrderRequestDetails) (*mo
 		return nil, err
 	}
 
-	order, err := s.OrderRepo.AddOrder(orderRequest)
+	order, err := s.OrderRepo.AddOrder(storeId, orderRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -105,12 +105,12 @@ func (s *OrderService) GetAllOrder(storeId string) ([]model.OrderResponse, error
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Check if no orders were found
 	if len(orders) == 0 {
 		return nil, errors.New("no orders found")
 	}
-	
+
 	// Get store details
 	storeIdUint := utils.StoUint(storeId)
 	storeDetails, err := s.GetStoreDetails(storeIdUint)
@@ -120,17 +120,17 @@ func (s *OrderService) GetAllOrder(storeId string) ([]model.OrderResponse, error
 	} else {
 		fmt.Printf("Successfully retrieved store details. Store name: %s\n", storeDetails.StoreName)
 	}
-	
+
 	// mapping order item model into order item response
 	var orderResponse []model.OrderResponse
 	for _, item := range orders {
 		response := item.CreateOrderResponse()
-		
+
 		// Add store name if available
 		if storeDetails != nil {
 			response.OrderResponseInfo.StoreName = storeDetails.StoreName
 		}
-		
+
 		orderResponse = append(orderResponse, *response)
 	}
 
@@ -146,7 +146,7 @@ func (s *OrderService) GetOrderDetails(orderId string) (*model.OrderDetailsRespo
 
 	// Create basic order details response
 	orderDetailsResponse := order.CreateOrderDetailsResponse()
-	
+
 	// Get store details
 	storeDetails, err := s.GetStoreDetails(order.StoreID)
 	if err != nil {
@@ -156,13 +156,13 @@ func (s *OrderService) GetOrderDetails(orderId string) (*model.OrderDetailsRespo
 		// Add store name to response
 		orderDetailsResponse.OrderResponseInfo.StoreName = storeDetails.StoreName
 	}
-	
+
 	// Collect all SKU IDs from order items
 	var skuIDs []uint
 	for _, item := range orderDetailsResponse.OrderItems {
 		skuIDs = append(skuIDs, item.SkuID)
 	}
-	
+
 	// Only fetch SKU details if there are items
 	if len(skuIDs) > 0 {
 		// Get SKU details from product service
@@ -182,7 +182,7 @@ func (s *OrderService) GetOrderDetails(orderId string) (*model.OrderDetailsRespo
 			}
 		}
 	}
-	
+
 	return orderDetailsResponse, nil
 }
 
@@ -194,7 +194,7 @@ func (s *OrderService) GetOrder(orderId string) (*model.OrderResponse, error) {
 	}
 
 	orderResponse := order.CreateOrderResponse()
-	
+
 	// Get store details
 	storeDetails, err := s.GetStoreDetails(order.StoreID)
 	if err != nil {
@@ -204,8 +204,27 @@ func (s *OrderService) GetOrder(orderId string) (*model.OrderResponse, error) {
 		// Add store name to response
 		orderResponse.OrderResponseInfo.StoreName = storeDetails.StoreName
 	}
-	
+
 	return orderResponse, nil
+}
+func (s *OrderService) ChangeOrderStatus(orderId uint, newStatus string) error {
+	var order model.Order
+	rowAffected, err := s.OrderRepo.IsOrderExist(&order, utils.ItoS(orderId))
+	if err != nil {
+		return err
+	} else if rowAffected == 0 {
+		return errors.New("order not found")
+	}
+
+	if !model.CanTransition(order.Status, newStatus) {
+		return errors.New("invalid status transition from " + order.Status + " to " + newStatus)
+	}
+	err = s.OrderRepo.ChangeOrderStatus(&order, newStatus)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *OrderService) UpdateOrder(orderId uint, orderRequest *model.OrderRequest) error {

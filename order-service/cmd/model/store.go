@@ -11,9 +11,10 @@ type StoreOrderResponse struct {
 	Orders        []OrderResponse `json:"orders" binding:"required"` // List of orders associated with the store.
 }
 
-// CreateStore creates a Store object from an OrderRequestDetails object.
-func (orderRequest *OrderRequestDetails) CreateStore() *Store {
-	return &Store{ID: orderRequest.StoreID} // Returns a Store object with the ID set to the StoreID from OrderRequestDetails.
+// CreateStore creates a Store object from store id parm.
+
+func CreateStore(storeId uint) *Store {
+	return &Store{ID: storeId} // Returns a Store object with the ID set to the StoreID from OrderRequestDetails.
 }
 
 // CreateStoreResponse creates a StoreResponse object from a Store object.

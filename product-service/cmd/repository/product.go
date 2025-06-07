@@ -165,12 +165,12 @@ func (pr *ProductRepository) GetStoreProducts(storeID uint, limit, offset int) (
 
 	// Build the base query
 	query := pr.db.DB.Model(&model.Product{}).Preload("Category").Where("store_id = ?", storeID).Order("id ASC")
-	
+
 	// Apply limit only if pagination is requested
 	if limit > 0 {
 		query = query.Limit(limit)
 	}
-	
+
 	// Apply offset only if pagination is requested
 	if limit > 0 || offset > 0 {
 		query = query.Offset(offset)

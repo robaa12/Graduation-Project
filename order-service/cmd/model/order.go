@@ -5,7 +5,6 @@ import (
 )
 
 type OrderRequestDetails struct {
-	StoreID uint `json:"store_id" binding:"required"`
 	OrderRequest
 	OrderItems []OrderItemRequest `json:"order_items" binding:"required"`
 }
@@ -39,6 +38,7 @@ type OrderResponseInfo struct {
 	Governorate    string    `json:"governorate" `
 	PostalCode     string    `json:"postal_code" `
 	ShippingMethod string    `json:"shipping_method"`
+	Status         string    `json:"status"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
 }
@@ -50,12 +50,13 @@ type OrderResponse struct {
 // OrderDetailsResponse  with their function that mapping OrderModel using CustomerModel as arg into OrderDetailsResponse
 type OrderDetailsResponse struct {
 	OrderResponse
-	OrderItems []OrderItemResponse `json:"order_items"`
+	OrderItems                 []OrderItemResponse          `json:"order_items"`
+	OrderStatusHistoryResonpse []OrderStatusHistoryResonpse `json:"order_status_history"`
 }
 
-func (orderRequest *OrderRequestDetails) CreateOrder(customerID uint) *Order {
+func (orderRequest *OrderRequestDetails) CreateOrder(storeID, customerID uint) *Order {
 	return &Order{
-		StoreID:        orderRequest.StoreID,
+		StoreID:        storeID,
 		TotalPrice:     orderRequest.TotalPrice,
 		CustomerID:     customerID,
 		CustomerName:   orderRequest.CustomerName,
@@ -85,6 +86,7 @@ func (order *Order) CreateOrderResponseInfo() *OrderResponseInfo {
 		Governorate:    order.Governorate,
 		PostalCode:     order.PostalCode,
 		ShippingMethod: order.ShippingMethod,
+		Status:         order.Status,
 	}
 
 }
@@ -104,8 +106,14 @@ func (order *Order) CreateOrderDetailsResponse() *OrderDetailsResponse {
 	for _, orderItem := range order.OrderItems {
 		orderItems = append(orderItems, *orderItem.CreateOrderItemResponse())
 	}
+	var orderStatusHistoryResonpse []OrderStatusHistoryResonpse
+	for _, statusHistory := range order.StatusHistory {
+		orderStatusHistoryResonpse = append(orderStatusHistoryResonpse, *statusHistory.ToOrderStatusHistoryResponse())
+	}
+
 	return &OrderDetailsResponse{
-		OrderResponse: *order.CreateOrderResponse(),
-		OrderItems:    orderItems,
+		OrderResponse:              *order.CreateOrderResponse(),
+		OrderItems:                 orderItems,
+		OrderStatusHistoryResonpse: orderStatusHistoryResonpse,
 	}
 }

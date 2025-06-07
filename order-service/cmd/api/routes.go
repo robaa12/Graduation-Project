@@ -43,6 +43,7 @@ func order(r chi.Router) {
 		r.Get("/", orderHandler.GetOrder)
 		r.Get("/details", orderHandler.GetOrderDetails)
 		r.Put("/", orderHandler.UpdateOrder)
+		r.Put("/status/{status}", orderHandler.UpdateOrderStatus)
 		r.Delete("/", orderHandler.DeleteOrder)
 	})
 

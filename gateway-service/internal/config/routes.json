@@ -30,6 +30,12 @@
     "middlewares": ["auth", "store-ownership", "logging"]
   },
   {
+    "path": "/stores/{store_id}/orders/{order_id}/status/{status}",
+    "methods": ["PUT"],
+    "service": "order-service",
+    "middlewares": ["auth", "store-ownership", "logging"]
+  },
+  {
     "path": "/stores/{store_id}/orders/{order_id}",
     "methods": ["GET"],
     "service": "order-service",

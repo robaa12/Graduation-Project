@@ -16,16 +16,22 @@ func NewOrderHandler(orderService *service.OrderService) *OrderHandler {
 	return &OrderHandler{OrderService: orderService}
 }
 func (orderHandler *OrderHandler) AddNewOrder(w http.ResponseWriter, r *http.Request) {
+	// get store_id from Query parameter
+	storeId, err := utils.GetID(r, "store_id")
+	if err != nil {
+		_ = utils.ErrorJSON(w, err)
+		return
+	}
 	// Read Order Request from json
 	var orderRequest model.OrderRequestDetails
-	err := utils.ReadJSON(w, r, &orderRequest)
+	err = utils.ReadJSON(w, r, &orderRequest)
 	if err != nil {
 		_ = utils.ErrorJSON(w, errors.New("enter valid order item data"))
 		return
 	}
 
 	// give order item response from service layer
-	orderResponse, err := orderHandler.OrderService.AddNewOrder(&orderRequest)
+	orderResponse, err := orderHandler.OrderService.AddNewOrder(storeId, &orderRequest)
 	if err != nil {
 		_ = utils.ErrorJSON(w, err)
 		return
@@ -105,6 +111,40 @@ func (orderHandler *OrderHandler) GetOrder(w http.ResponseWriter, r *http.Reques
 	}
 	// write json response
 	err = utils.WriteJSON(w, 200, orderResponse)
+	if err != nil {
+		_ = utils.ErrorJSON(w, err)
+		return
+	}
+
+}
+func (orderHandler *OrderHandler) UpdateOrderStatus(w http.ResponseWriter, r *http.Request) {
+
+	// get order_id from Query parameter
+	orderId, err := utils.GetID(r, "order_id")
+	if err != nil {
+		_ = utils.ErrorJSON(w, err)
+		return
+	}
+	// get status from Query parameter
+	status, err := utils.GetString(r, "status")
+	if err != nil {
+		_ = utils.ErrorJSON(w, err)
+		return
+	}
+	// validate status
+	if !model.IsValidStatus(status) {
+		_ = utils.ErrorJSON(w, errors.New("invalid status: "+status), http.StatusBadRequest)
+		return
+	}
+	err = orderHandler.OrderService.ChangeOrderStatus(orderId, status)
+	if err != nil {
+
+		_ = utils.ErrorJSON(w, err, http.StatusNotModified)
+		return
+	}
+
+	// write json response
+	err = utils.WriteJSON(w, http.StatusOK, "Order status updated successfully.")
 	if err != nil {
 		_ = utils.ErrorJSON(w, err)
 		return
