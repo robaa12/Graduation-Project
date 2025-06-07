@@ -2,7 +2,8 @@ package model
 
 // StoreResponse represents the basic response data for a store.
 type StoreResponse struct {
-	StoreID uint `json:"store_id" binding:"required"` // Unique identifier of the store.
+	StoreID uint   `json:"store_id" binding:"required"` // Unique identifier of the store.
+	Name    string `json:"name" binding:"required"`     // Name of the store.
 }
 
 // StoreOrderResponse represents a store's response containing a list of orders.

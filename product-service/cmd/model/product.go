@@ -29,7 +29,6 @@ type ProductResponse struct {
 }
 type ProductDetailsResponse struct {
 	ProductResponse
-
 	SKUs             []SKUResponse             `json:"skus"`
 	ReviewStatistics *ProductReviewsStatistics `json:"review_statistics,omitempty"`
 }
