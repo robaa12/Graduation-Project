@@ -15,15 +15,15 @@ func NewOrderRepository(db *gorm.DB) *OrderRepository {
 }
 
 func (r *OrderRepository) GetOrder(order *model.Order, id string) error {
-	return r.db.Preload("Customer").First(order, id).Error
+	return r.db.Preload("Customer").Preload("Store").First(order, id).Error
 }
 
 func (r *OrderRepository) GetOrderDetails(order *model.Order, id string) error {
-	return r.db.Preload("OrderItems").Preload("Customer").Preload("StatusHistory").First(order, id).Error
+	return r.db.Preload("OrderItems").Preload("Customer").Preload("Store").Preload("StatusHistory").First(order, id).Error
 }
 func (r *OrderRepository) GetAllOrder(id string) ([]model.Order, error) {
 	var orders []model.Order
-	err := r.db.Preload("Customer").Where("store_id = ?", id).Find(&orders).Error
+	err := r.db.Preload("Customer").Preload("Store").Where("store_id = ?", id).Find(&orders).Error
 	if err != nil {
 		return nil, err
 	}

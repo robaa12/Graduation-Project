@@ -142,7 +142,7 @@ func (app *Config) sku(r chi.Router) {
 	r.Group(func(r chi.Router) {
 		//	r.Use(customMiddleware.AuthenticateToken)
 		//	r.Use(customMiddleware.VerifyStoreOwnership)
-
+		r.Post("/info", skuHandler.GetSKUs)
 		r.Post("/", skuHandler.NewSKU)
 		r.Put("/{sku_id}", skuHandler.UpdateSKU)
 		r.Delete("/{sku_id}", skuHandler.DeleteSKU)

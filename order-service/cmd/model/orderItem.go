@@ -12,7 +12,7 @@ type OrderItemResponse struct {
 	ID          uint    `json:"id"`
 	OrderID     uint    `json:"order_id"`
 	SkuID       uint    `json:"sku_id"`
-	SkuName     string  `json:"sku_name"`
+	SkuName     string  `json:"sku_name,omitempty"`
 	ProductID   uint    `json:"product_id,omitempty"`
 	ProductName string  `json:"product_name,omitempty"`
 	ImageURL    string  `json:"image_url,omitempty"`
@@ -35,7 +35,6 @@ func (orderItem *OrderItem) CreateOrderItemResponse() *OrderItemResponse {
 		ID:       orderItem.ID,
 		OrderID:  orderItem.OrderID,
 		SkuID:    orderItem.SkuID,
-		SkuName:  "", // Will be populated by the service layer
 		Price:    orderItem.Price,
 		Quantity: orderItem.Quantity,
 		Subtotal: orderItem.Price * float64(orderItem.Quantity),

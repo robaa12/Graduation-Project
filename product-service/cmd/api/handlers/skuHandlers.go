@@ -76,6 +76,27 @@ func (h *SKUHandler) GetSKU(w http.ResponseWriter, r *http.Request) {
 	}
 	_ = utils.WriteJSON(w, http.StatusOK, skuResponse)
 }
+func (h *SKUHandler) GetSKUs(w http.ResponseWriter, r *http.Request) {
+
+	storeID, err := utils.GetID(r, "store_id")
+	if err != nil {
+		_ = utils.ErrorJSON(w, apperrors.NewBadRequestError("invalid storeID"))
+		return
+	}
+	var skusRequest *model.SKUsRequest
+	err = utils.ReadJSON(w, r, skusRequest)
+	if err != nil {
+		_ = utils.ErrorJSON(w, apperrors.NewBadRequestError("invalid request payload"))
+		return
+	}
+
+	skuResponse, err := h.service.GetSKUs(storeID, skusRequest)
+	if err != nil {
+		_ = utils.ErrorJSON(w, err)
+		return
+	}
+	_ = utils.WriteJSON(w, http.StatusOK, skuResponse)
+}
 
 func (h *SKUHandler) DeleteSKU(w http.ResponseWriter, r *http.Request) {
 	// Get the SKU ID from the URL
