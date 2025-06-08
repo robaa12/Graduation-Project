@@ -35,7 +35,7 @@ let testDev = 'mongodb+srv://Abdelrahmangamgom:Gj1VX4vsmyHSM9Ue@cluster0.kczkqhq
       },
     },
   }),
-  MongooseModule.forRoot(testDev, { dbName: 'themes'} ),
+  MongooseModule.forRoot(mongoUrl, { dbName: 'themes'} ),
   StoreModule,
   CategoryModule,
   PlansModule,

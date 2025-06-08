@@ -1,17 +1,31 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Category } from './entities/category.entity';
+import { defaultCategories } from 'src/shared/constants/contants';
 
 @Injectable()
-export class CategoryService {
+export class CategoryService implements OnModuleInit {
   constructor(
     @InjectRepository(Category)
     private categoryRepository: Repository<Category>,
   ) {}
 
+  async onModuleInit() {
+      const count = await this.categoryRepository.count();
+      if(count == 0 ){
+        await Promise.all(
+          defaultCategories.map(async (category)=>{
+            const newCategory =  this.categoryRepository.create(category);
+            return await this.categoryRepository.save(newCategory);
+          })
+        )
+        console.log('Default categories Added');
+        
+      }
+  }
   async createCategory(
     createCategoryDto: CreateCategoryDto,
   ): Promise<Category> {

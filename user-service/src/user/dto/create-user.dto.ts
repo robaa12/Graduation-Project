@@ -33,6 +33,9 @@ export class CreateUserDto {
     })
     @IsNotEmpty()
     email: string;
+
+    
+    plan_id:number = 1;
 }
 
 

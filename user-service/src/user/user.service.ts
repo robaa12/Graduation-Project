@@ -15,11 +15,13 @@ import { JwtService } from '@nestjs/jwt';
 import { EmailService } from 'src/shared/services/email/email.service';
 import { IUser } from 'src/shared/interfaces/uesr.interface';
 import { DuplicatedValueException } from 'src/shared/exception-filters/duplicate-value-exception.filter';
+import { PlansService } from 'src/plans/plans.service';
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
     private MailerService: EmailService,
+    private PlanService:PlansService,
     private jwtService: JwtService,
   ) {}
 
@@ -50,12 +52,14 @@ export class UserService {
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
 
+      const plan = await this.PlanService.findOne(createUserDto.plan_id);
       // Create user with all data at once
       let user = this.userRepository.create({
         ...createUserDto,
         password: hashedPassword,
         otp: otp,
         otpExpiry: otpExpiry,
+        plan
       });
 
       // Save user
@@ -91,7 +95,7 @@ export class UserService {
   async login(data: any) {
     let user = await this.userRepository.findOne({
       where: { email: data.email },
-      relations: ['stores'],
+      relations: ['stores' , 'plan'],
     });
     if (!user) {
       throw new UnauthorizedException('User not found');
@@ -109,7 +113,7 @@ export class UserService {
   async findOne(id: number) {
     const user = await this.userRepository.findOne({
       where: { id },
-      relations: ['stores'],
+      relations: ['stores' , 'plan'],
     });
     console.log(user);
     return this.castToUser(user);
