@@ -14,14 +14,6 @@ func NewStoreRepository(db *gorm.DB) *StoreRepository {
 	return &StoreRepository{db: db}
 }
 
-func AddStore(store *model.Store, tx *gorm.DB) error {
-	result := tx.Create(store)
-	if result.Error != nil {
-		return result.Error
-	}
-	return nil
-}
-
 // create store to the database
 func (sr *StoreRepository) CreateStore(store *model.Store) error {
 	result := sr.db.Create(store)
@@ -47,6 +39,15 @@ func (sr *StoreRepository) DeleteStore(storeID uint) error {
 func (sr *StoreRepository) GetStoreByID(storeID uint) (*model.Store, error) {
 	result := &model.Store{}
 	err := sr.db.First(result, storeID).Error
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+func GetStoreByID(storeID uint, tx *gorm.DB) (*model.Store, error) {
+	result := &model.Store{}
+	err := tx.First(result, storeID).Error
+
 	if err != nil {
 		return nil, err
 	}

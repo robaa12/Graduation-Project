@@ -35,7 +35,7 @@ func (sr *SkuRepository) GetSkus(storeID uint, skuIDs []uint) (*[]model.SKUProdu
 
 	var skusResponse []model.SKUProductResponse
 	result := sr.db.DB.Model(&model.Sku{}).
-		Select("skus.id as sku_id, skus.name as sku_name,products.id as product_id,products.name as product_name, skus.image_url as image_url").
+		Select("skus.id as sku_id, skus.name as sku_name, products.id as product_id, products.name as product_name, skus.image_url as image_url").
 		Joins("JOIN products ON skus.product_id = products.id").
 		Where("products.store_id = ? AND skus.id IN ?", storeID, skuIDs).
 		Scan(&skusResponse)

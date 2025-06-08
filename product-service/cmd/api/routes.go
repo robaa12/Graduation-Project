@@ -50,9 +50,11 @@ func (app *Config) routes() http.Handler {
 	}
 	storeHandler := handlers.NewStoreHandler(storeService)
 	reviewHandler := handlers.NewReviewHandler(reviewService)
+	skuHandler := setupSKUHandler(app.db)
 
 	mux.Post("/verify-order", OrderHandler.VerifyOrderItems)
 	mux.Post("/update-inventory", OrderHandler.UpdateInventory)
+
 	// Routes under /stores/{store_id}
 	mux.Route("/stores", func(r chi.Router) {
 		r.Post("/", storeHandler.CreateStore)
@@ -62,6 +64,7 @@ func (app *Config) routes() http.Handler {
 			r.Delete("/", storeHandler.DeleteStore)
 			r.Get("/products", productHandler.GetStoreProducts)
 			r.Get("/products/slug/{slug}", productHandler.GetProductBySlug)
+			r.Post("/skus/info", skuHandler.GetSKUs)
 
 			r.Group(func(r chi.Router) {
 				//r.Use(customMiddleware.AuthenticateToken)
@@ -142,7 +145,7 @@ func (app *Config) sku(r chi.Router) {
 	r.Group(func(r chi.Router) {
 		//	r.Use(customMiddleware.AuthenticateToken)
 		//	r.Use(customMiddleware.VerifyStoreOwnership)
-		r.Post("/info", skuHandler.GetSKUs)
+
 		r.Post("/", skuHandler.NewSKU)
 		r.Put("/{sku_id}", skuHandler.UpdateSKU)
 		r.Delete("/{sku_id}", skuHandler.DeleteSKU)

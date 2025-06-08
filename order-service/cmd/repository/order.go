@@ -41,13 +41,13 @@ func (r *OrderRepository) AddOrder(storeId uint, orderRequest *model.OrderReques
 			tx.Rollback()
 		}
 	}()
-
-	// create Store
-	store := model.CreateStore(storeId)
-	if err := AddStore(store, tx); err != nil {
+	//get store and add to order
+	store, err := GetStoreByID(storeId, tx)
+	if err != nil {
 		tx.Rollback()
 		return nil, err
 	}
+
 	// create Customer
 	customer := orderRequest.CreateCustomer()
 	if err := AddCustomer(customer, tx); err != nil {
@@ -55,7 +55,7 @@ func (r *OrderRepository) AddOrder(storeId uint, orderRequest *model.OrderReques
 		return nil, err
 	}
 	// create store customer which's trace orders history for the customer at specific store
-	storeCustomer := model.CreateStoreCustmer(store.ID, customer.ID)
+	storeCustomer := model.CreateStoreCustmer(storeId, customer.ID)
 	if _, err := AddStoreCustomer(storeCustomer, tx); err != nil {
 		tx.Rollback()
 		return nil, err
@@ -74,6 +74,8 @@ func (r *OrderRepository) AddOrder(storeId uint, orderRequest *model.OrderReques
 			tx.Rollback()
 			return nil, err
 		}
+
+		order.Store = *store
 		order.OrderItems = append(order.OrderItems, *orderItem)
 	}
 

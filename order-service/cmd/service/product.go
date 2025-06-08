@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"order-service/cmd/model"
 )
@@ -100,7 +101,7 @@ func (s *ProductService) UpdateInventory(items []model.OrderItemRequest) error {
 
 // GetSkuDetails fetches detailed information about SKUs from product service
 func (s *ProductService) GetSkuDetails(storeID uint, skuIDs []uint) (*SKUsResponse, error) {
-	skusRequest := &SKUsRequest{
+	skusRequest := SKUsRequest{
 		IDs: skuIDs,
 	}
 
@@ -108,6 +109,7 @@ func (s *ProductService) GetSkuDetails(storeID uint, skuIDs []uint) (*SKUsRespon
 	if err != nil {
 		return nil, err
 	}
+	log.Println("GetSkuDetails request:", skusRequest)
 
 	resp, err := http.Post(s.ProductServiceURL+fmt.Sprintf("/stores/%d/skus/info", storeID), "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
@@ -116,7 +118,7 @@ func (s *ProductService) GetSkuDetails(storeID uint, skuIDs []uint) (*SKUsRespon
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New("failed to verify order items")
+		return nil, errors.New("failed to get SKU details: " + resp.Status)
 	}
 
 	var skusResponse SKUsResponse
@@ -144,7 +146,7 @@ func (s *ProductService) GetOrderItemDetails(storeID uint, orderItems []model.Or
 	}
 	skusResponse, err := s.GetSkuDetails(storeID, skuIDs)
 	if err != nil {
-		return fmt.Errorf("failed to get SKU details: %w", err)
+		return err
 	}
 	for _, sku := range skusResponse.SKUs {
 		if index, exists := skuIndexMap[sku.ID]; exists {

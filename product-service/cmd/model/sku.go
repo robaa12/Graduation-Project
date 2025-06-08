@@ -9,6 +9,7 @@ type SKURequest struct {
 	CostPerItem    float64          `json:"cost_per_item" binding:"required"`
 	Profit         float64          `json:"profit" binding:"required"`
 	Margin         float64          `json:"margin" binding:"required"`
+	ImageURL       string           `json:"image_url,omitempty"`
 	Variants       []VariantRequest `json:"variants" binding:"required"`
 }
 type SKUsRequest struct {
@@ -18,11 +19,11 @@ type SKUsResponse struct {
 	SKUs []SKUProductResponse `json:"skus"`
 }
 type SKUProductResponse struct {
-	ID          uint   `json:"sku_id"`
-	Name        string `json:"sku_name"`
-	ProductID   uint   `json:"product_id"`
-	ProductName string `json:"product_name"`
-	ImgURL      string `json:"image_url"`
+	SKUID       uint   `json:"sku_id" gorm:"column:sku_id"`
+	SKUName     string `json:"sku_name" gorm:"column:sku_name"`
+	ProductID   uint   `json:"product_id" gorm:"column:product_id"`
+	ProductName string `json:"product_name" gorm:"column:product_name"`
+	ImageURL    string `json:"image_url" gorm:"column:image_url"`
 }
 
 type SKUResponse struct {
@@ -34,6 +35,7 @@ type SKUResponse struct {
 	Profit         float64           `json:"profit"`
 	Margin         float64           `json:"margin"`
 	CompareAtPrice float64           `json:"compare_at_price"`
+	ImageURL       string            `json:"image_url,omitempty"`
 	Variants       []VariantResponse `json:"variants"`
 }
 
@@ -45,6 +47,7 @@ func (s *SKURequest) ToSKU() *Sku {
 		CostPerItem:    s.CostPerItem,
 		Profit:         s.Profit,
 		Margin:         s.Margin,
+		ImageURL:       s.ImageURL,
 	}
 }
 func (s *SKURequest) CreateSKU(productID uint) *Sku {
@@ -99,5 +102,6 @@ func (s *Sku) ToSKUResponse() *SKUResponse {
 		Margin:         s.Margin,
 		CompareAtPrice: s.CompareAtPrice,
 		Variants:       variants,
+		ImageURL:       s.ImageURL,
 	}
 }
