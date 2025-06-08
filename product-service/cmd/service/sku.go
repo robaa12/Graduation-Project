@@ -47,6 +47,24 @@ func (s *SKUService) GetSKU(skuID, productID, storeID uint) (*model.SKUResponse,
 	return skuResponse, nil
 }
 
+func (s *SKUService) GetSKUs(storeID uint, skusRequest *model.SKUsRequest) (*model.SKUsResponse, error) {
+
+	// Find SKU by ID
+	skus, err := s.repository.GetSkus(storeID, skusRequest.IDs)
+	err = apperrors.ErrCheck(err)
+	if err != nil {
+		return nil, err
+	}
+	skuResponse := &model.SKUsResponse{
+		SKUs: *skus,
+	}
+	if len(skuResponse.SKUs) == 0 {
+		return nil, apperrors.NewNotFoundError("No SKUs found for the given IDs")
+	} else if len(skuResponse.SKUs) != len(skusRequest.IDs) {
+		return nil, apperrors.NewNotFoundError("Some SKUs not found for the given IDs")
+	}
+	return skuResponse, nil
+}
 func (s *SKUService) DeleteSKU(skuID, productID, storeID uint) error {
 
 	// Find SKU by ID

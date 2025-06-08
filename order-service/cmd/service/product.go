@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"order-service/cmd/model"
-	"time"
 )
 
 type ProductService struct {
@@ -27,18 +26,18 @@ type VerifiedItem struct {
 	Price   float64 `json:"actual_price"`
 }
 
-type SkuDetail struct {
-	SkuID       uint   `json:"sku_id"`
-	SkuName     string `json:"sku_name"`
+type SKUsRequest struct {
+	IDs []uint `json:"sku-ids" binding:"required"`
+}
+type SKUsResponse struct {
+	SKUs []SKUProductResponse `json:"skus"`
+}
+type SKUProductResponse struct {
+	ID          uint   `json:"sku_id"`
+	Name        string `json:"sku_name"`
 	ProductID   uint   `json:"product_id"`
 	ProductName string `json:"product_name"`
-	ImageURL    string `json:"image_url"`
-}
-
-type SkuDetailsResponse struct {
-	Status  bool       `json:"status"`
-	Message string     `json:"message"`
-	Data    []SkuDetail `json:"data"`
+	ImgURL      string `json:"image_url"`
 }
 
 func (s *ProductService) VerifyOrderItems(storeID uint, items []model.OrderItemRequest) error {
@@ -100,61 +99,61 @@ func (s *ProductService) UpdateInventory(items []model.OrderItemRequest) error {
 }
 
 // GetSkuDetails fetches detailed information about SKUs from product service
-func (s *ProductService) GetSkuDetails(storeID uint, skuIDs []uint) (map[uint]SkuDetail, error) {
-	// Create a map to store the sku details by sku ID for easy lookup
-	skuDetailsMap := make(map[uint]SkuDetail)
-	
-	// Prepare request body
-	requestBody := struct {
-		StoreID uint  `json:"store_id"`
-		SkuIDs  []uint `json:"sku_ids"`
-	}{
-		StoreID: storeID,
-		SkuIDs:  skuIDs,
+func (s *ProductService) GetSkuDetails(storeID uint, skuIDs []uint) (*SKUsResponse, error) {
+	skusRequest := &SKUsRequest{
+		IDs: skuIDs,
 	}
 
-	// Convert request to JSON
-	jsonData, err := json.Marshal(requestBody)
+	jsonData, err := json.Marshal(skusRequest)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal sku details request: %w", err)
+		return nil, err
 	}
 
-	// Initialize HTTP client if not already done
-	if s.client == nil {
-		s.client = &http.Client{Timeout: 10 * time.Second}
-	}
-
-	// Make request to product service
-	resp, err := s.client.Post(
-		fmt.Sprintf("%s/skus/details", s.ProductServiceURL),
-		"application/json", 
-		bytes.NewBuffer(jsonData),
-	)
+	resp, err := http.Post(s.ProductServiceURL+fmt.Sprintf("/stores/%d/skus/info", storeID), "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to product service: %w", err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 
-	// Check response status
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("product service returned non-OK status: %d", resp.StatusCode)
+		return nil, errors.New("failed to verify order items")
 	}
 
-	// Parse the response
-	var response SkuDetailsResponse
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return nil, fmt.Errorf("failed to parse sku details response: %w", err)
+	var skusResponse SKUsResponse
+
+	dec := json.NewDecoder(resp.Body)
+	err = dec.Decode(&skusResponse)
+	if err != nil {
+		return nil, err
 	}
 
-	// Check if response was successful
-	if !response.Status {
-		return nil, fmt.Errorf("product service error: %s", response.Message)
+	return &skusResponse, nil
+
+}
+func (s *ProductService) GetOrderItemDetails(storeID uint, orderItems []model.OrderItemResponse) error {
+	// Check if orderItems is empty
+	if len(orderItems) == 0 {
+		return nil
+	}
+	// intialize list of sku ids from order items and initialize map that contains id as key and index in the list as value
+	skuIDs := make([]uint, 0, len(orderItems))
+	skuIndexMap := make(map[uint]int, len(orderItems))
+	for i, item := range orderItems {
+		skuIDs = append(skuIDs, item.SkuID)
+		skuIndexMap[item.SkuID] = i
+	}
+	skusResponse, err := s.GetSkuDetails(storeID, skuIDs)
+	if err != nil {
+		return fmt.Errorf("failed to get SKU details: %w", err)
+	}
+	for _, sku := range skusResponse.SKUs {
+		if index, exists := skuIndexMap[sku.ID]; exists {
+			orderItems[index].SkuName = sku.Name
+			orderItems[index].ProductID = sku.ProductID
+			orderItems[index].ProductName = sku.ProductName
+			orderItems[index].ImageURL = sku.ImgURL
+		}
 	}
 
-	// Map the data for fast lookup by SKU ID
-	for _, skuDetail := range response.Data {
-		skuDetailsMap[skuDetail.SkuID] = skuDetail
-	}
-
-	return skuDetailsMap, nil
+	return nil
 }

@@ -11,6 +11,19 @@ type SKURequest struct {
 	Margin         float64          `json:"margin" binding:"required"`
 	Variants       []VariantRequest `json:"variants" binding:"required"`
 }
+type SKUsRequest struct {
+	IDs []uint `json:"sku-ids" binding:"required"`
+}
+type SKUsResponse struct {
+	SKUs []SKUProductResponse `json:"skus"`
+}
+type SKUProductResponse struct {
+	ID          uint   `json:"sku_id"`
+	Name        string `json:"sku_name"`
+	ProductID   uint   `json:"product_id"`
+	ProductName string `json:"product_name"`
+	ImgURL      string `json:"image_url"`
+}
 
 type SKUResponse struct {
 	ID             uint              `json:"id"`

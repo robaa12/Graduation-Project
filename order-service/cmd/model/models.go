@@ -33,6 +33,7 @@ type Order struct {
 	OrderItems     []OrderItem          `json:"order_items" gorm:"foreignKey:OrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	StatusHistory  []OrderStatusHistory `json:"status_history" gorm:"foreignKey:OrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // One-to-many relationship with OrderStatusHistory
 	BaseModel
+	Store Store `json:"store"`
 }
 
 // OrderItem related with Order 'one to many'
