@@ -1,6 +1,7 @@
 import { Category } from "src/category/entities/category.entity";
+import { Plan } from "src/plans/entities/plan.entity";
 import { User } from "src/user/entities/user.entity";
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class Store {
@@ -26,14 +27,12 @@ export class Store {
     category_id:number;
 
     @Column()
-    plan_id:number;
-
-    @Column()
     store_currency: string;
 
     @ManyToOne(()=> User, user=>user.stores , {onDelete: 'CASCADE'})
     user: User;
 
     @ManyToOne(()=> Category, category=>category.stores , {onDelete: 'CASCADE'})
+    @JoinColumn({ name: 'category_id' })
     category: Category;
 }

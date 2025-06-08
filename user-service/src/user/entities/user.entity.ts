@@ -1,5 +1,6 @@
+import { Plan } from "src/plans/entities/plan.entity";
 import { Store } from "src/store/entities/store.entity";
-import { Column, CreateDateColumn, DataSource, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, DataSource, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity()
 export class User {
@@ -50,6 +51,9 @@ export class User {
     })
     otpExpiry: Date;
 
+    @Column({nullable: true})
+    plan_id:number;
+
     @CreateDateColumn()
     createAt: Date;
 
@@ -58,4 +62,8 @@ export class User {
 
     @OneToMany(() => Store, Store => Store.user)
     stores: Store[];
+
+    @ManyToOne(()=>Plan , (plan)=> plan.users)
+    @JoinColumn({ name: 'plan_id' })
+    plan:Plan;
 }

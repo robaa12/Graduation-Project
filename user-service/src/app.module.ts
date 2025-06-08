@@ -10,7 +10,9 @@ import { EmailService } from './shared/services/email/email.service';
 import { StoreModule } from './store/store.module';
 import { CategoryModule } from './category/category.module';
 import { MongooseModule } from '@nestjs/mongoose';
+import { PlansModule } from './plans/plans.module';
 let mongoUrl = 'mongodb://admin:adminpassword@mongo-db:27017/users?authSource=admin';
+let testDev = 'mongodb+srv://Abdelrahmangamgom:Gj1VX4vsmyHSM9Ue@cluster0.kczkqhq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
 @Module({
   imports: [
   ConfigModule.forRoot({ envFilePath: '.env',isGlobal:true}), DatabaseModule , UserModule ,
@@ -33,9 +35,10 @@ let mongoUrl = 'mongodb://admin:adminpassword@mongo-db:27017/users?authSource=ad
       },
     },
   }),
-  MongooseModule.forRoot(mongoUrl, { dbName: 'themes'} ),
+  MongooseModule.forRoot(testDev, { dbName: 'themes'} ),
   StoreModule,
   CategoryModule,
+  PlansModule,
 ],
   controllers: [AppController],
   providers: [AppService , EmailService],

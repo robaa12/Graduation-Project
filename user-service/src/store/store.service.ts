@@ -1,3 +1,5 @@
+import { PlansService } from './../plans/plans.service';
+import { CategoryService } from './../category/category.service';
 import {  CreateStoreThemeDto } from './dto/create-store-theme.dto';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateStoreDto } from './dto/create-store.dto';
@@ -16,6 +18,8 @@ export class StoreService {
   constructor(
     @InjectRepository(Store)  private storeRepository: Repository<Store>,
     private MailerService:EmailService,
+    private CategoryService: CategoryService,
+    private PlansService: PlansService,
     private readonly UserService: UserService,
     @InjectModel('StoreTheme') private storeThemeModel: Model<StoreThemeSchema>
   ) {}
@@ -25,15 +29,17 @@ export class StoreService {
     if(!user){
       throw new NotFoundException('User not found');
     }
+    const category = await this.CategoryService.findOne(createStoreDto.category_id);
     const store = this.storeRepository.create({
       ...createStoreDto,
-      user
+      user,
+      category,
     })
     return await this.storeRepository.save(store);
   }
 
   async findAll():Promise<Store[]> {
-    return await this.storeRepository.find();
+    return await this.storeRepository.find({relations:['category' , 'plan', 'user']});
   }
 
   async deleteStore(id: number):Promise<void> {
@@ -45,9 +51,10 @@ export class StoreService {
   }
 
   async findOne(id: number):Promise<Store> {
-    const store =  await this.storeRepository.findOne(
-      {where:{id} }
-    );
+    const store =  await this.storeRepository.findOne({
+      where:{id},
+      relations:['category' , 'plan', 'user']
+    });
     if(!store){
       throw new NotFoundException('Store not found');
     }
@@ -63,7 +70,8 @@ export class StoreService {
       user:{
         id:userId
       }
-    } 
+    },
+    relations:['category' , 'plan', 'user'] 
     });
   }
 
