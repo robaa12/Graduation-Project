@@ -58,7 +58,7 @@ type StoreInfo struct {
 
 type UserData struct {
 	Address     string     `json:"address"` // nil in the example
-	CreateAt    string     `json:"createAt"`
+	CreateAt    time.Time  `json:"createAt"`
 	Email       string     `json:"email"`
 	FirstName   string     `json:"firstName"`
 	ID          int        `json:"id"`
@@ -67,7 +67,7 @@ type UserData struct {
 	LastName    string     `json:"lastName"`
 	PhoneNumber string     `json:"phoneNumber"` // nil in the example
 	Stores      []StoreRef `json:"stores"`
-	UpdateAt    string     `json:"updateAt"`
+	UpdateAt    time.Time  `json:"updateAt"`
 }
 
 type StoreRef struct {
@@ -100,15 +100,15 @@ type ServiceResult struct {
 }
 
 type StoreCreateRequest struct {
-	UserID        int     `json:"user_id,omitempty"`
-	StoreName     string  `json:"store_name" validate:"required"`
-	Description   string  `json:"description" validate:"required"`
-	BusinessPhone string  `json:"business_phone" validate:"required"`
-	CategoryID    int     `json:"category_id" validate:"required"`
-	PlanID        int     `json:"plan_id" validate:"required"`
-	StoreCurrency string  `json:"store_currency" validate:"required"`
-	Href          *string `json:"href,omitempty"`
-	Slug          *string `json:"slug,omitempty"`
+	UserID        int    `json:"user_id,omitempty"`
+	StoreName     string `json:"store_name" validate:"required"`
+	Description   string `json:"description" validate:"required"`
+	BusinessPhone string `json:"business_phone" validate:"required"`
+	CategoryID    int    `json:"category_id" validate:"required"`
+	PlanID        int    `json:"plan_id" validate:"required"`
+	StoreCurrency string `json:"store_currency" validate:"required"`
+	Href          string `json:"href,omitempty"`
+	Slug          string `json:"slug,omitempty"`
 }
 
 // CreateStore handles the distributed transaction for creating a store across all services
@@ -155,6 +155,7 @@ func (h *StoreHandler) CreateStore(w http.ResponseWriter, r *http.Request) {
 		ID:   storeResponse.Store.ID,
 		Name: storeResponse.Store.StoreName,
 	}
+	requestBody, _ := json.Marshal(StoreRequest)
 
 	// Step 2: Concurrently create store in other services
 	var wg sync.WaitGroup
@@ -167,8 +168,8 @@ func (h *StoreHandler) CreateStore(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		defer wg.Done()
 
-		productReqBody, _ := json.Marshal(StoreRequest)
-		resp, respBody, err := h.sendRequest(http.MethodPost, h.productServiceURL+"/stores", productReqBody)
+		//productReqBody, _ := json.Marshal(StoreRequest)
+		resp, respBody, err := h.sendRequest(http.MethodPost, h.productServiceURL+"/stores", requestBody)
 
 		mu.Lock()
 		defer mu.Unlock()
@@ -190,13 +191,18 @@ func (h *StoreHandler) CreateStore(w http.ResponseWriter, r *http.Request) {
 		}
 		serviceResults["product_service"] = result
 	}()
+	// Extract the store ID from the response
+	StoreRequests := ServicesStoreRequest{
+		ID:   storeResponse.Store.ID,
+		Name: storeResponse.Store.StoreName,
+	}
 
 	// Create store in order service
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 
-		orderReqBody, _ := json.Marshal(storeRequest)
+		orderReqBody, _ := json.Marshal(StoreRequests)
 		resp, respBody, err := h.sendRequest(http.MethodPost, h.orderServiceURL+"/stores", orderReqBody)
 
 		mu.Lock()
@@ -345,22 +351,31 @@ func (h *StoreHandler) createStoreInUserService(storeRequest *StoreCreateRequest
 	}
 	resp.Body.Close()
 
-	var storeData StoreData
-	err = json.Unmarshal(respBody, &storeData)
-	if err != nil {
-		return nil, StoreData{}, fmt.Errorf("unmarshaling response body failed: %w", err)
-	}
 	// Parse the store response to extract the store IDAdd commentMore actions
 	var storeResponse StoreResponse
 	if err := json.Unmarshal(respBody, &storeResponse); err != nil {
 		log.Printf("Error parsing store response: %v", err)
 		// Continue anyway to return the original response
 	}
+	storeData := StoreData{
+		StoreCreateRequest: StoreCreateRequest{
+			UserID:        storeResponse.Data.User.ID,
+			StoreName:     storeResponse.Data.StoreName,
+			Description:   storeResponse.Data.Description,
+			BusinessPhone: storeResponse.Data.BusinessPhone,
+			CategoryID:    storeResponse.Data.CategoryID,
+			PlanID:        storeResponse.Data.PlanID,
+			StoreCurrency: storeResponse.Data.StoreCurrency,
+			Href:          storeResponse.Data.Href,
+			Slug:          storeResponse.Data.Slug,
+		},
+		CreatedAt: storeResponse.Data.User.CreateAt,
+		UpdatedAt: storeResponse.Data.User.UpdateAt,
+		ID:        storeResponse.Data.ID,
+	}
+
 	log.Printf("Store created in user service: %+v", storeResponse)
 	log.Printf("Store data: %+v", storeData)
-	storeData.ID = storeResponse.Data.ID // Ensure we have the correct ID
-	storeData.StoreName = storeResponse.Data.StoreName
-
 	return resp, storeData, nil
 }
 
@@ -423,8 +438,9 @@ func (h *StoreHandler) deleteStoreFromUserService(storeID uint) error {
 
 // Compensating transaction: Delete store from product service
 func (h *StoreHandler) deleteStoreFromProductService(storeID uint) error {
+	log.Printf("Deleting store with ID %d from product service", storeID)
 	url := fmt.Sprintf("%s/stores/%d", h.productServiceURL, storeID)
-
+	log.Printf("Request URL: %s", url)
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
 	if err != nil {
 		return fmt.Errorf("creating request failed: %w", err)
@@ -439,7 +455,7 @@ func (h *StoreHandler) deleteStoreFromProductService(storeID uint) error {
 	if resp.StatusCode >= 300 {
 		return fmt.Errorf("delete store from product service failed with status code %d", resp.StatusCode)
 	}
-
+	log.Printf("Store with ID %d deleted from product service successfully", storeID)
 	return nil
 }
 

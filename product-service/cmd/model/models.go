@@ -40,8 +40,7 @@ type BaseModel struct {
 
 // Store related with products, reviews,collections,categories 'one to many'
 type Store struct {
-	ID uint `json:"id" gorm:"primaryKey"` // Primary key
-	//ID         uint         `json:"id" gorm:"primaryKey;autoIncrement:false"`// Disable auto-increment
+	ID         uint         `json:"id" gorm:"primaryKey;autoIncrement:false"` // Disable auto-increment
 	Name       string       `json:"name" gorm:"size:255;not null"`
 	Product    []Product    `json:"products" gorm:"foreignKey:StoreID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`    // One-to-many relationship with products
 	Review     []Review     `json:"reviews" gorm:"foreignKey:StoreID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`     // One-to-many relationship with reviews

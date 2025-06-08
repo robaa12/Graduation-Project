@@ -41,6 +41,7 @@ func (h *StoreHandler) CreateStore(w http.ResponseWriter, r *http.Request) {
 
 // DeleteStore deletes a store by ID
 func (h *StoreHandler) DeleteStore(w http.ResponseWriter, r *http.Request) {
+	log.Println("DeleteStore handler called, processing request to delete store")
 	// Get the store ID from the URL parameters
 	storeID, err := utils.GetID(r, "store_id")
 	if err != nil {

@@ -56,9 +56,10 @@ func (app *Config) routes() http.Handler {
 	// Routes under /stores/{store_id}
 	mux.Route("/stores", func(r chi.Router) {
 		r.Post("/", storeHandler.CreateStore)
-		r.Delete("/{store_id}", storeHandler.DeleteStore)
+
 		r.Route("/{store_id}", func(r chi.Router) {
 			// Public Product Routes
+			r.Delete("/", storeHandler.DeleteStore)
 			r.Get("/products", productHandler.GetStoreProducts)
 			r.Get("/products/slug/{slug}", productHandler.GetProductBySlug)
 

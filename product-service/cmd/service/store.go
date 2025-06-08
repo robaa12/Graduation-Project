@@ -21,15 +21,15 @@ func (s *StoreService) CreateStore(storeRequest *model.StoreRequest) (*model.Sto
 	// Create a new store in the database
 	store := storeRequest.ToStore()
 	// Check if the store already exists
-	existingStore, err := s.repo.GetStoreByID(store.ID)
+	/*existingStore, err := s.repo.GetStoreByID(store.ID)
 	if err != nil {
 		return nil, apperrors.NewInternalServerError("Failed to check if store exists")
 	}
 	if existingStore != nil {
 		return nil, apperrors.NewBadRequestError("Store already exists")
-	}
+	}*/
 	// call CreateStore method from repository
-	err = s.repo.CreateStore(store)
+	err := s.repo.CreateStore(store)
 	if err != nil {
 		return nil, apperrors.NewInternalServerError("Failed to create store")
 	}

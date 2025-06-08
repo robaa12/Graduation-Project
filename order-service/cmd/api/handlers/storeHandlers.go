@@ -26,12 +26,14 @@ func (h *StoreHandler) CreateStore(w http.ResponseWriter, r *http.Request) {
 		_ = utils.ErrorJSON(w, apperrors.NewBadRequestError("invalid request payload"))
 		return
 	}
+
 	// Call the CreateStore method from the service layer
 	storeResponse, err := h.service.CreateStore(&storeRequest)
 	if err != nil {
 		_ = utils.ErrorJSON(w, err)
 		return
 	}
+	log.Printf("Store request created successfully: %+v", storeRequest)
 	log.Printf("Store created successfully: %+v", storeResponse)
 	// Return the created store response
 	_ = utils.WriteJSON(w, http.StatusCreated, storeResponse)
