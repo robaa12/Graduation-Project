@@ -1,12 +1,12 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
-
-	apperrors "github.com/robaa12/product-service/cmd/errors"
-	"github.com/robaa12/product-service/cmd/model"
-	"github.com/robaa12/product-service/cmd/service"
-	"github.com/robaa12/product-service/cmd/utils"
+	apperrors "order-service/cmd/errors"
+	"order-service/cmd/model"
+	"order-service/cmd/service"
+	"order-service/cmd/utils"
 )
 
 type StoreHandler struct {
@@ -26,14 +26,18 @@ func (h *StoreHandler) CreateStore(w http.ResponseWriter, r *http.Request) {
 		_ = utils.ErrorJSON(w, apperrors.NewBadRequestError("invalid request payload"))
 		return
 	}
+
 	// Call the CreateStore method from the service layer
 	storeResponse, err := h.service.CreateStore(&storeRequest)
 	if err != nil {
 		_ = utils.ErrorJSON(w, err)
 		return
 	}
+	log.Printf("Store request created successfully: %+v", storeRequest)
+	log.Printf("Store created successfully: %+v", storeResponse)
 	// Return the created store response
 	_ = utils.WriteJSON(w, http.StatusCreated, storeResponse)
+
 }
 
 // DeleteStore deletes a store by ID
@@ -50,6 +54,7 @@ func (h *StoreHandler) DeleteStore(w http.ResponseWriter, r *http.Request) {
 		_ = utils.ErrorJSON(w, err)
 		return
 	}
+	log.Printf("Store deleted successfully")
 	// Return a success response
 	_ = utils.WriteJSON(w, http.StatusNoContent, nil)
 }

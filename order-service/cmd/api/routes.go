@@ -29,8 +29,19 @@ func (app *Config) routes() http.Handler {
 	mux.Route("/orders/{order_id}/items", orderItems)
 	mux.Route("/stores/{store_id}/orders", order)
 	mux.Route("/stores/{store_id}/customers", customer)
+	mux.Route("/stores", store)
 
 	return mux
+}
+func store(r chi.Router) {
+	storeRepo := repository.NewStoreRepository(db)
+	storeService := service.NewStoreService(storeRepo)
+	storeHandler := handlers.NewStoreHandler(storeService)
+
+	r.Post("/", storeHandler.CreateStore)
+	r.Route("/{store_id}", func(r chi.Router) {
+		r.Delete("/", storeHandler.DeleteStore)
+	})
 }
 func order(r chi.Router) {
 	orderRepo := repository.NewOrderRepository(db)

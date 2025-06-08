@@ -19,7 +19,7 @@ type RouteManager struct {
 	Router       *chi.Mux
 	Cfg          *config.Config
 	Auth         *auth.Service
-	StoreHandler *store.Handler
+	StoreHandler *store.StoreHandler
 }
 
 func NewRouter(cfg *config.Config) *RouteManager {

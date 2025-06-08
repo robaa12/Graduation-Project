@@ -38,7 +38,9 @@ func (app *Config) routes() http.Handler {
 	// Product Handler
 	productRepository := repository.NewProductRepository(*app.db)
 	reviewRepository := repository.NewReviewRepository(*app.db)
+	storeRepository := repository.NewStoreRepository(*app.db)
 	reviewService := service.NewReviewService(reviewRepository)
+	storeService := service.NewStoreService(storeRepository)
 
 	// Dependancy Injection To access review service in product service
 	productService := service.NewProductService(productRepository, reviewService)
@@ -46,14 +48,18 @@ func (app *Config) routes() http.Handler {
 	productHandler := handlers.ProductHandler{
 		ProductService: *productService,
 	}
+	storeHandler := handlers.NewStoreHandler(storeService)
 	reviewHandler := handlers.NewReviewHandler(reviewService)
 
 	mux.Post("/verify-order", OrderHandler.VerifyOrderItems)
 	mux.Post("/update-inventory", OrderHandler.UpdateInventory)
 	// Routes under /stores/{store_id}
 	mux.Route("/stores", func(r chi.Router) {
+		r.Post("/", storeHandler.CreateStore)
+
 		r.Route("/{store_id}", func(r chi.Router) {
 			// Public Product Routes
+			r.Delete("/", storeHandler.DeleteStore)
 			r.Get("/products", productHandler.GetStoreProducts)
 			r.Get("/products/slug/{slug}", productHandler.GetProductBySlug)
 

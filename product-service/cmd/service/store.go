@@ -1,20 +1,17 @@
 package service
 
 import (
-	"github.com/robaa12/product-service/cmd/database"
 	apperrors "github.com/robaa12/product-service/cmd/errors"
 	"github.com/robaa12/product-service/cmd/model"
 	"github.com/robaa12/product-service/cmd/repository"
 )
 
 type StoreService struct {
-	db   *database.Database
 	repo *repository.StoreRepository
 }
 
-func NewStoreService(db *database.Database, repo *repository.StoreRepository) *StoreService {
+func NewStoreService(repo *repository.StoreRepository) *StoreService {
 	return &StoreService{
-		db:   db,
 		repo: repo,
 	}
 }
@@ -24,15 +21,15 @@ func (s *StoreService) CreateStore(storeRequest *model.StoreRequest) (*model.Sto
 	// Create a new store in the database
 	store := storeRequest.ToStore()
 	// Check if the store already exists
-	existingStore, err := s.repo.GetStoreByID(store.ID)
+	/*existingStore, err := s.repo.GetStoreByID(store.ID)
 	if err != nil {
 		return nil, apperrors.NewInternalServerError("Failed to check if store exists")
 	}
 	if existingStore != nil {
 		return nil, apperrors.NewBadRequestError("Store already exists")
-	}
+	}*/
 	// call CreateStore method from repository
-	err = s.repo.CreateStore(store)
+	err := s.repo.CreateStore(store)
 	if err != nil {
 		return nil, apperrors.NewInternalServerError("Failed to create store")
 	}

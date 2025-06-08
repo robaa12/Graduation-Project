@@ -44,7 +44,7 @@ func (r *OrderRepository) AddOrder(storeId uint, orderRequest *model.OrderReques
 
 	// create Store
 	store := model.CreateStore(storeId)
-	if err := CreateStore(store, tx); err != nil {
+	if err := AddStore(store, tx); err != nil {
 		tx.Rollback()
 		return nil, err
 	}
@@ -83,6 +83,7 @@ func (r *OrderRepository) AddOrder(storeId uint, orderRequest *model.OrderReques
 
 	return order, nil
 }
+
 func (r *OrderRepository) ChangeOrderStatus(order *model.Order, newStatus string) error {
 	// start transaction
 	tx := r.db.Begin()

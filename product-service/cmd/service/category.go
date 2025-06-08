@@ -52,6 +52,9 @@ func (cs *CategoryService) GetCategories(storeID uint) ([]model.CategoryResponse
 	if err != nil {
 		return nil, err
 	}
+	if len(categories) == 0 {
+		return nil, apperrors.NewNotFoundError("This store has no categories")
+	}
 	// Convert to response
 	var categoriesResponse []model.CategoryResponse
 	for _, category := range categories {
