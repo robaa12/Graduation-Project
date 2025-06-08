@@ -185,7 +185,7 @@
     "path": "/store/{store_id}",
     "methods": ["DELETE"],
     "service": "user-service",
-    "middlewares": ["auth","logging"]
+    "middlewares": ["auth", "logging"]
   },
   {
     "path": "/store",
@@ -203,7 +203,7 @@
     "path": "/store/user/{user_id}",
     "methods": ["GET"],
     "service": "user-service",
-    "middlewares": ["auth","logging"]
+    "middlewares": ["auth", "logging"]
   },
   {
     "path": "/stores/{store_id}/customers",
@@ -246,5 +246,11 @@
     "methods": ["GET"],
     "service": "product-service",
     "middlewares": ["auth", "store-ownership", "logging"]
+  },
+  {
+    "path": "/category",
+    "methods": ["GET", "POST"],
+    "service": "user-service",
+    "middlewares": ["logging"]
   }
 ]
