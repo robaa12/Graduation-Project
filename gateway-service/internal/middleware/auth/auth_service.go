@@ -51,7 +51,6 @@ type (
 		UserID int     `json:"user_id"`
 		Stores []Store `json:"stores"`
 		Email  string  `json:"email"`
-		Image  string  `json:"image"`
 		Name   string  `json:"name"`
 		TokenResponse
 	}
@@ -321,7 +320,6 @@ func (s *Service) generateLoginResponse(userData *UserData) (*LoginResponse, err
 		Stores: userData.Stores,
 		Email:  userData.Email,
 		Name:   name,
-		Image:  "", // Add image handling if needed
 	}
 
 	return response, nil
