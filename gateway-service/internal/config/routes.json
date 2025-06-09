@@ -252,5 +252,17 @@
     "methods": ["GET", "POST"],
     "service": "user-service",
     "middlewares": ["logging"]
+  },
+  {
+    "path": "/plans",
+    "methods": ["GET", "POST"],
+    "service": "user-service",
+    "middlewares": ["logging"]
+  },
+  {
+    "path": "/plans/{plan_id}",
+    "methods": ["GET"],
+    "service": "user-service",
+    "middlewares": ["logging"]
   }
 ]

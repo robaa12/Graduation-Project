@@ -1,6 +1,6 @@
 import { PlansService } from './../plans/plans.service';
 import { CategoryService } from './../category/category.service';
-import {  CreateStoreThemeDto } from './dto/create-store-theme.dto';
+import { CreateStoreThemeDto } from './dto/create-store-theme.dto';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
@@ -16,86 +16,94 @@ import { Model } from 'mongoose';
 @Injectable()
 export class StoreService {
   constructor(
-    @InjectRepository(Store)  private storeRepository: Repository<Store>,
-    private MailerService:EmailService,
+    @InjectRepository(Store) private storeRepository: Repository<Store>,
+    private MailerService: EmailService,
     private CategoryService: CategoryService,
     private PlansService: PlansService,
     private readonly UserService: UserService,
-    @InjectModel('StoreTheme') private storeThemeModel: Model<StoreThemeSchema>
+    @InjectModel('StoreTheme') private storeThemeModel: Model<StoreThemeSchema>,
   ) {}
 
-  async createStore (createStoreDto: CreateStoreDto):Promise<Store> {
+  async createStore(createStoreDto: CreateStoreDto): Promise<Store> {
     const user = await this.UserService.findOne(createStoreDto.user_id);
-    if(!user){
+    if (!user) {
       throw new NotFoundException('User not found');
     }
-    const category = await this.CategoryService.findOne(createStoreDto.category_id);
+    const category = await this.CategoryService.findOne(
+      createStoreDto.category_id,
+    );
     const store = this.storeRepository.create({
       ...createStoreDto,
       user,
       category,
-    })
+    });
     return await this.storeRepository.save(store);
   }
 
-  async findAll():Promise<Store[]> {
-    return await this.storeRepository.find({relations:['category' , 'plan', 'user']});
+  async findAll(): Promise<Store[]> {
+    return await this.storeRepository.find({ relations: ['category', 'user'] });
   }
 
-  async deleteStore(id: number):Promise<void> {
-    const store = await this.storeRepository.findOne({where:{id}});
-    if(!store){
+  async deleteStore(id: number): Promise<void> {
+    const store = await this.storeRepository.findOne({ where: { id } });
+    if (!store) {
       throw new NotFoundException('Store not found');
     }
     await this.storeRepository.delete(id);
   }
 
-  async findOne(id: number):Promise<Store> {
-    const store =  await this.storeRepository.findOne({
-      where:{id},
-      relations:['category' , 'plan', 'user']
+  async findOne(id: number): Promise<Store> {
+    const store = await this.storeRepository.findOne({
+      where: { id },
+      relations: ['category', 'user'],
     });
-    if(!store){
+    if (!store) {
       throw new NotFoundException('Store not found');
     }
     return store;
   }
 
-  async findAllStoresByUserId(userId: number):Promise<Store[]> {
+  async findAllStoresByUserId(userId: number): Promise<Store[]> {
     const user = await this.UserService.findOne(userId);
-    if(!user){
+    if (!user) {
       throw new NotFoundException('User not found');
     }
-    return await this.storeRepository.find({where:{
-      user:{
-        id:userId
-      }
-    },
-    relations:['category' , 'plan', 'user'] 
+    return await this.storeRepository.find({
+      where: {
+        user: {
+          id: userId,
+        },
+      },
+      relations: ['category', 'user'],
     });
   }
 
-  async createStoreTheme(CreateStoreThemeDto:CreateStoreThemeDto){
-    const store = await this.storeRepository.findOne({where:{id:CreateStoreThemeDto.storeId}});
-    if(!store){
+  async createStoreTheme(CreateStoreThemeDto: CreateStoreThemeDto) {
+    const store = await this.storeRepository.findOne({
+      where: { id: CreateStoreThemeDto.storeId },
+    });
+    if (!store) {
       throw new NotFoundException('Store not found');
     }
-    const storeTheme = await this.storeThemeModel.create(CreateStoreThemeDto)
+    const storeTheme = await this.storeThemeModel.create(CreateStoreThemeDto);
     return storeTheme;
   }
 
-  async findStoreThemes(storeId:number){
-    return await this.storeThemeModel.find({storeId});
+  async findStoreThemes(storeId: number) {
+    return await this.storeThemeModel.find({ storeId });
   }
 
-  async findStoreThemeById(id:string){
-    return await this.storeThemeModel.findOne({_id:id});
+  async findStoreThemeById(id: string) {
+    return await this.storeThemeModel.findOne({ _id: id });
   }
 
-  async updateStoreTheme(id:string,updateStoreThemeDto:CreateStoreThemeDto){
-    return await this.storeThemeModel.findOneAndUpdate({_id:id},updateStoreThemeDto);
+  async updateStoreTheme(id: string, updateStoreThemeDto: CreateStoreThemeDto) {
+    return await this.storeThemeModel.findOneAndUpdate(
+      { _id: id },
+      updateStoreThemeDto,
+    );
   }
-  async removeStoreTheme(id:string){
-    return await this.storeThemeModel.findOneAndDelete({_id:id});
+  async removeStoreTheme(id: string) {
+    return await this.storeThemeModel.findOneAndDelete({ _id: id });
   }
 }
