@@ -86,3 +86,22 @@ func (s *JWTService) ValidateToken(tokenString string) (*Claims, error) {
 
 	return claims, nil
 }
+
+// GenerateUpdatedTokenResponse generates a new TokenResponse if the new store ID is not already present.
+func (s *JWTService) GenerateUpdatedTokenResponse(userID int, currentStoreIDs []int, newStoreID uint) (*TokenResponse, error) {
+	for _, sid := range currentStoreIDs {
+		if sid == int(newStoreID) {
+			return nil, nil // No update needed
+		}
+	}
+	updatedStoreIDs := append(currentStoreIDs, int(newStoreID))
+	accessToken, refreshToken, err := s.GenerateTokenPair(userID, updatedStoreIDs)
+	if err != nil {
+		return nil, err
+	}
+	return &TokenResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		ExpiresIn:    int64(s.GetAccessTokenExpiry().Seconds()),
+	}, nil
+}
