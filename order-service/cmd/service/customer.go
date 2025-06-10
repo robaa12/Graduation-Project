@@ -24,13 +24,14 @@ func (customerService *CustomerService) CreateNewCustomer(customerRequest *model
 	customerResponse := customer.CreateCustomerResponseInfo()
 	return customerResponse, nil
 }
-func (customerService *CustomerService) GetAllCustomers(storeID uint) ([]model.StoreCustomerItem, error) {
+func (customerService *CustomerService) GetAllCustomers(storeID uint) (*model.CustomersResponse, error) {
 
 	customers, err := customerService.CustomerRepo.GetStoreCustomers(storeID)
 	if err != nil {
 		return nil, err
 	}
-	return customers, nil
+	customersResponse := model.GetCustomersResponse(customers)
+	return customersResponse, nil
 }
 func (customerService *CustomerService) GetCustomer(storeID, customerID uint) (*model.CustomerResponseDetails, error) {
 	//TODO: Verfiy Store ID Before Create New Customer From My Store Table If not Existing ? Ask Robaa

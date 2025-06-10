@@ -44,22 +44,19 @@ func (cs *CategoryService) CreateCategory(storeID uint, categoryRequest *model.C
 }
 
 // GetCategories - GET /stores/{store_id}/categories/
-func (cs *CategoryService) GetCategories(storeID uint) ([]model.CategoryResponse, error) {
+func (cs *CategoryService) GetCategories(storeID uint) (*model.CategoriesResponse, error) {
 
 	// Get categories from the database by store ID
 	categories, err := cs.repository.GetStoreCategories(storeID)
-	err = apperrors.ErrCheck(err)
+	//err = apperrors.ErrCheck(err)
 	if err != nil {
 		return nil, err
 	}
-	if len(categories) == 0 {
+	/*if len(categories) == 0 {
 		return nil, apperrors.NewNotFoundError("This store has no categories")
-	}
+	}*/
 	// Convert to response
-	var categoriesResponse []model.CategoryResponse
-	for _, category := range categories {
-		categoriesResponse = append(categoriesResponse, *category.ToCategoryResponse())
-	}
+	categoriesResponse := model.GetCategoriesResponse(categories)
 	return categoriesResponse, nil
 }
 

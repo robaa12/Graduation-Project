@@ -90,7 +90,7 @@ func (r *CustomerRepository) GetStoreCustomerByEmail(customer *model.Customer, s
 
 // GetStoreCustomers retrieves all customers linked to a specific store
 func (r *CustomerRepository) GetStoreCustomers(storeID uint) ([]model.StoreCustomerItem, error) {
-	var storeCustomerItems []model.StoreCustomerItem
+	storeCustomerItems := []model.StoreCustomerItem{}
 
 	// Query to retrieve customers and their order statistics for a specific store
 	query := r.db.Model(&model.Customer{}).

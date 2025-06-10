@@ -22,6 +22,9 @@ type CollectionDetailsResponse struct {
 	CollectionResponse
 	Products []ProductResponse `json:"products"`
 }
+type CollectionsResponse struct {
+	Collections []CollectionResponse `json:"collections"`
+}
 
 func (c *CollectionRequest) ToCollection(storeID uint) *Collection {
 	return &Collection{
@@ -44,12 +47,21 @@ func (c *Collection) ToCollectionResponse() *CollectionResponse {
 }
 
 func (c *Collection) ToCollectionDetailsResponse() *CollectionDetailsResponse {
-	var products []ProductResponse
+	products := []ProductResponse{}
 	for _, product := range c.Products {
 		products = append(products, *product.ToProductResponse())
 	}
 	return &CollectionDetailsResponse{
 		CollectionResponse: *c.ToCollectionResponse(),
 		Products:           products,
+	}
+}
+func GetCollectionsResponse(collections []Collection) *CollectionsResponse {
+	collectionsResponse := []CollectionResponse{}
+	for _, collection := range collections {
+		collectionsResponse = append(collectionsResponse, *collection.ToCollectionResponse())
+	}
+	return &CollectionsResponse{
+		Collections: collectionsResponse,
 	}
 }

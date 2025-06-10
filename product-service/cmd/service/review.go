@@ -34,7 +34,7 @@ func (rs *ReviewService) CreateReview(productID, storeID uint, reviewRequest *mo
 	return review.ToReviewResponse(), nil
 }
 
-func (rs *ReviewService) GetProductReviews(productID, storeID uint) ([]model.ReviewResponse, error) {
+func (rs *ReviewService) GetProductReviews(productID, storeID uint) (*model.ReviewsResponse, error) {
 	exists, err := rs.reviewRepo.ProductExists(productID, storeID)
 	if err != nil {
 		return nil, apperrors.ErrCheck(err)
@@ -47,10 +47,7 @@ func (rs *ReviewService) GetProductReviews(productID, storeID uint) ([]model.Rev
 	if err != nil {
 		return nil, apperrors.ErrCheck(err)
 	}
-	var reviewResponses []model.ReviewResponse
-	for _, review := range reviews {
-		reviewResponses = append(reviewResponses, *review.ToReviewResponse())
-	}
+	reviewResponses := model.GetReviewsResponse(reviews)
 	return reviewResponses, nil
 }
 
