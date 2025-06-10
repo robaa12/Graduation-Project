@@ -11,8 +11,10 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/robaa12/gatway-service/internal/config"
 	store "github.com/robaa12/gatway-service/internal/handlers"
+	httpcient "github.com/robaa12/gatway-service/internal/http-cient"
 	"github.com/robaa12/gatway-service/internal/middleware/auth"
 	"github.com/robaa12/gatway-service/internal/proxy"
+	"github.com/robaa12/gatway-service/internal/service"
 )
 
 type RouteManager struct {
@@ -23,16 +25,25 @@ type RouteManager struct {
 }
 
 func NewRouter(cfg *config.Config) *RouteManager {
+
 	rm := RouteManager{
 		Router:       chi.NewRouter(),
 		Cfg:          cfg,
 		Auth:         auth.NewAuthService(cfg),
-		StoreHandler: store.NewStoreHandler(cfg),
+		StoreHandler: store.NewStoreHandler(setupServices(cfg)),
 	}
 	rm.setupRouter()
 	rm.coreRoutes()
 	rm.registerRoutes()
 	return &rm
+}
+func setupServices(cfg *config.Config) (*service.StoreService, *auth.JWTService) {
+	client := httpcient.NewClient(cfg.Services["user-service"].URL,
+		cfg.Services["product-service"].URL,
+		cfg.Services["order-service"].URL)
+	storeService := service.NewStoreService(client)
+	jwtService := auth.NewJWTService(cfg.Auth.JWTSecret, cfg.Auth.AccessTokenExp, cfg.Auth.RefreshTokenExp)
+	return storeService, jwtService
 }
 
 func (rm *RouteManager) setupRouter() {

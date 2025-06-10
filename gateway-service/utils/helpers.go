@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	apperrors "github.com/robaa12/gatway-service/internal/errors"
 )
 
 type jsonResponse struct {
@@ -57,9 +58,12 @@ func WriteJSON(w http.ResponseWriter, status int, data any, headers ...http.Head
 
 func ErrorJSON(w http.ResponseWriter, err error, status ...int) error {
 	statusCode := http.StatusBadRequest
-	if len(status) > 0 {
-		statusCode = status[0]
+
+	var appErr apperrors.AppError
+	if errors.As(err, &appErr) {
+		statusCode = appErr.StatusCode
 	}
+
 	var payload jsonResponse
 	payload.Error = true
 	payload.Message = err.Error()
