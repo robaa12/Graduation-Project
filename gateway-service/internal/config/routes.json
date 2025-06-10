@@ -264,5 +264,17 @@
     "methods": ["GET"],
     "service": "user-service",
     "middlewares": ["logging"]
+  },
+  {
+    "path": "/payment",
+    "methods": ["POST"],
+    "service": "user-service",
+    "middlewares": ["logging" , "auth"]
+  },
+  {
+    "path": "/payment/callback",
+    "methods": ["GET"],
+    "service": "user-service",
+    "middlewares": ["logging"]
   }
 ]

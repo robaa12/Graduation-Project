@@ -74,7 +74,7 @@ export class StoreService {
           id: userId,
         },
       },
-      relations: ['category', 'user'],
+      relations: ['category'],
     });
   }
 

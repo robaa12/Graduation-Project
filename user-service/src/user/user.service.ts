@@ -1,9 +1,11 @@
+import { CreatePaymentDto } from './../payment/dto/create-payment.dto';
 import { User } from './entities/user.entity';
 import {
   BadRequestException,
   Inject,
   Injectable,
   Logger,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -16,10 +18,13 @@ import { EmailService } from 'src/shared/services/email/email.service';
 import { IUser } from 'src/shared/interfaces/uesr.interface';
 import { DuplicatedValueException } from 'src/shared/exception-filters/duplicate-value-exception.filter';
 import { PlansService } from 'src/plans/plans.service';
+import { UserPlanPayment } from './entities/user-plan-payment.entity';
+import { Plan } from 'src/plans/entities/plan.entity';
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
+    @InjectRepository(UserPlanPayment) private userPlanPaymnetRepository: Repository<UserPlanPayment>,
     private MailerService: EmailService,
     private PlanService:PlansService,
     private jwtService: JwtService,
@@ -34,6 +39,7 @@ export class UserService {
       email: user.email,
       is_banned: user.is_banned,
       phoneNumber: user.phoneNumber,
+      plan_expire_date: user.plan_expire_date,
       stores: user.stores.map((store) => ({
         id: store.id,
         name: store.store_name,
@@ -115,7 +121,9 @@ export class UserService {
       where: { id },
       relations: ['stores' , 'plan'],
     });
-    console.log(user);
+    if(!user) {
+      throw new NotFoundException('User not found');
+    }
     return this.castToUser(user);
   }
 
@@ -127,5 +135,34 @@ export class UserService {
 
   async remove(id: number) {
     return await this.userRepository.delete(id);
+  }
+
+  async createPayment(user:IUser , plan:Plan , response:any) {
+    const userPlanPayment = this.userPlanPaymnetRepository.create({
+      user_id: user.id,
+      plan_id: plan.id,
+      amount: plan.price,
+      status: response.data.status,
+      charge_id: response.data.id,
+      currency: response.data.currency,
+    });
+    return await this.userPlanPaymnetRepository.save(userPlanPayment);
+
+  }
+
+  async updatePayment(tap_id:string , response:any){
+    const payment = await this.userPlanPaymnetRepository.findOne({
+      where: { charge_id: tap_id },
+      relations: ['user', 'plan'],
+    });
+    const user = await this.findOne(payment.user_id);
+    if (!payment) {
+      throw new NotFoundException('Payment not found');
+    }
+    payment.status = response.status;
+    user.plan_expire_date = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // Extend plan by 30 days
+    await this.userRepository.save(user);
+    await this.userPlanPaymnetRepository.save(payment);
+    return payment;
   }
 }

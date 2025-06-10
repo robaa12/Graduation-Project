@@ -10,6 +10,7 @@ export interface IUser{
     is_banned: boolean;
     phoneNumber: string;
     address: string;
+    plan_expire_date:Date;
     createAt:Date;
     updateAt:Date;
 }

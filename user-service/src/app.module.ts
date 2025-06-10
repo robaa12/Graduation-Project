@@ -11,6 +11,7 @@ import { StoreModule } from './store/store.module';
 import { CategoryModule } from './category/category.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PlansModule } from './plans/plans.module';
+import { PaymentModule } from './payment/payment.module';
 let mongoUrl = 'mongodb://admin:adminpassword@mongo-db:27017/users?authSource=admin';
 let testDev = 'mongodb+srv://Abdelrahmangamgom:Gj1VX4vsmyHSM9Ue@cluster0.kczkqhq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
 @Module({
@@ -35,10 +36,11 @@ let testDev = 'mongodb+srv://Abdelrahmangamgom:Gj1VX4vsmyHSM9Ue@cluster0.kczkqhq
       },
     },
   }),
-  MongooseModule.forRoot(mongoUrl, { dbName: 'themes'} ),
+  MongooseModule.forRoot(testDev, { dbName: 'themes'} ),
   StoreModule,
   CategoryModule,
   PlansModule,
+  PaymentModule,
 ],
   controllers: [AppController],
   providers: [AppService , EmailService],

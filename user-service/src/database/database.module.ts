@@ -16,10 +16,10 @@ import { ConfigService } from '@nestjs/config';
           : 'postgres',
         password: process.env.DSN
           ? new URL(process.env.DSN).password
-          : '1234',
+          : 'password',
         database: process.env.DSN
           ? new URL(process.env.DSN).pathname.replace('/', '')
-          : 'motager',
+          : 'users',
         autoLoadEntities: true,
         synchronize: process.env.APP_ENV !== 'production',
       }),

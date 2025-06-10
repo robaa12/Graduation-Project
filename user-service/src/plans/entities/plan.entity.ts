@@ -1,4 +1,5 @@
 import { Store } from "src/store/entities/store.entity";
+import { UserPlanPayment } from "src/user/entities/user-plan-payment.entity";
 import { User } from "src/user/entities/user.entity";
 import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
@@ -30,4 +31,7 @@ export class Plan {
 
     @OneToMany(()=>User , (user) => user.plan, {onDelete:'SET NULL'})
     users: User[];
+
+    @OneToMany(()=>UserPlanPayment , (payment) => payment.plan, {onDelete:'SET NULL'})
+    payments: UserPlanPayment[];
 }

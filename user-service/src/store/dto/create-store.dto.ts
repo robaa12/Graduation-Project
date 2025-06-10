@@ -19,11 +19,6 @@ export class CreateStoreDto {
     @IsNumber()
     category_id:number
 
-    @ApiProperty({type:Number,description:'plan id'})
-    @IsNotEmpty()
-    @IsNumber()
-    plan_id:number
-
     @ApiProperty({type:String,description:'store currency'})
     @IsNotEmpty()
     store_currency:string

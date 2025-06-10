@@ -1,6 +1,7 @@
 import { Plan } from "src/plans/entities/plan.entity";
 import { Store } from "src/store/entities/store.entity";
 import { Column, CreateDateColumn, DataSource, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { UserPlanPayment } from "./user-plan-payment.entity";
 
 @Entity()
 export class User {
@@ -54,6 +55,9 @@ export class User {
     @Column({nullable: true})
     plan_id:number;
 
+    @Column({type:'date' , nullable: true})
+    plan_expire_date:Date;
+
     @CreateDateColumn()
     createAt: Date;
 
@@ -66,4 +70,7 @@ export class User {
     @ManyToOne(()=>Plan , (plan)=> plan.users)
     @JoinColumn({ name: 'plan_id' })
     plan:Plan;
+
+    @OneToMany(()=>UserPlanPayment , (userPlanPayment)=> userPlanPayment.user, { onDelete: 'CASCADE' })
+    payments: UserPlanPayment[];
 }

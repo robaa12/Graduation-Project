@@ -175,9 +175,11 @@ services:
       - EMAIL_PASSWORD=2WYiWsHWbGqS
       - EMAIL_HOST=smtp.zoho.com
       - EMAIL_PORT=465
+      - PAYMENT_SECRET=sk_test_XKokBfNWv6FIYuTMg5sLPjhJ
     networks:
       - internal-network
       - user-network
+      - gateway-network
     depends_on:
       user-db:
         condition: service_healthy
