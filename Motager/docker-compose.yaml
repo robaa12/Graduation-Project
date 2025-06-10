@@ -176,6 +176,7 @@ services:
       - EMAIL_HOST=smtp.zoho.com
       - EMAIL_PORT=465
       - PAYMENT_SECRET=sk_test_XKokBfNWv6FIYuTMg5sLPjhJ
+      - PAYMENT_URL=https://api.tap.company/v2
     networks:
       - internal-network
       - user-network
