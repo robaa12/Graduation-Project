@@ -7,13 +7,14 @@ import (
 )
 
 type StoreInfo struct {
-	StoreName     string `json:"store_name" validate:"required"`
-	CategoryID    uint   `json:"category_id" validate:"required"`
+	StoreName string `json:"store_name" validate:"required"`
+
 	Description   string `json:"description" validate:"required"`
 	BusinessPhone string `json:"business_phone" validate:"required"`
 	StoreCurrency string `json:"store_currency" validate:"required"`
 	Href          string `json:"href,omitempty"`
 	Slug          string `json:"slug,omitempty"`
+	CategoryID    uint   `json:"category_id" validate:"required"`
 }
 type StoreRequest struct {
 	UserID uint `json:"user_id,omitempty"`
