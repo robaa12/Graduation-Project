@@ -10,7 +10,8 @@ type StoreUserResponse struct {
 
 type StoreData struct {
 	Store
-	User UserData `json:"user"`
+	User     UserData     `json:"user"`
+	Category CategoryData `json:"category"`
 }
 
 type UserData struct {
@@ -26,11 +27,17 @@ type UserData struct {
 	Stores      []StoreRef `json:"stores"`
 	UpdateAt    time.Time  `json:"updateAt"`
 }
-
+type CategoryData struct {
+	ID          int    `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
 type StoreRef struct {
 	ID int `json:"id"`
 }
 
 func (s *StoreUserResponse) GetStore() Store {
-	return s.Data.Store
+	store := s.Data.Store
+	store.CategoryName = s.Data.Category.Name
+	return store
 }
