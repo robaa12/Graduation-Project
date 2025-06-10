@@ -53,26 +53,21 @@ func (s *OrderService) AddNewOrder(storeId uint, orderRequest *model.OrderReques
 
 }
 
-func (s *OrderService) GetAllOrder(storeId string) ([]model.OrderResponse, error) {
+func (s *OrderService) GetAllOrder(storeId string) (*model.OrdersResponse, error) {
 	orders, err := s.OrderRepo.GetAllOrder(storeId)
 	if err != nil {
 		return nil, err
 	}
 
-	// Check if no orders were found
+	/*// Check if no orders were found
 	if len(orders) == 0 {
 		return nil, errors.New("no orders found")
-	}
+	}*/
 
 	// mapping order item model into order item response
-	var orderResponse []model.OrderResponse
-	for _, item := range orders {
-		response := item.CreateOrderResponse()
+	ordersResponse := model.GetOrdersReponse(orders)
 
-		orderResponse = append(orderResponse, *response)
-	}
-
-	return orderResponse, nil
+	return ordersResponse, nil
 }
 
 func (s *OrderService) GetOrderDetails(orderId string) (*model.OrderDetailsResponse, error) {

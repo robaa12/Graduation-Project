@@ -15,6 +15,9 @@ type CustomerResponseInfo struct {
 	CustomerID       uint `json:"custom_id" binding:"required"` // Unique identifier of the customer. Marked as required.
 	CustomerResponse      // Embedded struct containing the customer's email.
 }
+type CustomersResponse struct {
+	Customers []StoreCustomerItem `json:"customers"`
+}
 
 // CustomerResponseDetails represents comprehensive customer information including their ID, email, and order history.
 type CustomerResponseDetails struct {
@@ -54,5 +57,10 @@ func (customer *Customer) CreateCustomerResponseDetails() *CustomerResponseDetai
 	return &CustomerResponseDetails{
 		CustomerResponseInfo: *customer.CreateCustomerResponseInfo(), // Embeds the customer's ID and email.
 		Orders:               orders,                                 // Sets the list of orders associated with the customer.
+	}
+}
+func GetCustomersResponse(customers []StoreCustomerItem) *CustomersResponse {
+	return &CustomersResponse{
+		Customers: customers,
 	}
 }

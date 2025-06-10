@@ -7,6 +7,7 @@ import (
 	apperrors "github.com/robaa12/product-service/cmd/errors"
 	"github.com/robaa12/product-service/cmd/model"
 	"github.com/robaa12/product-service/cmd/repository"
+	"gorm.io/gorm"
 )
 
 type ProductService struct {
@@ -103,40 +104,25 @@ func (ps *ProductService) DeleteProduct(productID uint, storeID uint) error {
 func (ps *ProductService) GetStoreProducts(storeID uint, limit, offset int) (*model.PaginatedProductsResponse, error) {
 	// Check if we're fetching all products or using pagination
 	isPaginated := limit > 0
-	
+
 	if isPaginated {
 		log.Printf("GetStoreProducts: Paginated request - storeID=%d, limit=%d, offset=%d", storeID, limit, offset)
 	} else {
 		log.Printf("GetStoreProducts: Fetching all products for storeID=%d", storeID)
 	}
-	
+
 	// Call the repository to get the products
 	products, total, err := ps.repository.GetStoreProducts(storeID, limit, offset)
 	err = apperrors.ErrCheck(err)
-	if err != nil {
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		log.Printf("Error getting products: %v", err)
 		return nil, err
 	}
 
 	log.Printf("Retrieved %d products out of total %d", len(products), total)
 
-	// Convert products to response objects
-	var productsResponse []model.ProductResponse
-	for _, product := range products {
-		productResponse := product.ToProductResponse()
-		productsResponse = append(productsResponse, *productResponse)
-	}
-
 	// Create response with pagination info
-	paginatedResponse := &model.PaginatedProductsResponse{
-		Products: productsResponse,
-		Total:    total,
-		Limit:    limit,
-		Offset:   offset,
-		// Add a flag to indicate if this was a paginated request
-		IsPaginated: isPaginated,
-	}
-
+	paginatedResponse := model.GetPaginatedProductsResponse(products, total, limit, offset, isPaginated)
 	return paginatedResponse, nil
 }
 

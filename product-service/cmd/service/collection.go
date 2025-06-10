@@ -42,19 +42,16 @@ func (cs *CollectionService) CreateCollection(storeID uint, collectionRequest *m
 }
 
 // GetCollections - GET /stores/{store_id}/collections/
-func (cs *CollectionService) GetCollections(storeID uint) ([]model.CollectionResponse, error) {
+func (cs *CollectionService) GetCollections(storeID uint) (*model.CollectionsResponse, error) {
 
 	// Get collections from the database by store ID
 	collections, err := cs.repository.GetStoreCollections(storeID)
-	err = apperrors.ErrCheck(err)
+	// err = apperrors.ErrCheck(err)
 	if err != nil {
 		return nil, err
 	}
 	// Convert to response
-	var collectionsResponse []model.CollectionResponse
-	for _, collection := range collections {
-		collectionsResponse = append(collectionsResponse, *collection.ToCollectionResponse())
-	}
+	collectionsResponse := model.GetCollectionsResponse(collections)
 	return collectionsResponse, nil
 }
 
@@ -63,7 +60,7 @@ func (cs *CollectionService) GetCollection(storeID, collectionID uint) (*model.C
 
 	// Get collection from the database by store ID and collection ID
 	collection, err := cs.repository.GetCollectionByID(storeID, collectionID)
-	err = apperrors.ErrCheck(err)
+	//err = apperrors.ErrCheck(err)
 	if err != nil {
 		return nil, err
 	}

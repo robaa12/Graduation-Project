@@ -46,6 +46,9 @@ type OrderResponse struct {
 	CustomerResponse
 	OrderResponseInfo
 }
+type OrdersResponse struct {
+	Orders []OrderResponse `json:"orders"`
+}
 
 // OrderDetailsResponse  with their function that mapping OrderModel using CustomerModel as arg into OrderDetailsResponse
 type OrderDetailsResponse struct {
@@ -116,4 +119,17 @@ func (order *Order) CreateOrderDetailsResponse() *OrderDetailsResponse {
 		OrderItems:                 orderItems,
 		OrderStatusHistoryResonpse: orderStatusHistoryResonpse,
 	}
+}
+func GetOrdersReponse(orders []Order) *OrdersResponse {
+	// mapping order item model into order item response
+	orderResponse := []OrderResponse{}
+	for _, item := range orders {
+		response := item.CreateOrderResponse()
+
+		orderResponse = append(orderResponse, *response)
+	}
+	return &OrdersResponse{
+		Orders: orderResponse,
+	}
+
 }

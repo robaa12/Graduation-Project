@@ -27,6 +27,7 @@ type ProductResponse struct {
 	ImagesURL    []string      `json:"images_url"`
 	Category     *CategoryInfo `json:"category,omitempty"`
 }
+
 type ProductDetailsResponse struct {
 	ProductResponse
 	SKUs             []SKUResponse             `json:"skus"`
@@ -85,7 +86,7 @@ func (p *Product) ToProductResponse() *ProductResponse {
 
 // ToProductDetailsResponse map product object to product response object
 func (p *Product) ToProductDetailsResponse() *ProductDetailsResponse {
-	var SKUs []SKUResponse
+	SKUs := []SKUResponse{}
 	for _, sku := range p.SKUs {
 		SKUs = append(SKUs, *sku.ToSKUResponse())
 	}
@@ -98,4 +99,21 @@ func (p *Product) ToProductDetailsResponse() *ProductDetailsResponse {
 func (p *ProductDetailsResponse) WithReviewStatistics(stats *ProductReviewsStatistics) *ProductDetailsResponse {
 	p.ReviewStatistics = stats
 	return p
+}
+func GetPaginatedProductsResponse(products []Product, total int64, limit, offset int, isPaginated bool) *PaginatedProductsResponse {
+	productsResponse := []ProductResponse{}
+	for _, product := range products {
+		productResponse := product.ToProductResponse()
+		productsResponse = append(productsResponse, *productResponse)
+	}
+
+	return &PaginatedProductsResponse{
+		Products: productsResponse,
+		Total:    total,
+		Limit:    limit,
+		Offset:   offset,
+		// Add a flag to indicate if this was a paginated request
+		IsPaginated: isPaginated,
+	}
+
 }

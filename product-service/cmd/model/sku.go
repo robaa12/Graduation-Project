@@ -61,7 +61,7 @@ func (s *SKURequest) CreateSKU(productID uint) *Sku {
 func (s *SKURequest) generateSKUName() string {
 	//generate map contain key the variant name and value the variant value
 	variantMap := make(map[string]string)
-	var variantNames []string
+	variantNames := []string{}
 	for _, variant := range s.Variants {
 		variantMap[variant.Name] = variant.Value
 		variantNames = append(variantNames, variant.Name)
@@ -85,7 +85,7 @@ func (s *SKURequest) generateSKUName() string {
 // map sku object to sku response object
 
 func (s *Sku) ToSKUResponse() *SKUResponse {
-	var variants []VariantResponse
+	variants := []VariantResponse{}
 	for i, skuVariant := range s.SKUVariants {
 		variants = append(variants, VariantResponse{
 			Name:  s.Variants[i].Name,

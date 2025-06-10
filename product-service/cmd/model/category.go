@@ -14,6 +14,9 @@ type CategoryResponse struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
+type CategoriesResponse struct {
+	CategoriesResponse []CategoryResponse `json:"categories"`
+}
 type CategoryDetailsResponse struct {
 	CategoryResponse
 	Products []ProductResponse `json:"products"`
@@ -44,12 +47,21 @@ func (c *Category) ToCategoryResponse() *CategoryResponse {
 }
 
 func (c *Category) ToCategoryDetailsResponse() *CategoryDetailsResponse {
-	var products []ProductResponse
+	products := []ProductResponse{}
 	for _, product := range c.Products {
 		products = append(products, *product.ToProductResponse())
 	}
 	return &CategoryDetailsResponse{
 		CategoryResponse: *c.ToCategoryResponse(),
 		Products:         products,
+	}
+}
+func GetCategoriesResponse(categories []Category) *CategoriesResponse {
+	categoriesResponse := []CategoryResponse{}
+	for _, category := range categories {
+		categoriesResponse = append(categoriesResponse, *category.ToCategoryResponse())
+	}
+	return &CategoriesResponse{
+		CategoriesResponse: categoriesResponse,
 	}
 }

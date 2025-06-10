@@ -155,7 +155,7 @@ func (pr *ProductRepository) DeleteProduct(productID uint, storeID uint) error {
 }
 
 func (pr *ProductRepository) GetStoreProducts(storeID uint, limit, offset int) ([]model.Product, int64, error) {
-	var products []model.Product
+	products := []model.Product{}
 	var total int64
 
 	// Count total products for pagination info

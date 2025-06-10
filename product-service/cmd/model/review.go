@@ -22,7 +22,9 @@ type ReviewResponse struct {
 	Classification bool      `json:"classification"`
 	CreatedAt      time.Time `json:"created_at"`
 }
-
+type ReviewsResponse struct {
+	Reviews []ReviewResponse `json:"reviews"`
+}
 type ProductReviewsStatistics struct {
 	TotalReviews  int64   `json:"total_reviews"`
 	AverageRating float64 `json:"average_rating"`
@@ -54,5 +56,14 @@ func (rr *ReviewRequest) ToReview(productID, storeID uint) *Review {
 		Rating:      rr.Rating,
 		Title:       rr.Title,
 		Description: rr.Description,
+	}
+}
+func GetReviewsResponse(reviews []Review) *ReviewsResponse {
+	reviewResponses := []ReviewResponse{}
+	for _, review := range reviews {
+		reviewResponses = append(reviewResponses, *review.ToReviewResponse())
+	}
+	return &ReviewsResponse{
+		Reviews: reviewResponses,
 	}
 }
