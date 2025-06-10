@@ -1,7 +1,7 @@
 import { Category } from "src/category/entities/category.entity";
 import { Plan } from "src/plans/entities/plan.entity";
 import { User } from "src/user/entities/user.entity";
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity()
 export class Store {
@@ -28,6 +28,12 @@ export class Store {
 
     @Column()
     store_currency: string;
+
+    @CreateDateColumn({ type: 'timestamp' })
+    created_at: Date;
+
+    @UpdateDateColumn({ type: 'timestamp' })
+    updated_at: Date;
 
     @ManyToOne(()=> User, user=>user.stores , {onDelete: 'CASCADE'})
     user: User;
