@@ -22,15 +22,19 @@ type RouteManager struct {
 	Cfg          *config.Config
 	Auth         *auth.Service
 	StoreHandler *store.StoreHandler
+	UserHandler  *store.UserHandler
 }
 
 func NewRouter(cfg *config.Config) *RouteManager {
+
+	storeService, jwtService := setupServices(cfg)
 
 	rm := RouteManager{
 		Router:       chi.NewRouter(),
 		Cfg:          cfg,
 		Auth:         auth.NewAuthService(cfg),
-		StoreHandler: store.NewStoreHandler(setupServices(cfg)),
+		StoreHandler: store.NewStoreHandler(storeService, jwtService),
+		UserHandler:  store.NewUserHandler(cfg, jwtService),
 	}
 	rm.setupRouter()
 	rm.coreRoutes()
@@ -144,6 +148,9 @@ func (rm *RouteManager) coreRoutes() {
 
 	// Custom store creation route with auth middleware
 	rm.Router.With(rm.Auth.AuthMiddleware).Post("/store", rm.StoreHandler.CreateStore)
+
+	// Add User routes
+	rm.Router.With(rm.Auth.AuthMiddleware).Get("/user/me", rm.UserHandler.GetUser)
 }
 
 func (rm *RouteManager) sayHello() http.HandlerFunc {

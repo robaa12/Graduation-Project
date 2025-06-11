@@ -182,6 +182,12 @@
     "middlewares": ["auth", "logging"]
   },
   {
+    "path": "/user/me",
+    "methods": ["GET"],
+    "service": "user-service",
+    "middlewares": ["auth", "logging"]
+  },
+  {
     "path": "/store/{store_id}",
     "methods": ["DELETE"],
     "service": "user-service",
@@ -269,7 +275,7 @@
     "path": "/payment",
     "methods": ["POST"],
     "service": "user-service",
-    "middlewares": ["auth","logging"]
+    "middlewares": ["auth", "logging"]
   },
   {
     "path": "/payment/callback",

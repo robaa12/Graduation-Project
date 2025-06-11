@@ -2,6 +2,8 @@ package auth
 
 import (
 	"errors"
+	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -104,4 +106,19 @@ func (s *JWTService) GenerateUpdatedTokenResponse(userID int, currentStoreIDs []
 		RefreshToken: refreshToken,
 		ExpiresIn:    int64(s.GetAccessTokenExpiry().Seconds()),
 	}, nil
+}
+
+func (s *JWTService) GetUserIDFromJWT(r *http.Request) (string, error) {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" || len(authHeader) < 8 || authHeader[:7] != "Bearer " {
+		return "", errors.New("missing or invalid authorization header")
+	}
+	tokenString := authHeader[7:]
+
+	claims, err := s.ValidateToken(tokenString)
+	if err != nil {
+		return "", errors.New("Invalid credentials.")
+	}
+
+	return strconv.Itoa(claims.UserID), nil
 }
