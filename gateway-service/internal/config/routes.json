@@ -269,7 +269,7 @@
     "path": "/payment",
     "methods": ["POST"],
     "service": "user-service",
-    "middlewares": ["logging" , "auth"]
+    "middlewares": ["auth","logging"]
   },
   {
     "path": "/payment/callback",

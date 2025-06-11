@@ -2,24 +2,30 @@ import { CreateCategoryDto } from "src/category/dto/create-category.dto";
 import { CreatePlanDto } from "src/plans/dto/create-plan.dto";
 
 export const defaultPlans: CreatePlanDto[] = [
-        {
-          name: 'Basic Plan',
-          price: 10,
-          description: 'Basic plan with essential features',
-          num_of_stores: 1,
-        },
-        {
-          name: 'Pro Plan',
-          price: 20,
-          description: 'Pro plan with additional features',
-          num_of_stores: 5,
-        },
-        {
-          name: 'Premium Plan',
-          price: 30,
-          description: 'Premium plan with all features included',
-          num_of_stores: 10,
-        },
+    {
+        name: 'Free Plan',
+        price: 0,
+        description: 'Free plan with basic features',
+        num_of_stores: 1,
+      },
+      {
+        name: 'Basic Plan',
+        price: 10,
+        description: 'Basic plan with essential features',
+        num_of_stores: 2,
+      },
+      {
+        name: 'Pro Plan',
+        price: 20,
+        description: 'Pro plan with additional features',
+        num_of_stores: 5,
+      },
+      {
+        name: 'Premium Plan',
+        price: 30,
+        description: 'Premium plan with all features included',
+        num_of_stores: 10,
+      },
 ];
 
 

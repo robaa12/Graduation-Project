@@ -13,7 +13,6 @@ export class PaymentController {
   })
   @Post('')
   async createPayment(@Body() createPaymentDto: CreatePaymentDto) {
-    const redirectUrl = 'https://motager-v2.vercel.app/ar';
     return await this.paymentService.createCharge(createPaymentDto);
   }
 

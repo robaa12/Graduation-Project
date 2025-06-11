@@ -12,14 +12,14 @@ export class PaymentService {
     private UserService: UserService,
     private PlansService: PlansService,
   ) {}
- async createCharge(createPaymentDto:CreatePaymentDto) {
+ async createCharge(createPaymentDto:CreatePaymentDto) {  
   const plan = await this.PlansService.findOne(createPaymentDto.plan_id);
   const user = await this.UserService.findOne(createPaymentDto.user_id);
     try {
       const response = await axios.post(
         `${process.env.PAYMENT_URL}/charges`,
         {
-          amount:plan.price,
+          amount:plan.price*100,
           currency:'EGP',
           threeDSecure: true,
           save_card: false,
@@ -50,7 +50,7 @@ export class PaymentService {
             "url": "http://localhost:3000/payment/callback", 
           },  
           redirect: {
-            url: 'https://motager-v2.vercel.app/ar',
+            url: 'http://localhost:3001/ar',
           },
         },
         {
@@ -63,8 +63,7 @@ export class PaymentService {
       const userPlanPayment = await this.UserService.createPayment(user , plan , response)
       return response.data;
     } catch (error) {
-      console.log(error);
-      throw new BadRequestException(error.response?.data || 'Tap payment error', error.response?.status || 500);
+      throw new BadRequestException(error.response?.data || 'Tap payment error', error.response?.status || 400);
     }
   }
 

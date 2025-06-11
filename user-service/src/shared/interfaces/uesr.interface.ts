@@ -1,3 +1,4 @@
+import { Plan } from "src/plans/entities/plan.entity";
 import { Store } from "src/store/entities/store.entity";
 
 export interface IUser{
@@ -11,6 +12,7 @@ export interface IUser{
     phoneNumber: string;
     address: string;
     plan_expire_date:Date;
+    plan:Plan
     createAt:Date;
     updateAt:Date;
 }

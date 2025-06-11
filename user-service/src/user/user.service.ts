@@ -40,6 +40,7 @@ export class UserService {
       is_banned: user.is_banned,
       phoneNumber: user.phoneNumber,
       plan_expire_date: user.plan_expire_date,
+      plan:user.plan,
       stores: user.stores.map((store) => ({
         id: store.id,
         name: store.store_name,
