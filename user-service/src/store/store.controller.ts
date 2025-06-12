@@ -4,6 +4,7 @@ import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { CreateStoreThemeDto } from './dto/create-store-theme.dto';
 import { ApiOperation } from '@nestjs/swagger';
+import { UpdateStoreThemeDto } from './dto/update-store-theme.dto';
 
 @Controller('store')
 export class StoreController {
@@ -68,7 +69,7 @@ export class StoreController {
 
   @Patch('theme/:id')
   @ApiOperation({summary:'Update Store Theme'})
-  async update(@Param('id') id: string, @Body() CreateStoreThemeDto: CreateStoreThemeDto) {
+  async update(@Param('id') id: string, @Body() CreateStoreThemeDto: UpdateStoreThemeDto) {
     const theme = await this.storeService.updateStoreTheme(id, CreateStoreThemeDto);
     return {
       message: 'Store theme updated successfully',

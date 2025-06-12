@@ -12,6 +12,7 @@ import { UserService } from 'src/user/user.service';
 import { InjectModel } from '@nestjs/mongoose';
 import { StoreThemeSchema } from './entities/store-theme.entity';
 import { Model } from 'mongoose';
+import { UpdateStoreThemeDto } from './dto/update-store-theme.dto';
 
 @Injectable()
 export class StoreService {
@@ -90,6 +91,8 @@ export class StoreService {
     if (!store) {
       throw new NotFoundException('Store not found');
     }
+    console.log(CreateStoreThemeDto.theme);
+    
     const storeTheme = await this.storeThemeModel.create(CreateStoreThemeDto);
     return storeTheme;
   }
@@ -98,14 +101,17 @@ export class StoreService {
     return await this.storeThemeModel.find({ storeId });
   }
 
-  async findStoreThemeById(id: string) {
+  async findStoreThemesByStoreId(id: string) {
     return await this.storeThemeModel.findOne({ _id: id });
   }
 
-  async updateStoreTheme(id: string, updateStoreThemeDto: CreateStoreThemeDto) {
+  async updateStoreTheme(id: string, updateStoreThemeDto: UpdateStoreThemeDto) {
+    console.log(updateStoreThemeDto);
+    
     return await this.storeThemeModel.findOneAndUpdate(
       { _id: id },
       updateStoreThemeDto,
+      { new: true, runValidators: true },
     );
   }
   async removeStoreTheme(id: string) {

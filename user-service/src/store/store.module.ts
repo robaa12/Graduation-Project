@@ -6,9 +6,9 @@ import { Store } from './entities/store.entity';
 import { EmailService } from 'src/shared/services/email/email.service';
 import { UserModule } from 'src/user/user.module';
 import { MongooseModule } from '@nestjs/mongoose';
-import StoreTheme from './entities/store-theme.entity';
 import { CategoryModule } from 'src/category/category.module';
 import { PlansModule } from 'src/plans/plans.module';
+import { StoreTheme } from './entities/store-theme.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Store]) , forwardRef(()=>CategoryModule), forwardRef(()=>PlansModule), UserModule , MongooseModule.forFeature([{ name: 'StoreTheme', schema: StoreTheme }])],

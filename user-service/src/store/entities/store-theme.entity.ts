@@ -1,39 +1,19 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
 @Schema()
 export class StoreThemeSchema {
-    @Prop()
-    name: string;
+  @Prop()
+  storeId:number;
 
-    @Prop()
-    img:string;
+  @Prop({
+    type:Object
+  })
+  theme:any;
 
-    @Prop()
-    localPath:string;
-
-    @Prop()
-    isActive:boolean;
-    
-    @Prop()
-    pages:Array<{
-        _id:false,
-        name:string,
-        section:string[],
-        body:Array<{
-            _id:false,
-            type:string,
-            name:string,
-            data:Array<{
-                title:string,
-                subtitle:string,
-                imageUrl:string
-            }>
-        }>
-    }>
-
-    @Prop()
-    storeId:number;
+  @Prop({
+    type:Boolean,
+    default:false
+  })
+  isActive:boolean;
 }
-
-const StoreTheme = SchemaFactory.createForClass(StoreThemeSchema);
-export default StoreTheme;
+export const StoreTheme = SchemaFactory.createForClass(StoreThemeSchema);

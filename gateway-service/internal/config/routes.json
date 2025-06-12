@@ -212,6 +212,18 @@
     "middlewares": ["auth", "logging"]
   },
   {
+    "path": "/store/theme",
+    "methods": ["POST"],
+    "service": "user-service",
+    "middlewares": ["auth", "logging"]
+  },
+  {
+    "path": "/store/theme/{store_id}",
+    "methods": ["GET"],
+    "service": "user-service",
+    "middlewares": ["auth", "logging"]
+  },
+  {
     "path": "/stores/{store_id}/customers",
     "methods": ["GET", "POST"],
     "service": "order-service",

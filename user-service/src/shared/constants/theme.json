@@ -1,0 +1,191 @@
+{
+    "selectedTheme": {
+        "id": "43bc1e99-89c8-4393-9ad9-01f789c3e786",
+        "name": "Minimal Theme",
+        "img": "/themes/minimal-theme.png",
+        "locPath": "minimal-theme/sections",
+        "themeSettings": null,
+        "pages": [
+            {
+                "name": "Home Page",
+                "sections": [
+                    "Hero",
+                    "About",
+                    "FeaturedCollections",
+                    "ImageWithText",
+                    "BestSellers",
+                    "NewsletterSignup",
+                    "Footer"
+                ],
+                "initialValues": [],
+                "body": [
+                    {
+                        "id": "0d0ceea5-8f19-46ea-940b-cc40c3dd7ef7",
+                        "type": "Hero",
+                        "name": "Hero",
+                        "data": {
+                            "subtitle": "Test Subheading"
+                        }
+                    },
+                    {
+                        "id": "bf4cc9ab-8f90-49f9-b88d-0cb846a818ef",
+                        "type": "About",
+                        "name": "About",
+                        "data": {}
+                    },
+                    {
+                        "id": "91685255-9ed1-463a-951d-cadbd922cd8c",
+                        "type": "FeaturedCollections",
+                        "name": "FeaturedCollections",
+                        "data": {}
+                    },
+                    {
+                        "id": "b0be236e-5380-4660-80e9-25389e1ec16a",
+                        "type": "ImageWithText",
+                        "name": "ImageWithText",
+                        "data": {}
+                    },
+                    {
+                        "id": "230d7651-4062-4b0a-bf01-ea20a61c15bf",
+                        "type": "BestSellers",
+                        "name": "BestSellers",
+                        "data": {}
+                    },
+                    {
+                        "id": "09dca2bf-a2ef-48de-8148-97eaa938291a",
+                        "type": "NewsletterSignup",
+                        "name": "NewsletterSignup",
+                        "data": {}
+                    },
+                    {
+                        "id": "5a22a39c-97fb-49b0-8eb3-672a091b5758",
+                        "type": "Footer",
+                        "name": "Footer",
+                        "data": {}
+                    }
+                ]
+            },
+            {
+                "name": "Product Page",
+                "sections": [
+                    "SingleProduct"
+                ],
+                "initialValues": [],
+                "body": []
+            }
+        ]
+    },
+    "selectedPage": {
+        "name": "Home Page",
+        "sections": [
+            "Hero",
+            "About",
+            "FeaturedCollections",
+            "ImageWithText",
+            "BestSellers",
+            "NewsletterSignup",
+            "Footer"
+        ],
+        "initialValues": [],
+        "body": [
+            {
+                "id": "0d0ceea5-8f19-46ea-940b-cc40c3dd7ef7",
+                "type": "Hero",
+                "name": "Hero",
+                "data": {
+                    "subtitle": "Test Subheading"
+                }
+            },
+            {
+                "id": "bf4cc9ab-8f90-49f9-b88d-0cb846a818ef",
+                "type": "About",
+                "name": "About",
+                "data": {}
+            },
+            {
+                "id": "91685255-9ed1-463a-951d-cadbd922cd8c",
+                "type": "FeaturedCollections",
+                "name": "FeaturedCollections",
+                "data": {}
+            },
+            {
+                "id": "b0be236e-5380-4660-80e9-25389e1ec16a",
+                "type": "ImageWithText",
+                "name": "ImageWithText",
+                "data": {}
+            },
+            {
+                "id": "230d7651-4062-4b0a-bf01-ea20a61c15bf",
+                "type": "BestSellers",
+                "name": "BestSellers",
+                "data": {}
+            },
+            {
+                "id": "09dca2bf-a2ef-48de-8148-97eaa938291a",
+                "type": "NewsletterSignup",
+                "name": "NewsletterSignup",
+                "data": {}
+            },
+            {
+                "id": "5a22a39c-97fb-49b0-8eb3-672a091b5758",
+                "type": "Footer",
+                "name": "Footer",
+                "data": {}
+            }
+        ]
+    },
+    "selectedSection": null,
+    "availableSections": [
+        "Hero",
+        "About",
+        "FeaturedCollections",
+        "ImageWithText",
+        "BestSellers",
+        "NewsletterSignup",
+        "Footer"
+    ],
+    "loadedComponents": {},
+    "themeSettings": {
+        "fonts": {
+            "headings": "Rubik",
+            "body": "Roboto"
+        },
+        "colors": {
+            "main": "#6F4E37",
+            "lightMode": {
+                "background": {
+                    "primary": "#fafafa",
+                    "secondary": "#e0e0e0"
+                },
+                "buttons": {
+                    "primary": {
+                        "background": "#6F4E37",
+                        "hover": "#5C4033",
+                        "text": "#fafafa"
+                    },
+                    "secondary": {
+                        "background": "#D2B48C",
+                        "hover": "#C4A484",
+                        "text": "#6F4E37"
+                    },
+                    "tertiary": {
+                        "background": "#fafafa",
+                        "hover": "#d4d4d4",
+                        "text": "#6F4E37"
+                    }
+                },
+                "text": {
+                    "primary": "#6F4E37",
+                    "secondary": "#5C4033",
+                    "inverted": "#fafafa"
+                }
+            }
+        },
+        "borderRadius": {
+            "none": "0",
+            "small": "4px",
+            "medium": "8px",
+            "large": "12px"
+        }
+    }
+}
