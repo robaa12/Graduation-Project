@@ -15,14 +15,12 @@ export class PlansService implements OnModuleInit {
   async onModuleInit() {
     const count = await this.planRepository.count();
     if (count === 0) {
-      await Promise.all(
-        defaultPlans.map(async (plan) => {
-          const newPlan = this.planRepository.create(plan);
-          return this.planRepository.save(newPlan);
-        }),
-      )
-      console.log('Default plans created');
+    for (const plan of defaultPlans) {
+      const newPlan = this.planRepository.create(plan);
+      await this.planRepository.save(newPlan); // sequential save
     }
+    console.log('Default plans created in order');
+  }
     console.log('PlansService initialized');
   }
   async create(createPlanDto: CreatePlanDto) {

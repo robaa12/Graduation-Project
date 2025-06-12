@@ -162,6 +162,7 @@ export class UserService {
     }
     payment.status = response.status;
     user.plan_expire_date = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // Extend plan by 30 days
+    user.plan = payment.plan;
     await this.userRepository.save(user);
     await this.userPlanPaymnetRepository.save(payment);
     return payment;

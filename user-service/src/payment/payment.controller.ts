@@ -21,8 +21,8 @@ export class PaymentController {
     const chargeDetails = await this.paymentService.retrieveCharge(tapChargeId);
     return {
       message: 'Payment status retrieved',
-      status: chargeDetails.status,
-      charge: chargeDetails,
+      status: chargeDetails.charge.status,
+      data: {...chargeDetails},
     };
   }
 }

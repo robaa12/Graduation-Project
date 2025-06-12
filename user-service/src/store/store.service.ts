@@ -1,7 +1,7 @@
 import { PlansService } from './../plans/plans.service';
 import { CategoryService } from './../category/category.service';
 import { CreateStoreThemeDto } from './dto/create-store-theme.dto';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -32,6 +32,9 @@ export class StoreService {
     const category = await this.CategoryService.findOne(
       createStoreDto.category_id,
     );
+    if(user.plan.num_of_stores > user.stores.length + 1) {
+      throw new BadRequestException('You have reached the maximum number of stores allowed for your plan');
+    }
     const store = this.storeRepository.create({
       ...createStoreDto,
       user,

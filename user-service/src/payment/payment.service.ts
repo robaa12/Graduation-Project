@@ -15,11 +15,15 @@ export class PaymentService {
  async createCharge(createPaymentDto:CreatePaymentDto) {  
   const plan = await this.PlansService.findOne(createPaymentDto.plan_id);
   const user = await this.UserService.findOne(createPaymentDto.user_id);
+  console.log("Plan",plan);
+  console.log("User",user);
+  
+  
     try {
       const response = await axios.post(
         `${process.env.PAYMENT_URL}/charges`,
         {
-          amount:plan.price*100,
+          amount:plan.price,
           currency:'EGP',
           threeDSecure: true,
           save_card: false,
@@ -40,7 +44,7 @@ export class PaymentService {
             email: user.email,
             phone: {
               country_code: '20',
-              number: '50000000',
+              number: '1143101501',
             },
           },
           source: {
@@ -50,7 +54,7 @@ export class PaymentService {
             "url": "http://localhost:3000/payment/callback", 
           },  
           redirect: {
-            url: 'http://localhost:3001/ar',
+            url: 'http://localhost:3001/en/payment/success',
           },
         },
         {
@@ -74,8 +78,11 @@ export class PaymentService {
           Authorization: `Bearer ${process.env.PAYMENT_SECRET}`,
         },
       });
-      
-      return response.data;
+      const userPlanPayment = await this.UserService.updatePayment(chargeId , response.data);
+      return {
+        charge: response.data,
+        userPlanPayment: userPlanPayment,
+      };
     } catch (error) {
       throw new HttpException(error.response?.data || 'Error retrieving charge', error.response?.status || 500);
     }

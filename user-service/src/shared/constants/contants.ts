@@ -10,19 +10,19 @@ export const defaultPlans: CreatePlanDto[] = [
       },
       {
         name: 'Basic Plan',
-        price: 10,
+        price: 500,
         description: 'Basic plan with essential features',
         num_of_stores: 2,
       },
       {
         name: 'Pro Plan',
-        price: 20,
+        price: 1000,
         description: 'Pro plan with additional features',
         num_of_stores: 5,
       },
       {
         name: 'Premium Plan',
-        price: 30,
+        price: 1500,
         description: 'Premium plan with all features included',
         num_of_stores: 10,
       },
