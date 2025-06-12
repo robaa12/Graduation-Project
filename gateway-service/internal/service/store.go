@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"log"
 
@@ -27,7 +28,7 @@ func (s *StoreService) CreateStore(storeRequest *model.StoreRequest) (*model.Sto
 
 	if err != nil {
 
-		return nil, apperrors.NewInternalServerError(fmt.Sprintf("failed to create store in user service: %v", err))
+		return nil, errors.New(err.Error())
 	}
 
 	// Parse the user service response

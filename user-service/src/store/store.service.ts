@@ -32,7 +32,9 @@ export class StoreService {
     const category = await this.CategoryService.findOne(
       createStoreDto.category_id,
     );
-    if(user.plan.num_of_stores > user.stores.length + 1) {
+    console.log(user);
+    
+    if(user.stores.length + 1 > user.plan.num_of_stores) {
       throw new BadRequestException('You have reached the maximum number of stores allowed for your plan');
     }
     const store = this.storeRepository.create({
