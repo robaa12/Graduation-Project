@@ -7,7 +7,6 @@ import { ResponseInterceptor } from './shared/interceptors/response/response.int
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.enableCors({});
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Motager Auth API')
     .setDescription('API documentation')

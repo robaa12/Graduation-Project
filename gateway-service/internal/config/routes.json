@@ -173,7 +173,7 @@
     "path": "/user",
     "methods": ["GET"],
     "service": "user-service",
-    "middlewares": ["auth", "logging"]
+    "middlewares": ["logging"]
   },
   {
     "path": "/user/{id}",
@@ -233,7 +233,7 @@
     "path": "/store",
     "methods": ["GET", "POST"],
     "service": "user-service",
-    "middlewares": ["auth", "logging"]
+    "middlewares": ["logging"]
   },
   {
     "path": "/store/{store_id}",
