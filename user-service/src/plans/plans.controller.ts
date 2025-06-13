@@ -35,4 +35,13 @@ export class PlansController {
     };
   }
 
+  @Delete(':id')
+  async remove(@Param('id') id: number) {
+    await this.plansService.remove(id);
+    return {
+      message: `Plan with id ${id} removed successfully`,
+      data:null
+    };
+  }
+
 }

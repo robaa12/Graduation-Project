@@ -38,10 +38,13 @@ export class StoreService {
     if(user.stores.length + 1 > user.plan.num_of_stores) {
       throw new BadRequestException('You have reached the maximum number of stores allowed for your plan');
     }
+    let slug = await this.generateStoreSlug(createStoreDto.store_name);
+
     const store = this.storeRepository.create({
       ...createStoreDto,
       user,
       category,
+      slug,
     });
     return await this.storeRepository.save(store);
   }
@@ -129,11 +132,42 @@ export class StoreService {
     return storeTheme;
   }
 
+  async findStoreActiveThemeByStoreSlug(storeSlug: string) {
+    const store = await this.storeRepository.findOne({
+      where: { slug: storeSlug },
+    });
+    if (!store) {
+      throw new NotFoundException('Store not found');
+    }
+    const storeTheme = await this.storeThemeModel.findOne({
+      storeId: store.id,
+      isActive: true,
+    });
+    if (!storeTheme) {
+      throw new NotFoundException('Store theme not found');
+    }
+    return storeTheme;
+  }
+
   async findStoreThemesByStoreId(id: string) {
     return await this.storeThemeModel.findOne({ _id: id });
   }
 
   async removeStoreTheme(id: string) {
     return await this.storeThemeModel.findOneAndDelete({ _id: id });
+  }
+
+  async generateStoreSlug(storeName: string): Promise<string> {
+    let slug = storeName.toLocaleLowerCase().replace(/ /g, '-');
+    let existingStore = await this.storeRepository.findOne({ where: { slug } });
+    
+    let counter = 1;
+    while (existingStore) {
+      slug = `${storeName.toLocaleLowerCase().replace(/ /g, '-')}-${counter}`;
+      existingStore = await this.storeRepository.findOne({ where: { slug } });
+      counter++;
+    }
+    
+    return slug;
   }
 }

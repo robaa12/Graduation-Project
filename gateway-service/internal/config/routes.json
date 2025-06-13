@@ -315,7 +315,7 @@
   },
   {
     "path": "/plans/{plan_id}",
-    "methods": ["GET"],
+    "methods": ["GET" , "DELETE"],
     "service": "user-service",
     "middlewares": ["logging"]
   },

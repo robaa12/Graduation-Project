@@ -14,7 +14,7 @@ export class Store {
     @Column({nullable:true})
     href: string;
 
-    @Column({nullable:true})
+    @Column({unique:true})
     slug:string;
 
     @Column()

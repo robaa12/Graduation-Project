@@ -75,6 +75,15 @@ export class StoreController {
       data : storeTheme
     }
   }
+  @Get('theme/slug/:slug/active')
+  @ApiOperation({summary:'Find Active Store Theme'})
+  async findActiveStoreThemeBySlug(@Param('slug') slug:string){
+    let storeTheme = await this.storeService.findStoreActiveThemeByStoreSlug(slug);
+    return {
+      message: 'Active Store theme fetched successfully',
+      data : storeTheme
+    }
+  }
 
 
   @Delete(':id')

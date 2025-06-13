@@ -44,7 +44,12 @@ export class PlansService implements OnModuleInit {
     return `This action updates a #${id} plan`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} plan`;
+  async remove(id: number) {
+    const plan = await this.planRepository.findOne({ where: { id } });
+    if (!plan) {
+      throw new NotFoundException(`Plan with id ${id} not found`);
+    }
+    await this.planRepository.remove(plan);
+    return ;
   }
 }
