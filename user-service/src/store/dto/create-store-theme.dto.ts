@@ -13,7 +13,7 @@ export class CreateStoreThemeDto {
     type:Object,
   })
   @IsNotEmpty()
-  theme:Object;
+  theme:any;
 
   @ApiProperty({
     type:Boolean,

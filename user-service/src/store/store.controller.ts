@@ -66,16 +66,16 @@ export class StoreController {
       data : storeThemes
     }
   }
-
-  @Patch('theme/:id')
-  @ApiOperation({summary:'Update Store Theme'})
-  async update(@Param('id') id: string, @Body() CreateStoreThemeDto: UpdateStoreThemeDto) {
-    const theme = await this.storeService.updateStoreTheme(id, CreateStoreThemeDto);
+  @Get('theme/:storeId/active')
+  @ApiOperation({summary:'Find Active Store Theme'})
+  async findActiveStoreTheme(@Param('storeId') storeId:string){
+    let storeTheme = await this.storeService.fincStoreActiveTheme(+storeId);
     return {
-      message: 'Store theme updated successfully',
-      data : theme
+      message: 'Active Store theme fetched successfully',
+      data : storeTheme
     }
   }
+
 
   @Delete(':id')
   @ApiOperation({summary:'Delete Store'})

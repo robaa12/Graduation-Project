@@ -91,29 +91,48 @@ export class StoreService {
     if (!store) {
       throw new NotFoundException('Store not found');
     }
-    console.log(CreateStoreThemeDto.theme);
+    console.log(CreateStoreThemeDto.theme.selectedTheme.id);
     
+    let existingTheme = await this.storeThemeModel.findOne({
+      storeId: CreateStoreThemeDto.storeId,
+      'theme.selectedTheme.id': CreateStoreThemeDto.theme.selectedTheme.id,
+    });    
+    if (existingTheme) {
+      existingTheme = await this.storeThemeModel.findOneAndUpdate({ _id: existingTheme._id },{ theme:CreateStoreThemeDto.theme , isActive:CreateStoreThemeDto.isActive},{ new: true, runValidators: true },);
+
+      if(existingTheme.isActive) {
+        await this.storeThemeModel.updateMany(
+          { storeId: CreateStoreThemeDto.storeId, _id: { $ne: existingTheme._id } },
+          { isActive: false },
+        );
+      }
+      return existingTheme;
+    }    
     const storeTheme = await this.storeThemeModel.create(CreateStoreThemeDto);
+    if (CreateStoreThemeDto.isActive) {
+      await this.storeThemeModel.updateMany(
+        { storeId: CreateStoreThemeDto.storeId, _id: { $ne: storeTheme._id } },
+        { isActive: false },
+      );
+    }
     return storeTheme;
   }
 
   async findStoreThemes(storeId: number) {
     return await this.storeThemeModel.find({ storeId });
   }
+  async fincStoreActiveTheme(storeId: number) {
+    const storeTheme = await this.storeThemeModel.findOne({
+      storeId,
+      isActive: true,
+    });
+    return storeTheme;
+  }
 
   async findStoreThemesByStoreId(id: string) {
     return await this.storeThemeModel.findOne({ _id: id });
   }
 
-  async updateStoreTheme(id: string, updateStoreThemeDto: UpdateStoreThemeDto) {
-    console.log(updateStoreThemeDto);
-    
-    return await this.storeThemeModel.findOneAndUpdate(
-      { _id: id },
-      updateStoreThemeDto,
-      { new: true, runValidators: true },
-    );
-  }
   async removeStoreTheme(id: string) {
     return await this.storeThemeModel.findOneAndDelete({ _id: id });
   }
