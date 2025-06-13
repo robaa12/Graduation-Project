@@ -257,19 +257,19 @@
     "path": "/store/theme/{store_id}",
     "methods": ["GET"],
     "service": "user-service",
-    "middlewares": ["auth", "logging"]
+    "middlewares": [ "logging"]
   },
   {
     "path": "/store/theme/{store_id}/active",
     "methods": ["GET"],
     "service": "user-service",
-    "middlewares": ["auth", "logging"]
+    "middlewares": ["logging"]
   },
   {
     "path": "/store/theme/slug/{slug}/active",
     "methods": ["GET"],
     "service": "user-service",
-    "middlewares": ["auth", "logging"]
+    "middlewares": [ "logging"]
   },
   {
     "path": "/stores/{store_id}/customers",
