@@ -6,6 +6,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/lib/pq"
 	"github.com/robaa12/product-service/cmd/database"
 	"github.com/robaa12/product-service/cmd/model"
 	"gorm.io/gorm"
@@ -29,8 +30,64 @@ func (pr *ProductRepository) GetProduct(productId uint, storeId uint) (*model.Pr
 	return &product, nil
 }
 
-func (pr *ProductRepository) UpdateProduct(p model.ProductResponse, id uint, storeId uint) error {
-	return pr.db.DB.Model(&model.Product{}).Where("id = ? AND store_id = ?", id, storeId).Updates(p).Error
+func (pr *ProductRepository) UpdateProduct(p model.ProductResponse, id uint, storeId uint) (*model.Product, error) {
+	// Find the product with the given id and store_id
+	var product model.Product
+	err := pr.db.DB.Where("id = ? AND store_id = ?", id, storeId).First(&product).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// Create a map for updates with the correct field types
+	updates := map[string]interface{}{}
+
+	// Only add fields that are non-empty
+	if p.Name != "" {
+		updates["name"] = p.Name
+	}
+
+	if p.Description != "" {
+		updates["description"] = p.Description
+	}
+
+	// Include boolean fields
+	updates["published"] = p.Published
+
+	// Only update price if it's set
+	if p.StartPrice > 0 {
+		updates["start_price"] = p.StartPrice
+	}
+
+	if p.Slug != "" {
+		updates["slug"] = p.Slug
+	}
+
+	if p.MainImageURL != "" {
+		updates["main_image_url"] = p.MainImageURL
+	}
+
+	// Convert []string to pq.StringArray for ImagesURL
+	if p.ImagesURL != nil {
+		updates["images_url"] = pq.StringArray(p.ImagesURL)
+	}
+
+	// Update CategoryID if Category is provided
+	if p.Category != nil {
+		updates["category_id"] = p.Category.ID
+	}
+
+	// Apply updates to the product
+	if err := pr.db.DB.Model(&product).Updates(updates).Error; err != nil {
+		return nil, err
+	}
+
+	// Fetch the updated product with related data
+	var updatedProduct model.Product
+	if err := pr.db.DB.Preload("Category").Where("id = ?", id).First(&updatedProduct).Error; err != nil {
+		return nil, err
+	}
+
+	return &updatedProduct, nil
 }
 
 func (pr *ProductRepository) CreateProduct(storeID uint, productRequest model.ProductRequest) (*model.Product, error) {

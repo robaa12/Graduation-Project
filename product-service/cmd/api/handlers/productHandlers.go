@@ -85,15 +85,15 @@ func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.ProductService.UpdateProduct(id, storeID, product)
-	product.ID = id
+	// Update the product and get the updated response
+	updatedProduct, err := h.ProductService.UpdateProduct(id, storeID, product)
 	if err != nil {
 		_ = utils.ErrorJSON(w, err)
 		return
 	}
 
-	// Return the Updated product
-	_ = utils.WriteJSON(w, http.StatusOK, product)
+	// Return the updated product
+	_ = utils.WriteJSON(w, http.StatusOK, updatedProduct)
 }
 
 // DeleteProduct deletes a product from the database
@@ -134,18 +134,18 @@ func (h *ProductHandler) GetStoreProducts(w http.ResponseWriter, r *http.Request
 	// Check if pagination parameters are present
 	limitStr := r.URL.Query().Get("limit")
 	offsetStr := r.URL.Query().Get("offset")
-	
+
 	// Default to no pagination if no parameters are provided
 	limit := 0 // 0 means no limit
 	offset := 0
-	
+
 	// If both parameters are absent, don't apply pagination
 	isPaginated := limitStr != "" || offsetStr != ""
-	
+
 	if isPaginated {
 		// Default limit when pagination is requested
 		limit = 10
-		
+
 		// Get limit from query params if provided
 		if limitStr != "" {
 			parsedLimit, err := strconv.Atoi(limitStr)
@@ -156,7 +156,7 @@ func (h *ProductHandler) GetStoreProducts(w http.ResponseWriter, r *http.Request
 				return
 			}
 		}
-		
+
 		// Get offset from query params if provided
 		if offsetStr != "" {
 			parsedOffset, err := strconv.Atoi(offsetStr)

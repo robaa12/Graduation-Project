@@ -73,26 +73,30 @@ func (ps *ProductService) GetProduct(id uint, storeID uint) (*model.ProductRespo
 	return productResponse, nil
 }
 
-func (ps *ProductService) UpdateProduct(id, storeID uint, productResponse model.ProductResponse) error {
+func (ps *ProductService) UpdateProduct(id, storeID uint, productResponse model.ProductResponse) (*model.ProductResponse, error) {
 	// Check if the product exists
 	product, err := ps.repository.GetProduct(id, storeID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if product.Name != productResponse.Name {
 		slug, err := ps.repository.GenerateProductSlug(productResponse.Name, product.StoreID)
 		if err != nil {
 			log.Println("Error Generating Product's Slug")
-			return err
+			return nil, err
 		}
 		productResponse.Slug = slug
 	}
-	err = ps.repository.UpdateProduct(productResponse, id, storeID)
+
+	// Update the product
+	updatedProduct, err := ps.repository.UpdateProduct(productResponse, id, storeID)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+
+	// Convert to response and return
+	return updatedProduct.ToProductResponse(), nil
 }
 
 func (ps *ProductService) DeleteProduct(productID uint, storeID uint) error {
