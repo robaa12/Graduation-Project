@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 
 	apperrors "github.com/robaa12/product-service/cmd/errors"
@@ -127,5 +128,53 @@ func (h *CollectionHandler) RemoveProductFromCollection(w http.ResponseWriter, r
 	}
 	_ = utils.WriteJSON(w, http.StatusOK, map[string]string{
 		"message": "Product removed from collection successfully",
+	})
+}
+
+func (h *CollectionHandler) DeleteCollection(w http.ResponseWriter, r *http.Request) {
+	storeID, err := utils.GetID(r, "store_id")
+	if err != nil {
+		_ = utils.ErrorJSON(w, apperrors.NewBadRequestError("invalid store ID"))
+		return
+	}
+	collectionID, err := utils.GetID(r, "collection_id")
+	if err != nil {
+		_ = utils.ErrorJSON(w, apperrors.NewBadRequestError("invalid collection_id"))
+		return
+	}
+	err = h.service.DeleteCollection(storeID, collectionID)
+	if err != nil {
+		_ = utils.ErrorJSON(w, err)
+		return
+	}
+	_ = utils.WriteJSON(w, http.StatusOK, map[string]string{
+		"message": "Collection deleted successfully",
+	})
+}
+
+func (h *CollectionHandler) UpdateCollection(w http.ResponseWriter, r *http.Request) {
+	storeID, err := utils.GetID(r, "store_id")
+	if err != nil {
+		_ = utils.ErrorJSON(w, apperrors.NewBadRequestError("invalid store ID"))
+		return
+	}
+	collectionID, err := utils.GetID(r, "collection_id")
+	if err != nil {
+		_ = utils.ErrorJSON(w, apperrors.NewBadRequestError("invalid collection_id"))
+		return
+	}
+	var collectionRequest model.CollectionRequest
+	err = json.NewDecoder(r.Body).Decode(&collectionRequest)
+	if err != nil {
+		_ = utils.ErrorJSON(w, apperrors.NewBadRequestError("invalid collection request"))
+		return
+	}
+	err = h.service.UpdateCollection(storeID, collectionID, &collectionRequest)
+	if err != nil {
+		_ = utils.ErrorJSON(w, err)
+		return
+	}
+	_ = utils.WriteJSON(w, http.StatusOK, map[string]string{
+		"message": "Collection updated successfully",
 	})
 }

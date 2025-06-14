@@ -154,6 +154,8 @@ func (app *Config) collection(r chi.Router) {
 	// Public endpoints
 	r.Get("/", collectionHandler.GetCollections)
 	r.Get("/{collection_id}", collectionHandler.GetCollection)
+	r.Delete("/{collection_id}", collectionHandler.DeleteCollection)
+	r.Put("/{collection_id}", collectionHandler.UpdateCollection)
 
 	// Protected endpoints
 	r.Group(func(r chi.Router) {

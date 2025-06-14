@@ -104,3 +104,31 @@ func (cs *CollectionService) RemoveProductFromCollection(storeID, collectionID, 
 	err = apperrors.ErrCheck(err)
 	return err
 }
+
+func (cs *CollectionService) DeleteCollection(storeID, collectionID uint) error {
+	// Validate collection
+	collection, err := cs.repository.FindCollection(storeID, collectionID)
+	err = apperrors.ErrCheck(err)
+	if err != nil {
+		return err
+	}
+
+	// Delete collection
+	err = cs.repository.DeleteCollection(collection.ID)
+	err = apperrors.ErrCheck(err)
+	return err
+}
+
+func (cs *CollectionService) UpdateCollection(storeID, collectionID uint, collectionRequest *model.CollectionRequest) error {
+	// Validate collection
+	collection, err := cs.repository.FindCollection(storeID, collectionID)
+	err = apperrors.ErrCheck(err)
+	if err != nil {
+		return err
+	}
+
+	// Update collection
+	err = cs.repository.UpdateCollection(collection.ID, collectionRequest)
+	err = apperrors.ErrCheck(err)
+	return err
+}

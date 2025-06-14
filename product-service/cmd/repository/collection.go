@@ -38,8 +38,8 @@ func (cr *CollectionRepository) RemoveProductFromCollection(collectionID uint, p
 	return cr.db.DB.Exec("DELETE FROM collection_products WHERE product_id = ? AND collection_id = ?", productID, collectionID).Error
 }
 
-func (cr *CollectionRepository) UpdateCollection(collection model.Collection) error {
-	return cr.db.DB.Save(collection).Error
+func (cr *CollectionRepository) UpdateCollection(collectionID uint, collectionRequest *model.CollectionRequest) error {
+	return cr.db.DB.Model(&model.Collection{ID: collectionID}).Updates(collectionRequest).Error
 }
 
 func (cr *CollectionRepository) CreateCollection(collection *model.Collection) error {

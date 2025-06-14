@@ -109,7 +109,7 @@
   },
   {
     "path": "/stores/{store_id}/collections/{collection_id}",
-    "methods": ["GET"],
+    "methods": ["GET", "PUT", "DELETE"],
     "service": "product-service",
     "middlewares": ["logging"]
   },

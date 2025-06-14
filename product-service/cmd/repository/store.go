@@ -23,6 +23,16 @@ func (sr *StoreRepository) CreateStore(store *model.Store) error {
 	return nil
 }
 
+// get store by slug from the database
+func (sr *StoreRepository) GetStoreBySlug(slug string) (*model.Store, error) {
+	result := &model.Store{}
+	err := sr.db.DB.Where("slug = ?", slug).First(result).Error
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
 // delete store from the database
 func (sr *StoreRepository) DeleteStore(storeID uint) error {
 	result := sr.db.DB.Delete(&model.Store{}, storeID)
