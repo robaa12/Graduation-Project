@@ -162,7 +162,12 @@
     "service": "product-service",
     "middlewares": ["auth", "store-ownership", "logging"]
   },
-
+  {
+    "path": "/upload/file",
+    "methods": ["POST"],
+    "service": "user-service",
+    "middlewares": ["logging"]
+  },
   {
     "path": "/user/verify-email",
     "methods": ["POST"],

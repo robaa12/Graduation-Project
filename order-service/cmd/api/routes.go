@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/cors"
 	"gorm.io/gorm"
 )
 
@@ -17,14 +16,6 @@ var db *gorm.DB
 func (app *Config) routes() http.Handler {
 	db = app.db
 	mux := chi.NewRouter()
-	mux.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://*", "https://*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: true,
-		MaxAge:           300,
-	}))
 	mux.Use(middleware.Heartbeat("/ping"))
 	mux.Route("/orders/{order_id}/items", orderItems)
 	mux.Route("/stores/{store_id}/orders", order)

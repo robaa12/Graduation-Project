@@ -5,8 +5,7 @@ import (
 	"os"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware" // ✅ Corrected import for Chi middleware
-	"github.com/go-chi/cors"
+	"github.com/go-chi/chi/v5/middleware"                 // ✅ Corrected import for Chi middleware
 	"github.com/robaa12/product-service/cmd/api/handlers" // ✅ Alias for your custom middleware
 	"github.com/robaa12/product-service/cmd/database"
 	"github.com/robaa12/product-service/cmd/repository"
@@ -23,14 +22,6 @@ func (app *Config) routes() http.Handler {
 	mux.Use(middleware.RequestID)
 	mux.Use(middleware.RealIP)
 
-	mux.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"https://*", "http://*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: true,
-		MaxAge:           300,
-	}))
 
 	// Order Handler
 	OrderHandler := handlers.OrderHandler{DB: app.db.DB}
