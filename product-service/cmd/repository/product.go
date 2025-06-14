@@ -23,10 +23,14 @@ func NewProductRepository(db database.Database) *ProductRepository {
 func (pr *ProductRepository) GetProduct(productId uint, storeId uint) (*model.Product, error) {
 	var product model.Product
 	// Find the product with the given id and store_id
-	err := pr.db.DB.Preload("Category").Where("id = ? AND store_id = ?", productId, storeId).First(&product).Error
+	err := pr.db.DB.Preload("Category").Preload("SKUs").Where("id = ? AND store_id = ?", productId, storeId).First(&product).Error
 	if err != nil {
 		return nil, gorm.ErrRecordNotFound
 	}
+
+	// Fetch collection IDs
+	product.CollectionIDs = pr.fetchCollectionIDs(product.ID)
+
 	return &product, nil
 }
 
@@ -86,6 +90,8 @@ func (pr *ProductRepository) UpdateProduct(p model.ProductResponse, id uint, sto
 	if err := pr.db.DB.Preload("Category").Where("id = ?", id).First(&updatedProduct).Error; err != nil {
 		return nil, err
 	}
+
+	updatedProduct.CollectionIDs = pr.fetchCollectionIDs(updatedProduct.ID)
 
 	return &updatedProduct, nil
 }
@@ -226,7 +232,11 @@ func (pr *ProductRepository) GetStoreProducts(storeID uint, limit, offset int) (
 	}
 
 	// Build the base query
-	query := pr.db.DB.Model(&model.Product{}).Preload("Category").Where("store_id = ?", storeID).Order("id ASC")
+	query := pr.db.DB.Model(&model.Product{}).
+		Preload("Category").
+		Preload("SKUs").
+		Where("store_id = ?", storeID).
+		Order("id ASC")
 
 	// Apply limit only if pagination is requested
 	if limit > 0 {
@@ -244,6 +254,11 @@ func (pr *ProductRepository) GetStoreProducts(storeID uint, limit, offset int) (
 		return nil, 0, result.Error
 	}
 
+	// For each product, fetch the collection IDs
+	for i := range products {
+		products[i].CollectionIDs = pr.fetchCollectionIDs(products[i].ID)
+	}
+
 	if len(products) == 0 && offset == 0 {
 		return nil, 0, gorm.ErrRecordNotFound
 	}
@@ -254,13 +269,20 @@ func (pr *ProductRepository) GetStoreProducts(storeID uint, limit, offset int) (
 func (pr *ProductRepository) GetProductDetails(productID uint, storeID uint) (*model.Product, error) {
 	var product model.Product
 
-	result := pr.db.DB.Where("id=? AND store_id = ?", productID, storeID).Preload("SKUs.SKUVariants").Preload("SKUs.Variants").Preload("Category").Find(&product)
+	result := pr.db.DB.Where("id=? AND store_id = ?", productID, storeID).
+		Preload("SKUs.SKUVariants").
+		Preload("SKUs.Variants").
+		Preload("Category").
+		Find(&product)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	if result.RowsAffected == 0 {
 		return nil, gorm.ErrRecordNotFound
 	}
+
+	// Fetch collection IDs
+	product.CollectionIDs = pr.fetchCollectionIDs(product.ID)
 
 	return &product, nil
 }
@@ -282,6 +304,9 @@ func (pr *ProductRepository) GetProductBySlug(slug string, storeID uint) (*model
 		return nil, gorm.ErrRecordNotFound
 	}
 
+	// Fetch collection IDs
+	product.CollectionIDs = pr.fetchCollectionIDs(product.ID)
+
 	return &product, nil
 }
 
@@ -293,7 +318,27 @@ func (pr *ProductRepository) GetRelatedProducts(productID uint, categoryID uint,
 		Order("RANDOM()").
 		Limit(limit).
 		Preload("Category").
+		Preload("SKUs"). // Add this to preload SKUs
 		Find(&products)
 
+	// Fetch collection IDs for each product
+	for i := range products {
+		products[i].CollectionIDs = pr.fetchCollectionIDs(products[i].ID)
+	}
+
 	return products, result.Error
+}
+
+// Helper method to fetch collection IDs for a product
+func (pr *ProductRepository) fetchCollectionIDs(productID uint) []uint {
+	var collectionIDs []uint
+	if err := pr.db.DB.Table("collection_products").
+		Select("collection_id").
+		Where("product_id = ?", productID).
+		Pluck("collection_id", &collectionIDs).Error; err != nil {
+		// Just log the error and return empty array
+		log.Printf("Error fetching collection IDs for product %d: %v", productID, err)
+		return []uint{}
+	}
+	return collectionIDs
 }

@@ -17,15 +17,17 @@ type ProductRequest struct {
 	Category     *CategoryInfo `json:"category,omitempty" `
 }
 type ProductResponse struct {
-	ID           uint          `json:"id"`
-	Name         string        `json:"name"`
-	Description  string        `json:"description"`
-	Slug         string        `json:"slug"`
-	Published    bool          `json:"published"`
-	StartPrice   float64       `json:"startPrice"`
-	MainImageURL string        `json:"main_image_url"`
-	ImagesURL    []string      `json:"images_url"`
-	Category     *CategoryInfo `json:"category,omitempty"`
+	ID            uint          `json:"id"`
+	Name          string        `json:"name"`
+	Description   string        `json:"description"`
+	Slug          string        `json:"slug"`
+	Published     bool          `json:"published"`
+	StartPrice    float64       `json:"startPrice"`
+	MainImageURL  string        `json:"main_image_url"`
+	ImagesURL     []string      `json:"images_url"`
+	Category      *CategoryInfo `json:"category,omitempty"`
+	CollectionIDs []uint        `json:"collection_ids"`
+	HasVariants   bool          `json:"has_variants"`
 }
 
 type ProductDetailsResponse struct {
@@ -72,16 +74,23 @@ func (p *Product) ToProductResponse() *ProductResponse {
 		images[i] = url
 	}
 
+	collectionIDs := p.CollectionIDs
+	if collectionIDs == nil {
+		collectionIDs = []uint{}
+	}
+
 	return &ProductResponse{
-		ID:           p.ID,
-		Name:         p.Name,
-		Slug:         p.Slug,
-		Description:  p.Description,
-		Published:    p.Published,
-		StartPrice:   p.StartPrice,
-		MainImageURL: p.MainImageURL,
-		Category:     p.Category.ToCategoryInfo(),
-		ImagesURL:    images,
+		ID:            p.ID,
+		Name:          p.Name,
+		Slug:          p.Slug,
+		Description:   p.Description,
+		Published:     p.Published,
+		StartPrice:    p.StartPrice,
+		MainImageURL:  p.MainImageURL,
+		Category:      p.Category.ToCategoryInfo(),
+		ImagesURL:     images,
+		CollectionIDs: collectionIDs,
+		HasVariants:   len(p.SKUs) > 1,
 	}
 }
 
