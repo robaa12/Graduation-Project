@@ -196,18 +196,23 @@ func (pr *ProductRepository) GenerateProductSlug(name string, storeID uint) (str
 func (pr *ProductRepository) DeleteProduct(productID uint, storeID uint) error {
 	var product model.Product
 
-	result := pr.db.DB.Where("id = ? AND store_id = ?", productID, storeID).Delete(&product).Preload("SKUs.SKUVariants").
-		Preload("SKUs.Variants").
-		Find(&product)
-
-	if result.Error != nil {
-		return result.Error
+	// First check if the product exists
+	if err := pr.db.DB.Where("id = ? AND store_id = ?", productID, storeID).First(&product).Error; err != nil {
+		return err // This will return gorm.ErrRecordNotFound if the product doesn't exist
 	}
 
-	if result.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
+	// If you need to load related data for cascade deletion, do it here
+	// But don't combine it with the delete operation
+	if err := pr.db.DB.Preload("SKUs.SKUVariants").Preload("SKUs.Variants").
+		Where("id = ?", productID).First(&product).Error; err != nil {
+		return err
 	}
 
+	// Perform the actual delete (choose one approach):
+	// Option 1: Soft delete (keeps record but marks as deleted)
+	// return pr.db.DB.Delete(&product).Error
+
+	// Option 2: Hard delete (completely removes the record)
 	return pr.db.DB.Unscoped().Delete(&product).Error
 }
 
