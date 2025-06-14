@@ -31,6 +31,7 @@ type ProductResponse struct {
 type ProductDetailsResponse struct {
 	ProductResponse
 	SKUs             []SKUResponse             `json:"skus"`
+	RelatedProducts  []ProductResponse         `json:"related_products"`
 	ReviewStatistics *ProductReviewsStatistics `json:"review_statistics,omitempty"`
 }
 
@@ -115,5 +116,9 @@ func GetPaginatedProductsResponse(products []Product, total int64, limit, offset
 		// Add a flag to indicate if this was a paginated request
 		IsPaginated: isPaginated,
 	}
+}
 
+func (p *ProductDetailsResponse) WithRelatedProducts(products []ProductResponse) *ProductDetailsResponse {
+	p.RelatedProducts = products
+	return p
 }

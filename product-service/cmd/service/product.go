@@ -168,6 +168,17 @@ func (ps *ProductService) GetProductBySlug(slug string, storeID uint) (*model.Pr
 	// Convert to detailed response
 	productDetailsResponse := product.ToProductDetailsResponse()
 
+	if product.CategoryID != nil {
+		relatedProducts, err := ps.repository.GetRelatedProducts(product.ID, *product.CategoryID, storeID, 4)
+		if err == nil {
+			relatedProductResponses := make([]model.ProductResponse, 0, len(relatedProducts))
+			for _, rp := range relatedProducts {
+				relatedProductResponses = append(relatedProductResponses, *rp.ToProductResponse())
+			}
+			productDetailsResponse = productDetailsResponse.WithRelatedProducts(relatedProductResponses)
+		}
+	}
+
 	if ps.reviewService != nil {
 		reviewsStats, err := ps.reviewService.GetReviewStatistics(product.ID, storeID)
 		if err != nil {

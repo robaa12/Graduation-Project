@@ -284,3 +284,16 @@ func (pr *ProductRepository) GetProductBySlug(slug string, storeID uint) (*model
 
 	return &product, nil
 }
+
+func (pr *ProductRepository) GetRelatedProducts(productID uint, categoryID uint, storeID uint, limit int) ([]model.Product, error) {
+	var products []model.Product
+
+	result := pr.db.DB.Where("id != ? AND category_id = ? AND store_id = ? AND published = ?",
+		productID, categoryID, storeID, true).
+		Order("RANDOM()").
+		Limit(limit).
+		Preload("Category").
+		Find(&products)
+
+	return products, result.Error
+}
