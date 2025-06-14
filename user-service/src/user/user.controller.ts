@@ -78,14 +78,7 @@ export class UserController {
     };
   }
 
-  @Post('gallery')
-  async addPhotoToGallery(@Body() body: { userId: number; imageUrl: string },) {
-    const image = await this.userService.addPhotoToGallery(body.userId, body.imageUrl);
-    return {
-      message: 'Image added to gallery successfully',
-      data: image,
-    }
-  }
+
 
 
   @ApiOperation({ summary: 'Get All Users' })
@@ -98,14 +91,7 @@ export class UserController {
     };
   }
 
-  @Get('gallery/:userId')
-  async getGallery(@Param('userId') userId: number) {
-    const gallery = await this.userService.getUserGallery(userId);
-    return {
-      message: 'Gallery fetched successfully',
-      data: gallery,
-    };
-  }
+  
 
   @ApiOperation({ summary: 'Get User By Id' })
   @Get(':id')
@@ -127,15 +113,6 @@ export class UserController {
     };
   }
 
-  @Delete('gallery/:photoId')
-  async deletePhotoFromGallery(@Param('photoId') photoId: number) {
-    const result = await this.userService.deletePhotoFromGallery( photoId);
-    return {
-      message: 'Photo deleted from gallery successfully',
-      data: result,
-    };
-
-  }
 
   @ApiOperation({ summary: 'Delete User' })
   @Delete(':id')

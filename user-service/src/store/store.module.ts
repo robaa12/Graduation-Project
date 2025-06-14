@@ -9,9 +9,10 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { CategoryModule } from 'src/category/category.module';
 import { PlansModule } from 'src/plans/plans.module';
 import { StoreTheme } from './entities/store-theme.entity';
+import { StoreGallery } from './entities/user-gallery.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Store]) , forwardRef(()=>CategoryModule), forwardRef(()=>PlansModule), UserModule , MongooseModule.forFeature([{ name: 'StoreTheme', schema: StoreTheme }])],
+  imports: [TypeOrmModule.forFeature([Store , StoreGallery]) , forwardRef(()=>CategoryModule), forwardRef(()=>PlansModule), UserModule , MongooseModule.forFeature([{ name: 'StoreTheme', schema: StoreTheme }])],
   controllers: [StoreController],
   providers: [StoreService , EmailService ],
 })

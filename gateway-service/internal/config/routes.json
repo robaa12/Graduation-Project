@@ -193,31 +193,19 @@
     "middlewares": ["auth", "logging"]
   },
   {
-    "path": "/user/gallery",
+    "path": "/store/gallery",
     "methods": ["POST"],
     "service": "user-service",
     "middlewares": ["auth", "logging"]
   },
   {
-    "path": "/user/gallery/{image_id}",
+    "path": "/store/gallery/{image_id}",
     "methods": ["DELETE"],
     "service": "user-service",
     "middlewares": ["auth", "logging"]
   },
   {
-    "path": "/user/gallery/{user_id}",
-    "methods": ["GET"],
-    "service": "user-service",
-    "middlewares": ["auth", "logging"]
-  },
-  {
-    "path": "/user/gallery",
-    "methods": ["GET"],
-    "service": "user-service",
-    "middlewares": ["auth", "logging"]
-  },
-  {
-    "path": "/user/gallery/{image_id}/download",
+    "path": "/store/gallery/{user_id}",
     "methods": ["GET"],
     "service": "user-service",
     "middlewares": ["auth", "logging"]

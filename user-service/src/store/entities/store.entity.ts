@@ -1,7 +1,8 @@
 import { Category } from "src/category/entities/category.entity";
 import { Plan } from "src/plans/entities/plan.entity";
 import { User } from "src/user/entities/user.entity";
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { StoreGallery } from "./user-gallery.entity";
 
 @Entity()
 export class Store {
@@ -37,6 +38,9 @@ export class Store {
 
     @ManyToOne(()=> User, user=>user.stores , {onDelete: 'CASCADE'})
     user: User;
+
+    @OneToMany(() => StoreGallery, gallery => gallery.store, { onDelete: 'CASCADE' })
+    images: StoreGallery[];
 
     @ManyToOne(()=> Category, category=>category.stores , {onDelete: 'CASCADE'})
     @JoinColumn({ name: 'category_id' })
