@@ -2,7 +2,6 @@ import { Plan } from "src/plans/entities/plan.entity";
 import { Store } from "src/store/entities/store.entity";
 import { Column, CreateDateColumn, DataSource, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { UserPlanPayment } from "./user-plan-payment.entity";
-import { UserGallery } from "./user-gallery.entity";
 
 @Entity()
 export class User {
@@ -68,8 +67,6 @@ export class User {
     @OneToMany(() => Store, Store => Store.user)
     stores: Store[];
 
-    @OneToMany(() => UserGallery, gallery => gallery.user, { onDelete: 'CASCADE' })
-    images: UserGallery[];
 
     @ManyToOne(()=>Plan , (plan)=> plan.users)
     @JoinColumn({ name: 'plan_id' })

@@ -20,13 +20,11 @@ import { DuplicatedValueException } from 'src/shared/exception-filters/duplicate
 import { PlansService } from 'src/plans/plans.service';
 import { UserPlanPayment } from './entities/user-plan-payment.entity';
 import { Plan } from 'src/plans/entities/plan.entity';
-import { UserGallery } from './entities/user-gallery.entity';
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
     @InjectRepository(UserPlanPayment) private userPlanPaymnetRepository: Repository<UserPlanPayment>,
-    @InjectRepository(UserGallery) private userGalleryRepository: Repository<UserGallery>,
     private MailerService: EmailService,
     private PlanService:PlansService,
     private jwtService: JwtService,
@@ -170,33 +168,4 @@ export class UserService {
     return payment;
   }
 
-  async addPhotoToGallery(userId: number, imageUrl: string): Promise<UserGallery> {
-    const user = await this.userRepository.findOneBy({ id: userId });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    const galleryItem = this.userGalleryRepository.create({
-      user: user,
-      imageUrl,
-    });
-    return await this.userGalleryRepository.save(galleryItem);
-  }
-
-  async getUserGallery(userId: number): Promise<UserGallery[]> {
-    const gallery = await this.userGalleryRepository.find({
-      where: { user: { id: userId } },
-    })
-    if (!gallery) {
-      throw new NotFoundException('Gallery not found for this user');
-    }
-    return gallery;
-  }
-
-  async deletePhotoFromGallery(image_id: number): Promise<void> {
-    const galleryItem = await this.userGalleryRepository.findOneBy({ id: image_id });
-    if (!galleryItem) {
-      throw new NotFoundException('Gallery item not found');
-    }
-    await this.userGalleryRepository.remove(galleryItem);
-  }
 }

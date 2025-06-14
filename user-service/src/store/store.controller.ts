@@ -57,6 +57,24 @@ export class StoreController {
     }
   }
 
+  @Post('gallery')
+  async addPhotoToGallery(@Body() body: { storeId: number; imageUrl: string },) {
+    const image = await this.storeService.addPhotoToGallery(body.storeId, body.imageUrl);
+    return {
+      message: 'Image added to gallery successfully',
+      data: image,
+    }
+  }
+
+  @Get('gallery/:storeId')
+  async getGallery(@Param('storeId') storeId: number) {
+    const gallery = await this.storeService.getStoreGallery(storeId);
+    return {
+      message: 'Gallery fetched successfully',
+      data: gallery,
+    };
+  }
+
   @Get('theme/:storeId')
   @ApiOperation({summary:'Find Store Themes'})
   async findStoreThemes(@Param('storeId') storeId:string){
@@ -93,6 +111,15 @@ export class StoreController {
     return {
       message: 'Store deleted successfully',
     }
+  }
+
+  @Delete('gallery/:photoId')
+  async deletePhotoFromGallery(@Param('photoId') photoId: number) {
+    const result = await this.storeService.deletePhotoFromGallery( photoId);
+    return {
+      message: 'Photo deleted from gallery successfully',
+      data: result,
+    };
   }
 
   @Delete('theme/:id')

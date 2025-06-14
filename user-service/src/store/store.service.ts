@@ -13,14 +13,15 @@ import { InjectModel } from '@nestjs/mongoose';
 import { StoreThemeSchema } from './entities/store-theme.entity';
 import { Model } from 'mongoose';
 import { UpdateStoreThemeDto } from './dto/update-store-theme.dto';
+import { StoreGallery } from './entities/user-gallery.entity';
 
 @Injectable()
 export class StoreService {
   constructor(
     @InjectRepository(Store) private storeRepository: Repository<Store>,
-    private MailerService: EmailService,
+    @InjectRepository(StoreGallery)
+    private storeGalleryRepository: Repository<StoreGallery>,
     private CategoryService: CategoryService,
-    private PlansService: PlansService,
     private readonly UserService: UserService,
     @InjectModel('StoreTheme') private storeThemeModel: Model<StoreThemeSchema>,
   ) {}
@@ -169,5 +170,36 @@ export class StoreService {
     }
     
     return slug;
+  }
+
+
+    async addPhotoToGallery(storeId: number, imageUrl: string): Promise<StoreGallery> {
+    const store = await this.storeRepository.findOneBy({ id: storeId });
+    if (!store) {
+      throw new NotFoundException('User not found');
+    }
+    const galleryItem = this.storeGalleryRepository.create({
+      store,
+      imageUrl,
+    });
+    return await this.storeGalleryRepository.save(galleryItem);
+  }
+
+  async getStoreGallery(storeId: number): Promise<StoreGallery[]> {
+    const gallery = await this.storeGalleryRepository.find({
+      where: { store: { id: storeId } },
+    })
+    if (!gallery) {
+      throw new NotFoundException('Gallery not found for this user');
+    }
+    return gallery;
+  }
+
+  async deletePhotoFromGallery(image_id: number): Promise<void> {
+    const galleryItem = await this.storeGalleryRepository.findOneBy({ id: image_id });
+    if (!galleryItem) {
+      throw new NotFoundException('Gallery item not found');
+    }
+    await this.storeGalleryRepository.remove(galleryItem);
   }
 }
