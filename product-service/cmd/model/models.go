@@ -46,6 +46,7 @@ type Store struct {
 	Review     []Review     `json:"reviews" gorm:"foreignKey:StoreID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`     // One-to-many relationship with reviews
 	Collection []Collection `json:"collections" gorm:"foreignKey:StoreID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // One-to-many relationship with collections
 	Category   []Category   `json:"categories" gorm:"foreignKey:StoreID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`  // One-to-many relationship with categories
+	Slug       string       `json:"slug" gorm:"size:255;not null"`
 	BaseModel
 }
 type Review struct {

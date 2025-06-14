@@ -5,12 +5,14 @@ package model
 type StoreRequest struct {
 	ID   uint   `json:"id"`
 	Name string `json:"name" gorm:"size:255;not null"`
+	Slug string `json:"slug" gorm:"size:255;not null"`
 }
 
 // / StoreResponse is the response structure for store-related operations
 type StoreResponse struct {
 	ID   uint   `json:"id"`
 	Name string `json:"name"`
+	Slug string `json:"slug"`
 }
 
 // StoreOrderResponse represents a store's response containing a list of orders.
@@ -21,14 +23,12 @@ type StoreOrderResponse struct {
 
 // CreateStore creates a Store object from store id parm.
 
-func CreateStore(storeId uint) *Store {
-	return &Store{ID: storeId} // Returns a Store object with the ID set to the StoreID from OrderRequestDetails.
-}
-
 // CreateStoreResponse creates a StoreResponse object from a Store object.
 func (store *Store) CreateStoreResponse() *StoreResponse {
 	return &StoreResponse{
-		ID: store.ID, // Returns a StoreResponse object with the StoreID set to the ID of the Store.
+		ID:   store.ID,
+		Name: store.Name,
+		Slug: store.Slug,
 	}
 }
 
@@ -51,6 +51,7 @@ func (s *Store) ToStoreResponse() *StoreResponse {
 	return &StoreResponse{
 		ID:   s.ID,
 		Name: s.Name,
+		Slug: s.Slug,
 	}
 }
 
@@ -59,5 +60,6 @@ func (sr *StoreRequest) ToStore() *Store {
 	return &Store{
 		ID:   sr.ID,
 		Name: sr.Name,
+		Slug: sr.Slug,
 	}
 }

@@ -342,3 +342,60 @@ func (pr *ProductRepository) fetchCollectionIDs(productID uint) []uint {
 	}
 	return collectionIDs
 }
+
+// GetProductsByStoreSlug retrieves all products for a store identified by its slug
+func (pr *ProductRepository) GetProductsByStoreSlug(storeSlug string, limit, offset int) ([]model.Product, uint, int64, error) {
+	products := []model.Product{}
+	var total int64
+	var storeID uint
+
+	// First, find the store by slug
+	var store model.Store
+	if err := pr.db.DB.Where("slug = ?", storeSlug).First(&store).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, 0, 0, errors.New("store not found")
+		}
+		return nil, 0, 0, err
+	}
+
+	storeID = store.ID
+
+	// Count total products for pagination info
+	if err := pr.db.DB.Model(&model.Product{}).Where("store_id = ?", storeID).Count(&total).Error; err != nil {
+		return nil, storeID, 0, err
+	}
+
+	// Build the base query
+	query := pr.db.DB.Model(&model.Product{}).
+		Preload("Category").
+		Preload("SKUs").
+		Where("store_id = ?", storeID).
+		Order("id ASC")
+
+	// Apply limit only if pagination is requested
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+
+	// Apply offset only if pagination is requested
+	if limit > 0 || offset > 0 {
+		query = query.Offset(offset)
+	}
+
+	result := query.Find(&products)
+
+	if result.Error != nil {
+		return nil, storeID, 0, result.Error
+	}
+
+	// For each product, fetch the collection IDs
+	for i := range products {
+		products[i].CollectionIDs = pr.fetchCollectionIDs(products[i].ID)
+	}
+
+	if len(products) == 0 && offset == 0 {
+		return nil, storeID, total, nil // Return empty products with total count
+	}
+
+	return products, storeID, total, nil
+}

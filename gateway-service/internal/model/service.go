@@ -8,6 +8,7 @@ type Service struct {
 type ServiceCreateStoreRequest struct {
 	ID   uint   `json:"id"`
 	Name string `json:"name" validate:"required"`
+	Slug string `json:"slug" validate:"required"`
 }
 
 // ServiceResult tracks the result of operations on individual services

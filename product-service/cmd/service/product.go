@@ -211,3 +211,27 @@ func validateProductImages(product model.ProductRequest) error {
 	}
 	return nil
 }
+
+// GetProductsByStoreSlug retrieves all products for a store identified by its slug
+func (ps *ProductService) GetProductsByStoreSlug(storeSlug string, limit, offset int) (*model.PaginatedProductsResponse, error) {
+	// Check if we're fetching all products or using pagination
+	isPaginated := limit > 0
+
+	if isPaginated {
+		log.Printf("GetProductsByStoreSlug: Paginated request - storeSlug=%s, limit=%d, offset=%d", storeSlug, limit, offset)
+	} else {
+		log.Printf("GetProductsByStoreSlug: Fetching all products for storeSlug=%s", storeSlug)
+	}
+
+	// Call the repository to get the products
+	products, storeID, total, err := ps.repository.GetProductsByStoreSlug(storeSlug, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Printf("Retrieved %d products out of total %d for store %d (slug: %s)", len(products), total, storeID, storeSlug)
+
+	// Create response with pagination info
+	paginatedResponse := model.GetPaginatedProductsResponse(products, total, limit, offset, isPaginated)
+	return paginatedResponse, nil
+}

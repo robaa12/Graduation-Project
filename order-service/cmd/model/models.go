@@ -66,6 +66,7 @@ type StoreCustomer struct {
 type Store struct {
 	ID             uint            `json:"id" gorm:"primaryKey;autoIncrement:false"`                                                // Disable auto-increment
 	Name           string          `json:"name" gorm:"size:255"`                                                                    // Store name
+	Slug           string          `json:"slug" gorm:"size:255"`                                                                    // Store slug
 	Orders         []Order         `json:"orders" gorm:"foreignKey:StoreID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`           // One-to-many relationship with Orders
 	Customers      []Customer      `json:"customers" gorm:"many2many:store_customers;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // Many-to-many with Customers
 	StoreCustomers []StoreCustomer `json:"store_customers" gorm:"foreignKey:StoreID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`  // One-to-many relationship with StoreCustomer

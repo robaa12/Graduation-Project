@@ -22,7 +22,6 @@ func (app *Config) routes() http.Handler {
 	mux.Use(middleware.RequestID)
 	mux.Use(middleware.RealIP)
 
-
 	// Order Handler
 	OrderHandler := handlers.OrderHandler{DB: app.db.DB}
 
@@ -49,6 +48,7 @@ func (app *Config) routes() http.Handler {
 	// Routes under /stores/{store_id}
 	mux.Route("/stores", func(r chi.Router) {
 		r.Post("/", storeHandler.CreateStore)
+		r.Get("/slug/{store_slug}/products", productHandler.GetProductsByStoreSlug)
 
 		r.Route("/{store_id}", func(r chi.Router) {
 			// Public Product Routes

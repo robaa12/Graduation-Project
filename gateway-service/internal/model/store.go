@@ -7,8 +7,7 @@ import (
 )
 
 type StoreInfo struct {
-	StoreName string `json:"store_name" validate:"required"`
-
+	StoreName     string `json:"store_name" validate:"required"`
 	Description   string `json:"description" validate:"required"`
 	BusinessPhone string `json:"business_phone" validate:"required"`
 	StoreCurrency string `json:"store_currency" validate:"required"`
@@ -44,5 +43,6 @@ func (s *Store) ToServiceCreateStoreRequest() ServiceCreateStoreRequest {
 	return ServiceCreateStoreRequest{
 		ID:   s.ID,
 		Name: s.StoreName,
+		Slug: s.Slug,
 	}
 }
