@@ -1,7 +1,11 @@
 import { PlansService } from './../plans/plans.service';
 import { CategoryService } from './../category/category.service';
 import { CreateStoreThemeDto } from './dto/create-store-theme.dto';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -35,9 +39,11 @@ export class StoreService {
       createStoreDto.category_id,
     );
     console.log(user);
-    
-    if(user.stores.length + 1 > user.plan.num_of_stores) {
-      throw new BadRequestException('You have reached the maximum number of stores allowed for your plan');
+
+    if (user.stores.length + 1 > user.plan.num_of_stores) {
+      throw new BadRequestException(
+        'You have reached the maximum number of stores allowed for your plan',
+      );
     }
     let slug = await this.generateStoreSlug(createStoreDto.store_name);
 
@@ -107,22 +113,32 @@ export class StoreService {
       throw new NotFoundException('Store not found');
     }
     console.log(CreateStoreThemeDto.theme.selectedTheme.id);
-    
+
     let existingTheme = await this.storeThemeModel.findOne({
       storeId: CreateStoreThemeDto.storeId,
       'theme.selectedTheme.id': CreateStoreThemeDto.theme.selectedTheme.id,
-    });    
+    });
     if (existingTheme) {
-      existingTheme = await this.storeThemeModel.findOneAndUpdate({ _id: existingTheme._id },{ theme:CreateStoreThemeDto.theme , isActive:CreateStoreThemeDto.isActive},{ new: true, runValidators: true },);
+      existingTheme = await this.storeThemeModel.findOneAndUpdate(
+        { _id: existingTheme._id },
+        {
+          theme: CreateStoreThemeDto.theme,
+          isActive: CreateStoreThemeDto.isActive,
+        },
+        { new: true, runValidators: true },
+      );
 
-      if(existingTheme.isActive) {
+      if (existingTheme.isActive) {
         await this.storeThemeModel.updateMany(
-          { storeId: CreateStoreThemeDto.storeId, _id: { $ne: existingTheme._id } },
+          {
+            storeId: CreateStoreThemeDto.storeId,
+            _id: { $ne: existingTheme._id },
+          },
           { isActive: false },
         );
       }
       return existingTheme;
-    }    
+    }
     const storeTheme = await this.storeThemeModel.create(CreateStoreThemeDto);
     if (CreateStoreThemeDto.isActive) {
       await this.storeThemeModel.updateMany(
@@ -172,19 +188,21 @@ export class StoreService {
   async generateStoreSlug(storeName: string): Promise<string> {
     let slug = storeName.toLocaleLowerCase().replace(/ /g, '-');
     let existingStore = await this.storeRepository.findOne({ where: { slug } });
-    
+
     let counter = 1;
     while (existingStore) {
       slug = `${storeName.toLocaleLowerCase().replace(/ /g, '-')}-${counter}`;
       existingStore = await this.storeRepository.findOne({ where: { slug } });
       counter++;
     }
-    
+
     return slug;
   }
 
-
-    async addPhotoToGallery(storeId: number, imageUrl: string): Promise<StoreGallery> {
+  async addPhotoToGallery(
+    storeId: number,
+    imageUrl: string,
+  ): Promise<StoreGallery> {
     const store = await this.storeRepository.findOneBy({ id: storeId });
     if (!store) {
       throw new NotFoundException('User not found');
@@ -199,7 +217,7 @@ export class StoreService {
   async getStoreGallery(storeId: number): Promise<StoreGallery[]> {
     const gallery = await this.storeGalleryRepository.find({
       where: { store: { id: storeId } },
-    })
+    });
     if (!gallery) {
       throw new NotFoundException('Gallery not found for this user');
     }
@@ -207,10 +225,34 @@ export class StoreService {
   }
 
   async deletePhotoFromGallery(image_id: number): Promise<void> {
-    const galleryItem = await this.storeGalleryRepository.findOneBy({ id: image_id });
+    const galleryItem = await this.storeGalleryRepository.findOneBy({
+      id: image_id,
+    });
     if (!galleryItem) {
       throw new NotFoundException('Gallery item not found');
     }
     await this.storeGalleryRepository.remove(galleryItem);
+  }
+
+  async addPhotosToGallery(storeId: number, imageUrls: string[]) {
+    const store = await this.storeRepository.findOneBy({ id: storeId });
+    if (!store) {
+      throw new NotFoundException('Store not found');
+    }
+
+    const galleryItems = imageUrls.map((imageUrl) =>
+      this.storeGalleryRepository.create({
+        store,
+        imageUrl,
+      }),
+    );
+
+    const images = await this.storeGalleryRepository.save(galleryItems);
+    return images.map((image) => {
+      return {
+        id: image.id,
+        imageUrl: image.imageUrl,
+      };
+    });
   }
 }
