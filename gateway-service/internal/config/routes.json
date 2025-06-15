@@ -341,5 +341,11 @@
     "methods": ["GET"],
     "service": "product-service",
     "middlewares": ["logging"]
+  },
+  {
+    "path": "/store/gallery/bulk",
+    "methods": ["POST"],
+    "service": "user-service",
+    "middlewares": ["logging"]
   }
 ]
