@@ -217,6 +217,12 @@
     "middlewares": ["auth", "logging"]
   },
   {
+    "path": "/store/slug/{store_slug}",
+    "methods": ["GET"],
+    "service": "user-service",
+    "middlewares": ["auth", "logging"]
+  },
+  {
     "path": "/store/{store_id}",
     "methods": ["DELETE"],
     "service": "user-service",

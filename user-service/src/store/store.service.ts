@@ -62,6 +62,17 @@ export class StoreService {
     await this.storeRepository.delete(id);
   }
 
+  async findStoreBySlug(slug: string): Promise<Store> {
+    const store = await this.storeRepository.findOne({
+      where: { slug },
+      relations: ['category', 'user'],
+    });
+    if (!store) {
+      throw new NotFoundException('Store not found');
+    }
+    return store;
+  }
+
   async findOne(id: number): Promise<Store> {
     const store = await this.storeRepository.findOne({
       where: { id },

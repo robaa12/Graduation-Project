@@ -28,6 +28,16 @@ export class StoreController {
     }
   }
 
+  @Get('slug/:slug')
+  @ApiOperation({summary:'Find Store by Slug'})
+  async findStoreBySlug(@Param('slug') slug: string) {
+      let store = await this.storeService.findStoreBySlug(slug);
+      return {
+        message: 'Store fetched successfully',
+        data : store
+      }
+  }
+  
   @Get(':id')
   async findOne(@Param('id') id: string) {
       let store = await  this.storeService.findOne(+id);
