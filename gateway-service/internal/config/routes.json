@@ -18,6 +18,12 @@
     "middlewares": ["auth", "store-ownership", "logging"]
   },
   {
+    "path": "/stores/{store_id}/dashboard",
+    "methods": ["GET"],
+    "service": "order-service",
+    "middlewares": ["auth", "store-ownership", "logging"]
+  },
+  {
     "path": "/stores/{store_id}/orders",
     "methods": ["POST"],
     "service": "order-service",

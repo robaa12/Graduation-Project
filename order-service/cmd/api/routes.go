@@ -20,6 +20,7 @@ func (app *Config) routes() http.Handler {
 	mux.Route("/orders/{order_id}/items", orderItems)
 	mux.Route("/stores/{store_id}/orders", order)
 	mux.Route("/stores/{store_id}/customers", customer)
+	mux.Route("/stores/{store_id}/dashboard", dashboard)
 	mux.Route("/stores", store)
 
 	return mux
@@ -78,5 +79,13 @@ func customer(r chi.Router) {
 		//	r.Put("/", customerHandler.UpdateCustomer)
 		r.Delete("/", customerHandler.DeleteCustomer)
 	})
+
+}
+func dashboard(r chi.Router) {
+	dashboardRepo := repository.NewDashBoardRepository(db)
+	dashboardService := service.NewDashBoardService(dashboardRepo)
+	dashboardHandler := handlers.NewDashBoardHandler(dashboardService)
+
+	r.Get("/", dashboardHandler.GetDashboardInfo)
 
 }

@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	apperrors "github.com/robaa12/product-service/cmd/errors"
@@ -180,6 +181,61 @@ func (h *ProductHandler) GetStoreProducts(w http.ResponseWriter, r *http.Request
 
 	// Return store's Products
 	_ = utils.WriteJSON(w, http.StatusOK, productsResponse)
+}
+
+func (h *ProductHandler) GetStoreProductDashboard(w http.ResponseWriter, r *http.Request) {
+	// Fetch Store ID Param From URL
+	storeID, err := utils.GetID(r, "store_id")
+	if err != nil {
+		_ = utils.ErrorJSON(w, apperrors.NewBadRequestError("invalid store ID"))
+		return
+	}
+
+	// set defalut  startDate and endDate
+	var startDate, endDate time.Time
+
+	// Get startDate and endDate from query parameters
+	startDateStr := r.URL.Query().Get("startDate")
+	endDateStr := r.URL.Query().Get("endDate")
+
+	// If both parameters are absent, don't apply hasPeriod
+	hasPeriod := startDateStr != "" || endDateStr != ""
+
+	if hasPeriod {
+
+		// Define the expected date format
+		const layout = "2003-05-02"
+
+		// Parse and validate start date
+		startDate, err = time.Parse(layout, startDateStr)
+		if err != nil {
+			http.Error(w, "Invalid start date format. Use YYYY-MM-DD.", http.StatusBadRequest)
+			return
+		}
+
+		// Parse and validate end date
+		endDate, err = time.Parse(layout, endDateStr)
+		if err != nil {
+			http.Error(w, "Invalid end date format. Use YYYY-MM-DD.", http.StatusBadRequest)
+			return
+		}
+
+		// Optional: Check if startDate is before endDate
+		if startDate.After(endDate) {
+			http.Error(w, "Start date must be before end date.", http.StatusBadRequest)
+			return
+		}
+
+	}
+
+	productsDashboardResponse, err := h.ProductService.GetStoreProductsDashboard(storeID, startDate, endDate)
+	if err != nil {
+		_ = utils.ErrorJSON(w, err)
+		return
+	}
+
+	// Return store's Products
+	_ = utils.WriteJSON(w, http.StatusOK, productsDashboardResponse)
 }
 
 // GetProductDetails returns a product details from the database

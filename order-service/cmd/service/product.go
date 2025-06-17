@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"order-service/cmd/model"
+	"time"
 )
 
 type ProductService struct {
@@ -158,4 +159,25 @@ func (s *ProductService) GetOrderItemDetails(storeID uint, orderItems []model.Or
 	}
 
 	return nil
+}
+func (s *ProductService) GetStoreProductsDashboard(storeID uint, startDate, endDate time.Time) (*model.ProductsDashboardResponse, error) {
+
+	resp, err := http.Get(s.ProductServiceURL + fmt.Sprintf("/stores/%d/products/dashboard", storeID))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New("failed to get SKU details: " + resp.Status)
+	}
+
+	var productsDashboardResponse model.ProductsDashboardResponse
+	dec := json.NewDecoder(resp.Body)
+	err = dec.Decode(&productsDashboardResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return &productsDashboardResponse, nil
 }

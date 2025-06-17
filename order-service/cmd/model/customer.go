@@ -24,6 +24,13 @@ type CustomerResponseDetails struct {
 	CustomerResponseInfo                     // Embedded struct containing the customer's ID and email.
 	Orders               []OrderResponseInfo `json:"orders"` // List of orders associated with the customer.
 }
+type CustomerDashboardResponse struct {
+	CustomerID     uint    `json:"id" binding:"required"`    // Unique identifier of the customer. Marked as required.
+	CustomerName   string  `json:"email" binding:"required"` // Email of the customer. Marked as required.
+	NumberOfOrders int     `json:"orders"`                   // Total number of orders placed by the customer.
+	TotalSpent     float64 `json:"totalSpent"`               // Total amount spent by the customer.
+	JoinDate       string  `json:"joinDate"`                 // Date when the customer joined.
+}
 
 // CreateCustomer creates a Customer object from a CustomerRequest object.
 func (customer *CustomerRequest) CreateCustomer() *Customer {

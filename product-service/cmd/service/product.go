@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"log"
+	"time"
 
 	apperrors "github.com/robaa12/product-service/cmd/errors"
 	"github.com/robaa12/product-service/cmd/model"
@@ -130,6 +131,26 @@ func (ps *ProductService) GetStoreProducts(storeID uint, limit, offset int) (*mo
 	return paginatedResponse, nil
 }
 
+func (ps *ProductService) GetStoreProductsDashboard(storeID uint, startDate, endDate time.Time) (*model.ProductsDashboardResponse, error) {
+	if startDate.IsZero() || endDate.IsZero() {
+		startDate = time.Now().AddDate(0, -30, 0) // Default to 30 days ago
+		if endDate.IsZero() {
+			endDate = time.Now()
+		}
+	}
+
+	// Call the repository to get the products
+	productsDashboardResponse, err := ps.repository.GetStoreProductsDashboard(storeID, startDate, endDate)
+	err = apperrors.ErrCheck(err)
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		log.Printf("Error getting products: %v", err)
+		return nil, err
+	}
+
+	log.Printf("Retrieved %v products dashboard", productsDashboardResponse)
+
+	return productsDashboardResponse, nil
+}
 func (ps *ProductService) GetProductDetails(productID, storeID uint) (*model.ProductDetailsResponse, error) {
 	// Call the repository to get the product with details
 	product, err := ps.repository.GetProductDetails(productID, storeID)

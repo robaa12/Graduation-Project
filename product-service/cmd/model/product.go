@@ -45,6 +45,10 @@ type PaginatedProductsResponse struct {
 	Offset      int               `json:"offset"`
 	IsPaginated bool              `json:"is_paginated"`
 }
+type ProductsDashboardResponse struct {
+	TotalProducts  int64   `json:"totalProducts"`
+	ProductsChange float64 `json:"productsChange"`
+}
 
 func (p *ProductRequest) CreateProduct(storeID uint) *Product {
 	mainImageURL := utils.SanitizeURL(p.MainImageURL)

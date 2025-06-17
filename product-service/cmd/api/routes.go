@@ -54,6 +54,7 @@ func (app *Config) routes() http.Handler {
 			// Public Product Routes
 			r.Delete("/", storeHandler.DeleteStore)
 			r.Get("/products", productHandler.GetStoreProducts)
+			r.Get("/products/dashboard", productHandler.GetStoreProductDashboard)
 			r.Get("/products/slug/{slug}", productHandler.GetProductBySlug)
 			r.Post("/skus/info", skuHandler.GetSKUs)
 

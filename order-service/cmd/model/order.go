@@ -56,6 +56,13 @@ type OrderDetailsResponse struct {
 	OrderItems                 []OrderItemResponse          `json:"order_items"`
 	OrderStatusHistoryResonpse []OrderStatusHistoryResonpse `json:"order_status_history"`
 }
+type OrderDashboardResponse struct {
+	ID           uint    `json:"id"`
+	CustomerName string  `json:"customer"`
+	TotalPrice   float64 `json:"amount"`
+	Status       string  `json:"status"`
+	Date         string  `json:"date"`
+}
 
 func (orderRequest *OrderRequestDetails) CreateOrder(storeID, customerID uint) *Order {
 	return &Order{
@@ -132,4 +139,17 @@ func GetOrdersReponse(orders []Order) *OrdersResponse {
 		Orders: orderResponse,
 	}
 
+}
+func GetOrderDashboardResponse(orders []Order) []OrderDashboardResponse {
+	orderDashboardResponse := make([]OrderDashboardResponse, 0, len(orders))
+	for _, item := range orders {
+		orderDashboardResponse = append(orderDashboardResponse, OrderDashboardResponse{
+			ID:           item.ID,
+			CustomerName: item.CustomerName,
+			TotalPrice:   item.TotalPrice,
+			Status:       item.Status,
+			Date:         item.CreatedAt.Format("2006-01"), // Format as YYYY-MM
+		})
+	}
+	return orderDashboardResponse
 }

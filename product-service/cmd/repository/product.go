@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/lib/pq"
 	"github.com/robaa12/product-service/cmd/database"
@@ -398,4 +399,40 @@ func (pr *ProductRepository) GetProductsByStoreSlug(storeSlug string, limit, off
 	}
 
 	return products, storeID, total, nil
+}
+func (pr *ProductRepository) GetStoreProductsDashboard(storeID uint, startDate, endDate time.Time) (*model.ProductsDashboardResponse, error) {
+	var totalProducts int64
+	var productsChange float64
+
+	// Count total products in the current period
+	if err := pr.db.DB.Model(&model.Product{}).
+		Where("store_id = ? AND created_at BETWEEN ? AND ?", storeID, startDate, endDate).
+		Count(&totalProducts).Error; err != nil {
+		return nil, err
+	}
+
+	// Calculate previous period
+	periodDuration := endDate.Sub(startDate)
+	prevPeriodEnd := startDate
+	prevPeriodStart := startDate.Add(-periodDuration)
+
+	// Count products in the previous period
+	var previousCount int64
+	if err := pr.db.DB.Model(&model.Product{}).
+		Where("store_id = ? AND created_at BETWEEN ? AND ?", storeID, prevPeriodStart, prevPeriodEnd).
+		Count(&previousCount).Error; err != nil {
+		return nil, err
+	}
+
+	// Calculate percentage change
+	if previousCount > 0 {
+		productsChange = float64(totalProducts-previousCount) / float64(previousCount) * 100.0
+	} else {
+		productsChange = float64(totalProducts) * 100.0 // If no previous products, consider it a full increase
+	}
+
+	return &model.ProductsDashboardResponse{
+		TotalProducts:  totalProducts,
+		ProductsChange: productsChange,
+	}, nil
 }
