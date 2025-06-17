@@ -343,6 +343,18 @@
     "middlewares": ["auth", "logging"]
   },
   {
+    "path": "/payment/order",
+    "methods": ["POST"],
+    "service": "user-service",
+    "middlewares": ["auth", "logging"]
+  },
+  {
+    "path": "/payment/order/{id}",
+    "methods": ["GET"],
+    "service": "user-service",
+    "middlewares": ["logging"]
+  },
+  {
     "path": "/payment/callback",
     "methods": ["GET"],
     "service": "user-service",

@@ -15,5 +15,6 @@ import { StoreGallery } from './entities/user-gallery.entity';
   imports: [TypeOrmModule.forFeature([Store , StoreGallery]) , forwardRef(()=>CategoryModule), forwardRef(()=>PlansModule), UserModule , MongooseModule.forFeature([{ name: 'StoreTheme', schema: StoreTheme }])],
   controllers: [StoreController],
   providers: [StoreService , EmailService ],
+  exports:[StoreService]
 })
 export class StoreModule {}

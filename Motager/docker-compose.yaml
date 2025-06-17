@@ -177,10 +177,13 @@ services:
       - EMAIL_PORT=465
       - PAYMENT_SECRET=sk_test_kQEHZfcY5VR1oba6pGnjml2S
       - PAYMENT_URL=https://api.tap.company/v2
+      - GATEWAY_API=http://localhost:8080
+      - ORDER_SERVICE_URL=http://order-service:8084
     networks:
       - internal-network
       - user-network
       - gateway-network
+      - order-network
     depends_on:
       user-db:
         condition: service_healthy
