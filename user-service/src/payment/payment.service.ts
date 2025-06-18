@@ -61,7 +61,7 @@ export class PaymentService {
             "url": "http://localhost:3000/payment/callback", 
           },  
           redirect: {
-            url: 'http://localhost:3001/en/payment/success',
+            url: 'https://motager.tech/en/payment/success',
           },
         },
         {
@@ -136,7 +136,7 @@ export class PaymentService {
             "url": "http://localhost:3000/payment/callback", 
           },  
           redirect: {
-            url: 'http://localhost:3001/shop/order/success',
+            url: 'https://motager.tech/shop/order/success',
           },
         },
         {
